@@ -1,7 +1,9 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignore": ["**/dist/**", "**/coverage/**", "**/.turbo/**", "**/node_modules/**"] },
+  "files": {
+    "includes": ["**", "!**/dist", "!**/coverage", "!**/.turbo", "!**/node_modules"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -21,7 +23,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": { "noConsole": { "level": "error", "options": { "allow": ["error", "warn"] } } },
+      "suspicious": {
+        "noConsole": { "level": "error", "options": { "allow": ["error", "warn"] } }
+      },
       "style": { "noNonNullAssertion": "off" },
       "complexity": { "noUselessTypeConstraint": "error" }
     }
