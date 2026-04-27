@@ -1,0 +1,22 @@
+# Worktrees (subagent-driven development isolation)
+.worktrees/
+
+# Build artifacts
+node_modules/
+dist/
+.turbo/
+coverage/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
