@@ -228,9 +228,11 @@ git commit -m "chore: initialize pnpm workspace + tsconfig + license"
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignore": ["**/dist/**", "**/coverage/**", "**/.turbo/**", "**/node_modules/**"] },
+  "files": {
+    "includes": ["**", "!**/dist", "!**/coverage", "!**/.turbo", "!**/node_modules"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -250,7 +252,9 @@ git commit -m "chore: initialize pnpm workspace + tsconfig + license"
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": { "noConsole": { "level": "error", "options": { "allow": ["error", "warn"] } } },
+      "suspicious": {
+        "noConsole": { "level": "error", "options": { "allow": ["error", "warn"] } }
+      },
       "style": { "noNonNullAssertion": "off" },
       "complexity": { "noUselessTypeConstraint": "error" }
     }
@@ -261,7 +265,7 @@ git commit -m "chore: initialize pnpm workspace + tsconfig + license"
 - [ ] **Step 2: Verify biome runs clean on empty repo**
 
 Run: `pnpm lint`
-Expected: `Checked 0 files in <1ms. No fixes needed.` (or similar — exit 0).
+Expected: exit code 0. (Some informational diagnostics about config schema may appear — those are non-fatal.)
 
 - [ ] **Step 3: Commit**
 
