@@ -58,6 +58,34 @@ importers:
         specifier: ^3.2.0
         version: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(msw@2.13.6(@types/node@22.19.17)(typescript@5.9.3))
 
+  packages/mcp-server:
+    dependencies:
+      '@discord-mcp/core':
+        specifier: workspace:*
+        version: link:../mcp-core
+      '@discordjs/rest':
+        specifier: ^2.4.0
+        version: 2.6.1
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.20.0
+        version: 1.29.0(zod@4.3.6)
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.17
+      tsdown:
+        specifier: ^0.21.10
+        version: 0.21.10(typescript@5.9.3)
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(msw@2.13.6(@types/node@22.19.17)(typescript@5.9.3))
+
 packages:
 
   '@babel/generator@8.0.0-rc.3':
@@ -814,6 +842,10 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   content-disposition@1.1.0:
     resolution: {integrity: sha512-5jRCH9Z/+DRP7rkvY83B+yGIGX96OYdJmzngqnw2SBSxqCFPd0w2km3s5iawpGX8krnwSGmF0FW5Nhr0Hfai3g==}
@@ -2215,6 +2247,8 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
+
+  commander@12.1.0: {}
 
   content-disposition@1.1.0: {}
 
