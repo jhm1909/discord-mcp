@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 

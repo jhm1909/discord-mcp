@@ -1,6 +1,6 @@
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { buildServer, createLogger, loadConfig } from '@discord-mcp/core';
 import { REST } from '@discordjs/rest';
-import { buildServer, loadConfig, createLogger } from '@discord-mcp/core';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 export async function startStdio(): Promise<void> {
   const config = loadConfig();

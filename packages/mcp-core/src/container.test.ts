@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { container } from '@sapphire/pieces';
+import { describe, expect, it } from 'vitest';
 import './container.js'; // augments Container interface
 
 describe('Container declaration-merge', () => {

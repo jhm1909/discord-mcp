@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { Snowflake, ChannelId, GuildId, MessageId, UserId, RoleId } from './snowflake.js';
+import { describe, expect, it } from 'vitest';
+import { ChannelId, GuildId, MessageId, RoleId, Snowflake, UserId } from './snowflake.js';
 
 describe('Snowflake schemas', () => {
   it('accepts a 17-digit snowflake', () => {

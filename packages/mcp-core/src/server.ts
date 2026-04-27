@@ -1,3 +1,4 @@
+import type { REST } from '@discordjs/rest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
@@ -5,10 +6,10 @@ import {
   type Tool as McpTool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { container } from '@sapphire/pieces';
-import { z, toJSONSchema } from 'zod';
-import type { REST } from '@discordjs/rest';
 import type { Logger } from 'pino';
+import { toJSONSchema, z } from 'zod';
 import type { Config } from './config.js';
+import type { Tool } from './pieces/Tool.js';
 import { ToolStore } from './stores/ToolStore.js';
 import { messagesSend } from './tools/messages/send.js';
 
@@ -32,9 +33,14 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   // Initialize stores.
   const toolStore = new ToolStore();
   // v0: register the one hot-path tool inline. Plan 1+ replaces this with auto-discovery.
+  // messagesSend is the concrete subclass returned by defineTool(); cast away
+  // the abstract typing so TypeScript allows direct instantiation here.
+  const MessagesSendCtor = messagesSend as unknown as new (
+    ...args: ConstructorParameters<typeof Tool>
+  ) => Tool;
   toolStore.set(
     'messages_send',
-    new (messagesSend)(
+    new MessagesSendCtor(
       { name: 'messages_send', path: 'inline', root: 'inline', store: toolStore as never },
       { name: 'messages_send', enabled: true },
     ),
@@ -60,7 +66,9 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
       tools.push({
         name: tool.name,
         description: tool.description,
-        inputSchema: toJSONSchema(inputSchema, { target: 'draft-2020-12' }) as McpTool['inputSchema'],
+        inputSchema: toJSONSchema(inputSchema, {
+          target: 'draft-2020-12',
+        }) as McpTool['inputSchema'],
         annotations: tool.annotations,
       });
     }

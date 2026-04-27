@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { defineTool } from './defineTool.js';
 
@@ -37,7 +37,12 @@ describe('defineTool', () => {
         name: 'BadName',
         description: '',
         inputSchema: {},
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
         handler: async () => ({}),
       }),
     ).toThrow(/snake_case/);

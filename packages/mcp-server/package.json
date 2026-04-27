@@ -5,13 +5,35 @@
   "type": "module",
   "mcpName": "io.github.jhm1909/discord-mcp",
   "description": "Discord MCP server — stdio transport CLI",
-  "bin": { "discord-mcp": "./dist/cli.js" },
+  "bin": {
+    "discord-mcp": "./dist/cli.js"
+  },
   "main": "./dist/cli.js",
-  "files": ["dist", "README.md", "LICENSE"],
-  "engines": { "node": ">=20.11" },
-  "os": ["darwin", "linux", "win32"],
-  "keywords": ["mcp", "model-context-protocol", "discord", "ai", "claude", "cursor"],
-  "publishConfig": { "access": "public", "provenance": true },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "discord",
+    "ai",
+    "claude",
+    "cursor"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",

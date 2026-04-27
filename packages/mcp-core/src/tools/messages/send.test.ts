@@ -1,13 +1,15 @@
-import { describe, it, expect } from 'vitest';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
+import { describe, expect, it } from 'vitest';
 import { messagesSend } from './send.js';
 import '../../container.js';
 
 describe('messages_send tool', () => {
   it('returns dualResult with message_id, jump_url, timestamp on success', async () => {
     // Use global fetch so msw can intercept (undici bypasses msw's ClientRequest/fetch interceptors)
-    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake.test.token-abcdefghijklmnopqrstuvwxyz');
+    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken(
+      'fake.test.token-abcdefghijklmnopqrstuvwxyz',
+    );
 
     const ToolCls = messagesSend;
     const instance = new ToolCls(
@@ -29,7 +31,9 @@ describe('messages_send tool', () => {
       },
     });
     const data = (result as { structuredContent: { jump_url: string } }).structuredContent;
-    expect(data.jump_url).toMatch(/^https:\/\/discord\.com\/channels\/@me\/112233445566778899\/999000999000999000$/);
+    expect(data.jump_url).toMatch(
+      /^https:\/\/discord\.com\/channels\/@me\/112233445566778899\/999000999000999000$/,
+    );
   });
 
   it('rejects empty content via zod', async () => {

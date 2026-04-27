@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { REST } from '@discordjs/rest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { REST } from '@discordjs/rest';
-import { buildServer } from './server.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { loadConfig } from './config.js';
 import { createLogger } from './logger.js';
+import { buildServer } from './server.js';
 
 describe('MCP protocol contract', () => {
   const fakeEnv = {

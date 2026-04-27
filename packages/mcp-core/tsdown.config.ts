@@ -8,5 +8,12 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ['@modelcontextprotocol/sdk', '@discordjs/rest', '@sapphire/pieces', 'pino', 'zod', 'discord-api-types'],
+  external: [
+    '@modelcontextprotocol/sdk',
+    '@discordjs/rest',
+    '@sapphire/pieces',
+    'pino',
+    'zod',
+    'discord-api-types',
+  ],
 });

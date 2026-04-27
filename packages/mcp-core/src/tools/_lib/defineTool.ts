@@ -25,9 +25,17 @@ export function defineTool<I extends Record<string, z.ZodTypeAny>, O>(
   class GeneratedTool extends Tool {
     public override readonly description = def.description;
     public override readonly inputSchema = def.inputSchema;
-    public override readonly outputSchema = def.outputSchema;
+    // outputSchema is optional on the base class; only set when provided to
+    // avoid overriding the base undefined with an explicit undefined.
     public override readonly annotations = def.annotations;
     public override readonly idempotent = def.idempotent ?? false;
+
+    constructor(...args: ConstructorParameters<typeof Tool>) {
+      super(...args);
+      if (def.outputSchema !== undefined) {
+        (this as { outputSchema?: Record<string, z.ZodTypeAny> }).outputSchema = def.outputSchema;
+      }
+    }
 
     public override async run(args: unknown, ctx: ToolRunContext): Promise<unknown> {
       return def.handler(args as { [K in keyof I]: z.infer<I[K]> }, ctx);
@@ -37,5 +45,7 @@ export function defineTool<I extends Record<string, z.ZodTypeAny>, O>(
   // Sapphire reads `name` from constructor.options at registration time —
   // we set the static name as a hint only.
   Object.defineProperty(GeneratedTool, 'name', { value: def.name });
-  return GeneratedTool;
+  // Cast to `typeof Tool` — GeneratedTool is concrete but defineTool returns the
+  // abstract base type so callers can instantiate via the concrete subclass.
+  return GeneratedTool as unknown as typeof Tool;
 }
