@@ -1028,15 +1028,22 @@ Code in §5.2 (sampling), §5.3 (elicitation), §5.4 (subscriptions). Pattern: a
 
 ---
 
-## 13. Open Questions
+## 13. Resolved Decisions (2026-04-28)
 
-1. **Gateway client default** — v1 `--gateway` is opt-in. Should it become default? Tradeoff: extra startup cost (~500ms gateway handshake) vs USP of resource subscriptions out-of-box.
-2. **Sampling-only tools warning** — should `intelligence_*` tools refuse to register on clients without sampling, or always register with fallback? Current plan: always register, fallback to raw-data + hint.
-3. **Pipeline step max** — chosen 50; empirically agents rarely chain >10. Lowering to 20 saves DoS surface.
-4. **`MCP_DRY_RUN` default** — currently `true` (safe-by-default). Maintainers may prefer `false` for power users. Document switch in onboarding.
-5. **Templates language** — v1 ship 5 V2 templates in English only; i18n defer.
-6. **Plugin manifest schema versioning** — v2 needs versioned manifest. Lock format before v1.5 to ease migration.
-7. **OTel SDK Node 0.x → 1.0 GA** — track upstream; 1.0 expected late 2026. Pin to 0.x with explicit upgrade plan.
+1. **`--gateway` flag default: OFF** — opt-in for resource subscriptions. Rationale: stdio agent loops rarely need real-time push; only 4 clients (Claude Code, Cursor, VS Code, VS 2026) support subscriptions; gateway adds ~500ms startup + websocket connection. Document opt-in clearly in onboarding for users who want live state.
+
+2. **`MCP_DRY_RUN` default: TRUE for destructive tools only** — applies to `member_kick`, `member_ban`, `messages_bulk_delete`, `channels_delete`, `roles_delete`, `guild_delete` (when added v2), `webhooks_delete`. Read tools and non-destructive writes (`messages_send`, `channels_create`, `roles_create`) unaffected. First-run safety prevents catastrophic agent errors. User sets `MCP_DRY_RUN=false` for production after validating workflow.
+
+3. **Pipeline step max: 20** (lowered from research's 50). Rationale: empirically agents rarely chain >10 steps in real workflows; smaller surface easier to reason about; reduces DoS attack surface; v1.5 can raise to 50 if production usage demands.
+
+4. **Migration scripts: ship for top 4 source servers v1** — PaSympa, quadslab (`@quadslab.io/discord-mcp`), discord-ops, barryyip (`mcp-discord`). Estimated ~200 LOC per source, ~800 LOC total. Justified by marketplace capture: aggregate ~600 stars across 4 servers, potentially thousands of installed users to migrate. `discord-mcp migrate --from <name>` reads source config, outputs equivalent discord-mcp config + tool name mapping notes.
+
+## 13.1 Still Open
+
+- **Templates language** — v1 ship 5 V2 templates in English only; i18n defer to v2.
+- **Plugin manifest schema versioning** — v2 needs versioned manifest. Lock format before v1.5 to ease migration.
+- **OTel SDK Node 0.x → 1.0 GA** — track upstream; 1.0 expected late 2026. Pin to 0.x with explicit upgrade plan.
+- **Sampling-only tool registration** — `intelligence_*` tools always register with fallback (current plan). Re-evaluate after v1 telemetry shows fallback usage rate.
 
 ---
 
