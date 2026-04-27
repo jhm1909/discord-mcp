@@ -1,0 +1,35 @@
+{
+  "name": "@discord-mcp/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": { "types": "./dist/index.d.mts", "default": "./dist/index.mjs" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=20.11" },
+  "dependencies": {
+    "@discordjs/rest": "^2.4.0",
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "@sapphire/pieces": "^4.4.1",
+    "discord-api-types": "^0.38.0",
+    "pino": "^9.5.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "msw": "^2.7.0",
+    "tsdown": "^0.21.10",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
+  }
+}
