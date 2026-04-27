@@ -354,7 +354,7 @@ git commit -m "chore: configure turbo build pipeline"
   "dependencies": {
     "@discordjs/rest": "^2.4.0",
     "@modelcontextprotocol/sdk": "^1.20.0",
-    "@sapphire/pieces": "^4.5.0",
+    "@sapphire/pieces": "^4.4.1",
     "discord-api-types": "^0.38.0",
     "pino": "^9.5.0",
     "zod": "^4.0.0"
