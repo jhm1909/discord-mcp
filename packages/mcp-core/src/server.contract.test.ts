@@ -81,9 +81,9 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/channel_id/);
   });
 
-  it('lists 18 tools after auto-discovery (Plan 0+1+2+3D cumulative)', async () => {
+  it('lists 22 tools after auto-discovery (Plan 0+1+2+3D+3E cumulative)', async () => {
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(18);
+    expect(tools.length).toBe(22);
     const names = new Set(tools.map((t) => t.name));
     for (const expected of [
       'messages_send',
@@ -104,6 +104,10 @@ describe('MCP protocol contract', () => {
       'components_v2_build_container',
       'components_v2_build_section',
       'components_v2_build_media_gallery',
+      'components_v2_validate',
+      'components_v2_preview',
+      'components_v2_send',
+      'components_v2_edit',
     ]) {
       expect(names.has(expected)).toBe(true);
     }
