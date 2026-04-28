@@ -81,9 +81,9 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/channel_id/);
   });
 
-  it('lists 26 tools after auto-discovery (Plan 0+1+2+3+4+5 cumulative)', async () => {
+  it('lists 28 tools after auto-discovery (Plan 0+1+2+3+4+5 cumulative)', async () => {
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(26);
+    expect(tools.length).toBe(28);
     const names = new Set(tools.map((t) => t.name));
     for (const expected of [
       'messages_send',
@@ -112,6 +112,8 @@ describe('MCP protocol contract', () => {
       'mcp_pipeline',
       'intelligence_summarize_channel',
       'intelligence_classify_messages',
+      'intelligence_draft_response',
+      'intelligence_moderate_content',
     ]) {
       expect(names.has(expected)).toBe(true);
     }

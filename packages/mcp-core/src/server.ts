@@ -50,6 +50,8 @@ import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
 import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
 import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
+import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
+import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -165,6 +167,14 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'intelligence_classify_messages',
     piece: IntelligenceClassifyMessages as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_draft_response',
+    piece: IntelligenceDraftResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_moderate_content',
+    piece: IntelligenceModerateContent as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
