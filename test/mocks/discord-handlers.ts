@@ -13,7 +13,7 @@ export const handlers = [
     };
     return HttpResponse.json({
       id: '999000999000999000',
-      channel_id: params['channelId'],
+      channel_id: params.channelId,
       content: body.content ?? '',
       tts: body.tts ?? false,
       timestamp: '2026-04-28T12:00:00.000000+00:00',
@@ -29,7 +29,7 @@ export const handlers = [
     const limit = Number(url.searchParams.get('limit') ?? 50);
     const items = Array.from({ length: Math.min(limit, 3) }, (_, i) => ({
       id: `msg_${i + 1}`,
-      channel_id: params['channelId'],
+      channel_id: params.channelId,
       content: `message ${i + 1} content`,
       author: {
         id: `user_${i + 1}`,
@@ -48,37 +48,37 @@ export const handlers = [
   http.get(`${DISCORD_API}/guilds/:guildId/channels`, async ({ params }) => {
     return HttpResponse.json([
       {
-        id: 'ch1',
+        id: '111122223333444401',
         name: 'general',
         type: 0,
         position: 0,
         parent_id: null,
         nsfw: false,
-        guild_id: params['guildId'],
+        guild_id: params.guildId,
       },
       {
-        id: 'ch2',
+        id: '111122223333444402',
         name: 'announcements',
         type: 5,
         position: 1,
         parent_id: null,
         nsfw: false,
-        guild_id: params['guildId'],
+        guild_id: params.guildId,
       },
       {
-        id: 'ch3',
+        id: '111122223333444403',
         name: 'voice-lobby',
         type: 2,
         position: 2,
         parent_id: null,
-        guild_id: params['guildId'],
+        guild_id: params.guildId,
       },
     ]);
   }),
   // channels_get — must come AFTER the :channelId/messages route
   http.get(`${DISCORD_API}/channels/:channelId`, async ({ params }) => {
     return HttpResponse.json({
-      id: params['channelId'],
+      id: params.channelId,
       name: 'general',
       type: 0,
       position: 0,
@@ -93,7 +93,7 @@ export const handlers = [
   http.get(`${DISCORD_API}/guilds/:guildId/members/:userId`, async ({ params }) => {
     return HttpResponse.json({
       user: {
-        id: params['userId'],
+        id: params.userId,
         username: 'alice',
         global_name: 'Alice',
         avatar: 'abc123',
@@ -168,7 +168,7 @@ export const handlers = [
   // guild_get
   http.get(`${DISCORD_API}/guilds/:guildId`, async ({ params }) => {
     return HttpResponse.json({
-      id: params['guildId'],
+      id: params.guildId,
       name: 'My Test Server',
       icon: 'icon_hash',
       owner_id: 'owner1',
@@ -195,8 +195,8 @@ export const handlers = [
     return HttpResponse.json([
       {
         id: 'cmd1',
-        application_id: params['appId'],
-        guild_id: params['guildId'],
+        application_id: params.appId,
+        guild_id: params.guildId,
         name: 'ping',
         description: 'Ping the bot',
         type: 1,
@@ -211,7 +211,7 @@ export const handlers = [
         id: 'wh1',
         name: 'CI Notifier',
         type: 1,
-        channel_id: params['channelId'],
+        channel_id: params.channelId,
         application_id: null,
         avatar: null,
       },
@@ -227,8 +227,8 @@ export const handlers = [
         components?: unknown[];
       };
       return HttpResponse.json({
-        id: params['messageId'],
-        channel_id: params['channelId'],
+        id: params.messageId,
+        channel_id: params.channelId,
         content: body.content ?? '',
         edited_timestamp: '2026-04-28T13:00:00.000000+00:00',
         ...(body.flags !== undefined && { flags: body.flags }),

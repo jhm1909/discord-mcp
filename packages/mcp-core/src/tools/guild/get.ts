@@ -61,7 +61,7 @@ export default defineTool({
       preferred_locale: g.preferred_locale,
       features: g.features,
     };
-    if (g.member_count !== undefined) data['member_count'] = g.member_count;
+    if (g.member_count !== undefined) data.member_count = g.member_count;
     return dualResult({
       text: `**Guild ${wrappedName}** (\`guild:${g.id}\`)\nOwner: \`user:${g.owner_id}\`\nMembers: ${g.member_count ?? '?'}\nDescription: ${wrappedDesc}\nFeatures: ${g.features.join(', ') || '_(none)_'}`,
       data,

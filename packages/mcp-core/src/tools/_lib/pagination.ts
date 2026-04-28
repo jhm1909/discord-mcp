@@ -18,7 +18,7 @@ export function decodeCursor(s: string): CursorPayload {
     if (
       typeof parsed !== 'object' ||
       parsed === null ||
-      typeof (parsed as Record<string, unknown>)['limit'] !== 'number'
+      typeof (parsed as Record<string, unknown>).limit !== 'number'
     ) {
       throw new Error('cursor missing required fields');
     }

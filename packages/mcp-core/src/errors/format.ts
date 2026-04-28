@@ -37,7 +37,7 @@ function makeError(opts: MakeErrorOpts): CallToolResult {
     ...opts.structured,
   };
   if (opts.retry_after_ms !== undefined) {
-    structured['retry_after_ms'] = opts.retry_after_ms;
+    structured.retry_after_ms = opts.retry_after_ms;
   }
   return {
     isError: true,
@@ -75,7 +75,7 @@ export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToo
       scope: e.scope,
     };
     if (e.suggestedTool !== undefined) {
-      structured['suggested_tool'] = e.suggestedTool;
+      structured.suggested_tool = e.suggestedTool;
     }
     return makeError({
       code: e.code,
@@ -98,7 +98,7 @@ export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToo
       id: e.id,
     };
     if (e.suggestedTool !== undefined) {
-      structured['suggested_tool'] = e.suggestedTool;
+      structured.suggested_tool = e.suggestedTool;
     }
     return makeError({
       code: e.code,
@@ -204,7 +204,7 @@ export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToo
   if (e instanceof DiscordServerError) {
     const structured: Record<string, unknown> = {};
     if (ctx.sentryEventId !== undefined) {
-      structured['trace_id'] = ctx.sentryEventId;
+      structured.trace_id = ctx.sentryEventId;
     }
     return makeError({
       code: e.code,
@@ -233,7 +233,7 @@ export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToo
 
   const structured: Record<string, unknown> = {};
   if (ctx.sentryEventId !== undefined) {
-    structured['trace_id'] = ctx.sentryEventId;
+    structured.trace_id = ctx.sentryEventId;
   }
   return makeError({
     code: 'INTERNAL_ERROR',

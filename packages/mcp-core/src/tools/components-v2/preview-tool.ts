@@ -23,6 +23,6 @@ export default defineTool({
   idempotent: true,
   handler: async (args) => {
     const ascii = renderPreview(args.components as never);
-    return dualResult({ text: '```\n' + ascii + '\n```', data: { ascii } });
+    return dualResult({ text: `\`\`\`\n${ascii}\n\`\`\``, data: { ascii } });
   },
 });

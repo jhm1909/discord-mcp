@@ -81,9 +81,9 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/channel_id/);
   });
 
-  it('lists 23 tools after auto-discovery (Plan 0+1+2+3D+3E+3F cumulative)', async () => {
+  it('lists 24 tools after auto-discovery (Plan 0+1+2+3+4 cumulative)', async () => {
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(23);
+    expect(tools.length).toBe(24);
     const names = new Set(tools.map((t) => t.name));
     for (const expected of [
       'messages_send',
@@ -109,9 +109,51 @@ describe('MCP protocol contract', () => {
       'components_v2_send',
       'components_v2_edit',
       'components_v2_send_from_template',
+      'mcp_pipeline',
     ]) {
       expect(names.has(expected)).toBe(true);
     }
+  });
+
+  it('mcp_pipeline executes a 2-step pipeline end-to-end', async () => {
+    const r = await client.callTool({
+      name: 'mcp_pipeline',
+      arguments: {
+        steps: [
+          { id: 'step1', tool: 'channels_list', args: { guild_id: '999000999000999000' } },
+          {
+            id: 'step2',
+            tool: 'messages_send',
+            args: { channel_id: '{{step1.channels[0].id}}', content: 'pipeline ran' },
+          },
+        ],
+      },
+    });
+    expect(r.isError).toBe(false);
+    expect(r.structuredContent).toMatchObject({
+      aborted: false,
+      steps: expect.arrayContaining([
+        expect.objectContaining({ id: 'step1', status: 'success' }),
+        expect.objectContaining({ id: 'step2', status: 'success' }),
+      ]),
+    });
+  });
+
+  it('mcp_pipeline rejects nested pipeline calls', async () => {
+    const r = await client.callTool({
+      name: 'mcp_pipeline',
+      arguments: { steps: [{ id: 'inner', tool: 'mcp_pipeline', args: { steps: [] } }] },
+    });
+    expect(r.isError).toBe(false);
+    expect(r.structuredContent).toMatchObject({
+      aborted: true,
+      steps: expect.arrayContaining([
+        expect.objectContaining({
+          status: 'error',
+          error: expect.objectContaining({ code: 'PIPELINE_RECURSION' }),
+        }),
+      ]),
+    });
   });
 
   it('messages_delete returns DRY_RUN_PREVIEW without __confirm', async () => {

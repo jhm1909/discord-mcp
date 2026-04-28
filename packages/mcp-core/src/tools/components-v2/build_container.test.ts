@@ -43,6 +43,6 @@ describe('components_v2_build_container', () => {
       { components: [{ type: 10, content: 'hi' }] },
       { signal: new AbortController().signal },
     )) as { isError: boolean; structuredContent: { component: Record<string, unknown> } };
-    expect(r.structuredContent.component['accent_color']).toBeUndefined();
+    expect(r.structuredContent.component.accent_color).toBeUndefined();
   });
 });

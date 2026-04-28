@@ -3,6 +3,7 @@ import type { REST } from '@discordjs/rest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
+  type CallToolResult,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   type Tool as McpTool,
@@ -43,6 +44,7 @@ import MessagesDelete from './tools/messages/delete.js';
 import MessagesEdit from './tools/messages/edit.js';
 import MessagesRead from './tools/messages/read.js';
 import MessagesSend from './tools/messages/send.js';
+import McpPipeline from './tools/meta/pipeline.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
@@ -150,6 +152,10 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     name: 'components_v2_send_from_template',
     piece: ComponentsV2SendFromTemplate as unknown as ConcreteTool,
   });
+  await toolStore.loadPiece({
+    name: 'mcp_pipeline',
+    piece: McpPipeline as unknown as ConcreteTool,
+  });
   await toolStore.loadAll();
 
   preconditionStore.set(
@@ -204,42 +210,48 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     return { tools };
   });
 
-  server.setRequestHandler(CallToolRequestSchema, async (req, extra) => {
-    const tool = toolStore.get(req.params.name);
+  const invokeTool = async (
+    toolName: string,
+    args: unknown,
+    signal: AbortSignal,
+  ): Promise<CallToolResult> => {
+    const tool = toolStore.get(toolName);
     if (tool === undefined) {
-      return formatErrorForUser(new Error(`Tool '${req.params.name}' not found.`), {
-        toolName: req.params.name,
+      return formatErrorForUser(new Error(`Tool '${toolName}' not found.`), {
+        toolName,
         transport: 'stdio',
       });
     }
-
-    const requestId = randomUUID();
-    const requestCtx = {
-      requestId,
-      toolName: tool.name,
-      transport: 'stdio' as const,
-      signal: extra.signal,
-    };
-
     const middlewareCtx: MiddlewareContext<unknown> = {
       tool: { name: tool.name, category: tool.category, idempotent: tool.idempotent },
-      args: req.params.arguments ?? {},
+      args: args ?? {},
       meta: new Map<string, unknown>([
         ['toolPiece', tool],
         ['toolPreconditions', tool.preconditions],
       ]),
     };
-
     const dispatch = compose(middlewares, async (c) => {
-      return tool.run(c.args, { signal: extra.signal });
+      return tool.run(c.args, { signal, invoke: invokeTool } as never);
     });
-
     try {
-      return (await runWithCtx(requestCtx, async () => dispatch(middlewareCtx))) as never;
+      return (await dispatch(middlewareCtx)) as CallToolResult;
     } catch (e) {
-      deps.logger.warn({ err: e, tool: tool.name, requestId }, 'tool error');
+      deps.logger.warn({ err: e, tool: tool.name }, 'tool error');
       return formatErrorForUser(e, { toolName: tool.name, transport: 'stdio' });
     }
+  };
+
+  server.setRequestHandler(CallToolRequestSchema, async (req, extra) => {
+    const requestId = randomUUID();
+    const requestCtx = {
+      requestId,
+      toolName: req.params.name,
+      transport: 'stdio' as const,
+      signal: extra.signal,
+    };
+    return runWithCtx(requestCtx, async () =>
+      invokeTool(req.params.name, req.params.arguments, extra.signal),
+    );
   });
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => {

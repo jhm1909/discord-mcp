@@ -39,8 +39,8 @@ export default defineTool({
       type: 17,
       components: args.components,
     };
-    if (args.accent_color !== undefined) component['accent_color'] = args.accent_color;
-    if (args.spoiler !== undefined) component['spoiler'] = args.spoiler;
+    if (args.accent_color !== undefined) component.accent_color = args.accent_color;
+    if (args.spoiler !== undefined) component.spoiler = args.spoiler;
     return dualResult({ text: 'Built Container.', data: { component } });
   },
 });

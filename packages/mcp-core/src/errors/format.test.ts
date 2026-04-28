@@ -12,7 +12,7 @@ import {
   ScopeRejectedError,
   ValidationError,
 } from './index.js';
-import { DiscordServerErrorImpl, InternalError } from './server.js';
+import { DiscordServerErrorImpl } from './server.js';
 
 const stdio = { toolName: 'messages_send', transport: 'stdio' as const };
 

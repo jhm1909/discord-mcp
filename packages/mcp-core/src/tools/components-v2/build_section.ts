@@ -44,7 +44,7 @@ export default defineTool({
       type: 9,
       components: args.text.map((t) => ({ type: 10, content: t })),
     };
-    if (args.accessory !== undefined) component['accessory'] = args.accessory;
+    if (args.accessory !== undefined) component.accessory = args.accessory;
     return dualResult({ text: 'Built Section.', data: { component } });
   },
 });

@@ -33,8 +33,8 @@ export default defineTool({
       type: 12,
       items: args.items.map((it) => {
         const item: Record<string, unknown> = { media: { url: it.url } };
-        if (it.description !== undefined) item['description'] = it.description;
-        if (it.spoiler !== undefined) item['spoiler'] = it.spoiler;
+        if (it.description !== undefined) item.description = it.description;
+        if (it.spoiler !== undefined) item.spoiler = it.spoiler;
         return item;
       }),
     };
