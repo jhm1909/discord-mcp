@@ -48,10 +48,18 @@ import IntelligenceModerateContent from './tools/intelligence/moderate_content.j
 import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
 import MembersGet from './tools/members/get.js';
 import MembersSearch from './tools/members/search.js';
+import MessagesBulkDelete from './tools/messages/bulk_delete.js';
+import MessagesCreateThread from './tools/messages/create_thread.js';
+import MessagesCrosspost from './tools/messages/crosspost.js';
 import MessagesDelete from './tools/messages/delete.js';
 import MessagesEdit from './tools/messages/edit.js';
+import MessagesGet from './tools/messages/get.js';
+import MessagesListPins from './tools/messages/list_pins.js';
+import MessagesPin from './tools/messages/pin.js';
 import MessagesRead from './tools/messages/read.js';
+import MessagesSearchRecent from './tools/messages/search_recent.js';
 import MessagesSend from './tools/messages/send.js';
+import MessagesUnpin from './tools/messages/unpin.js';
 import McpPipeline from './tools/meta/pipeline.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
@@ -97,6 +105,38 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'messages_delete',
     piece: MessagesDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_get',
+    piece: MessagesGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_crosspost',
+    piece: MessagesCrosspost as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_bulk_delete',
+    piece: MessagesBulkDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_pin',
+    piece: MessagesPin as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_unpin',
+    piece: MessagesUnpin as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_list_pins',
+    piece: MessagesListPins as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_create_thread',
+    piece: MessagesCreateThread as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_search_recent',
+    piece: MessagesSearchRecent as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'channels_list',
