@@ -16,4 +16,59 @@ export const handlers = [
       type: 0,
     });
   }),
+  // messages_read
+  http.get(`${DISCORD_API}/channels/:channelId/messages`, async ({ params, request }) => {
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get('limit') ?? 50);
+    const items = Array.from({ length: Math.min(limit, 3) }, (_, i) => ({
+      id: `msg_${i + 1}`,
+      channel_id: params['channelId'],
+      content: `message ${i + 1} content`,
+      author: { id: `user_${i + 1}`, username: `user${i + 1}`, global_name: `User ${i + 1}`, bot: false },
+      timestamp: '2026-04-28T12:00:00.000000+00:00',
+      edited_timestamp: null,
+      attachments: [],
+      embeds: [],
+    }));
+    return HttpResponse.json(items);
+  }),
+  // channels_list
+  http.get(`${DISCORD_API}/guilds/:guildId/channels`, async ({ params }) => {
+    return HttpResponse.json([
+      { id: 'ch1', name: 'general', type: 0, position: 0, parent_id: null, nsfw: false, guild_id: params['guildId'] },
+      { id: 'ch2', name: 'announcements', type: 5, position: 1, parent_id: null, nsfw: false, guild_id: params['guildId'] },
+      { id: 'ch3', name: 'voice-lobby', type: 2, position: 2, parent_id: null, guild_id: params['guildId'] },
+    ]);
+  }),
+  // channels_get — must come AFTER the :channelId/messages route
+  http.get(`${DISCORD_API}/channels/:channelId`, async ({ params }) => {
+    return HttpResponse.json({
+      id: params['channelId'],
+      name: 'general',
+      type: 0,
+      position: 0,
+      parent_id: null,
+      nsfw: false,
+      topic: 'Main discussion',
+      rate_limit_per_user: 0,
+      guild_id: '999000999000999000',
+    });
+  }),
+  // members_get
+  http.get(`${DISCORD_API}/guilds/:guildId/members/:userId`, async ({ params }) => {
+    return HttpResponse.json({
+      user: {
+        id: params['userId'],
+        username: 'alice',
+        global_name: 'Alice',
+        avatar: 'abc123',
+        bot: false,
+      },
+      nick: 'alice the dev',
+      roles: ['role1', 'role2'],
+      joined_at: '2026-01-15T10:00:00.000000+00:00',
+      premium_since: null,
+      pending: false,
+    });
+  }),
 ];
