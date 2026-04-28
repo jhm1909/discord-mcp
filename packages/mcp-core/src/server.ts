@@ -26,6 +26,7 @@ import ComponentsV2BuildContainer from './tools/components-v2/build_container.js
 import ComponentsV2BuildMediaGallery from './tools/components-v2/build_media_gallery.js';
 import ComponentsV2BuildSection from './tools/components-v2/build_section.js';
 import ComponentsV2Edit from './tools/components-v2/edit.js';
+import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-template.js';
 import ComponentsV2PreviewTool from './tools/components-v2/preview-tool.js';
 import ComponentsV2Send from './tools/components-v2/send.js';
 import ComponentsV2Validate from './tools/components-v2/validate.js';
@@ -141,6 +142,10 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'components_v2_edit',
     piece: ComponentsV2Edit as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'components_v2_send_from_template',
+    piece: ComponentsV2SendFromTemplate as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
