@@ -3,6 +3,9 @@ import {
   DiscordPermissionError,
   DiscordRateLimitError,
   DiscordNotFoundError,
+  ValidationError,
+  DiscordAuthError,
+  DiscordCloudflareBlocked,
 } from './client.js';
 
 describe('DiscordPermissionError', () => {
@@ -48,5 +51,48 @@ describe('DiscordNotFoundError', () => {
     expect(e.id).toBe('1234');
     expect(e.suggestedTool).toBe('channels_list');
     expect(e.recoveryHint).toContain('VIEW');
+  });
+});
+
+describe('ValidationError', () => {
+  it('captures zod-shape issues and surfaces first issue in recoveryHint', () => {
+    const e = new ValidationError([
+      { path: 'channel_id', message: 'Must be a 17-20 digit Discord snowflake', code: 'invalid_string' },
+      { path: 'content', message: 'String must contain at least 1 character(s)', code: 'too_small' },
+    ]);
+    expect(e.code).toBe('VALIDATION_FAILED');
+    expect(e.retriable).toBe(false);
+    expect(e.issues).toHaveLength(2);
+    expect(e.recoveryHint).toContain('channel_id');
+    expect(e.recoveryHint).toContain('17-20 digit');
+  });
+
+  it('survives empty issues array with a generic hint', () => {
+    const e = new ValidationError([]);
+    expect(e.recoveryHint).toContain('Check input schema');
+  });
+});
+
+describe('DiscordAuthError', () => {
+  it('hard-codes recoveryHint pointing to env DISCORD_TOKEN', () => {
+    const e = new DiscordAuthError('token rejected by /users/@me');
+    expect(e.code).toBe('DISCORD_AUTH_INVALID');
+    expect(e.retriable).toBe(false);
+    expect(e.recoveryHint).toMatch(/DISCORD_TOKEN/);
+  });
+});
+
+describe('DiscordCloudflareBlocked', () => {
+  it('defaults retryAfterMs to 1 hour and warns to STOP all requests', () => {
+    const e = new DiscordCloudflareBlocked();
+    expect(e.code).toBe('DISCORD_CLOUDFLARE_BLOCKED');
+    expect(e.retriable).toBe(true);
+    expect(e.retryAfterMs).toBe(3_600_000);
+    expect(e.recoveryHint).toMatch(/IP-banned/);
+  });
+
+  it('accepts custom retryAfterMs', () => {
+    const e = new DiscordCloudflareBlocked(60_000);
+    expect(e.retryAfterMs).toBe(60_000);
   });
 });

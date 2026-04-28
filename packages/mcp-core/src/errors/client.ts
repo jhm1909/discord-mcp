@@ -41,3 +41,37 @@ export class DiscordNotFoundError extends DiscordClientError {
     this.suggestedTool = `${resourceType.toLowerCase()}s_list`;
   }
 }
+
+export interface ValidationIssue {
+  readonly path: string;
+  readonly message: string;
+  readonly code: string;
+}
+
+export class ValidationError extends DiscordClientError {
+  public readonly code = 'VALIDATION_FAILED';
+  public readonly retriable = false;
+  public constructor(public readonly issues: readonly ValidationIssue[]) {
+    super('Input validation failed');
+    const first = issues[0];
+    this.recoveryHint = first
+      ? `Fix \`${first.path}\`: ${first.message}`
+      : 'Check input schema';
+  }
+}
+
+export class DiscordAuthError extends DiscordClientError {
+  public readonly code = 'DISCORD_AUTH_INVALID';
+  public readonly retriable = false;
+  public override recoveryHint =
+    'Bot token invalid or revoked. Set DISCORD_TOKEN env to a fresh token.';
+}
+
+export class DiscordCloudflareBlocked extends DiscordClientError {
+  public readonly code = 'DISCORD_CLOUDFLARE_BLOCKED';
+  public readonly retriable = true;
+  public constructor(public readonly retryAfterMs: number = 3_600_000) {
+    super('Cloudflare 1015 — exceeded 10K invalid requests / 10 min');
+    this.recoveryHint = `IP-banned for ~1h. STOP all Discord requests. Investigate which tool spammed invalid args.`;
+  }
+}
