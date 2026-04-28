@@ -27,6 +27,11 @@ import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
+import AppEmojisCreate from './tools/app_emojis/create.js';
+import AppEmojisDelete from './tools/app_emojis/delete.js';
+import AppEmojisGet from './tools/app_emojis/get.js';
+import AppEmojisList from './tools/app_emojis/list.js';
+import AppEmojisModify from './tools/app_emojis/modify.js';
 import AuditLogGet from './tools/audit_log/get.js';
 import ChannelsGet from './tools/channels/get.js';
 import ChannelsList from './tools/channels/list.js';
@@ -187,6 +192,26 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'emojis_delete',
     piece: EmojisDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_list',
+    piece: AppEmojisList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_get',
+    piece: AppEmojisGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_create',
+    piece: AppEmojisCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_modify',
+    piece: AppEmojisModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_delete',
+    piece: AppEmojisDelete as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'channels_list',
