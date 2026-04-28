@@ -77,4 +77,7 @@ export {
   wrapUntrusted,
 } from './tools/_lib/untrusted.js';
 
+export { createGatewayClient, type GatewayClient, type GatewayClientDeps } from './gateway/client.js';
+export { SubscriptionRegistry } from './gateway/subscription_registry.js';
+
 export const VERSION = '0.0.0';
