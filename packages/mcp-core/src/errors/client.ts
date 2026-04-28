@@ -75,3 +75,44 @@ export class DiscordCloudflareBlocked extends DiscordClientError {
     this.recoveryHint = `IP-banned for ~1h. STOP all Discord requests. Investigate which tool spammed invalid args.`;
   }
 }
+
+export class ScopeRejectedError extends DiscordClientError {
+  public readonly code = 'SCOPE_REJECTED';
+  public readonly retriable = false;
+  public constructor(
+    public readonly tool: string,
+    public readonly required: string,
+    public readonly granted: readonly string[],
+  ) {
+    super(`Tool ${tool} requires scope '${required}', granted: [${granted.join(', ')}]`);
+    this.recoveryHint = `Re-launch server with MCP_SCOPES including '${required}'`;
+  }
+}
+
+export class GuildNotAllowedError extends DiscordClientError {
+  public readonly code = 'GUILD_NOT_ALLOWED';
+  public readonly retriable = false;
+  public constructor(public readonly guildId: string) {
+    super(`Guild ${guildId} not in ALLOWED_GUILDS`);
+    this.recoveryHint = `Add guild ${guildId} to ALLOWED_GUILDS env, OR call from an allowed guild`;
+  }
+}
+
+export class DryRunPreview extends DiscordClientError {
+  public readonly code = 'DRY_RUN_PREVIEW';
+  public readonly retriable = false;
+  public constructor(public readonly tool: string, public readonly preview: unknown) {
+    super(`Dry-run: would call ${tool} with the given args`);
+    this.recoveryHint =
+      'Set MCP_DRY_RUN=false AND pass __confirm:true (or use elicitation flow) to actually execute';
+  }
+}
+
+export class CancelledError extends DiscordClientError {
+  public readonly code = 'CANCELLED';
+  public readonly retriable = false;
+  public override recoveryHint = 'Tool execution cancelled by client';
+  public constructor(message = 'Tool execution cancelled by client') {
+    super(message);
+  }
+}

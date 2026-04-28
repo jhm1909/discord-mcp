@@ -6,6 +6,10 @@ import {
   ValidationError,
   DiscordAuthError,
   DiscordCloudflareBlocked,
+  ScopeRejectedError,
+  GuildNotAllowedError,
+  DryRunPreview,
+  CancelledError,
 } from './client.js';
 
 describe('DiscordPermissionError', () => {
@@ -94,5 +98,48 @@ describe('DiscordCloudflareBlocked', () => {
   it('accepts custom retryAfterMs', () => {
     const e = new DiscordCloudflareBlocked(60_000);
     expect(e.retryAfterMs).toBe(60_000);
+  });
+});
+
+describe('ScopeRejectedError', () => {
+  it('reports tool, required scope, and granted set', () => {
+    const e = new ScopeRejectedError('member_ban', 'moderation', ['read', 'write']);
+    expect(e.code).toBe('SCOPE_REJECTED');
+    expect(e.retriable).toBe(false);
+    expect(e.tool).toBe('member_ban');
+    expect(e.required).toBe('moderation');
+    expect(e.granted).toEqual(['read', 'write']);
+    expect(e.recoveryHint).toContain("'moderation'");
+  });
+});
+
+describe('GuildNotAllowedError', () => {
+  it('captures guildId and points to ALLOWED_GUILDS env', () => {
+    const e = new GuildNotAllowedError('1234');
+    expect(e.code).toBe('GUILD_NOT_ALLOWED');
+    expect(e.retriable).toBe(false);
+    expect(e.guildId).toBe('1234');
+    expect(e.recoveryHint).toContain('ALLOWED_GUILDS');
+  });
+});
+
+describe('DryRunPreview', () => {
+  it('captures tool name and preview args', () => {
+    const e = new DryRunPreview('member_ban', { user_id: '5678' });
+    expect(e.code).toBe('DRY_RUN_PREVIEW');
+    expect(e.retriable).toBe(false);
+    expect(e.tool).toBe('member_ban');
+    expect(e.preview).toEqual({ user_id: '5678' });
+    expect(e.recoveryHint).toMatch(/MCP_DRY_RUN=false/);
+    expect(e.recoveryHint).toMatch(/__confirm/);
+  });
+});
+
+describe('CancelledError', () => {
+  it('is not retriable and explains client cancelled', () => {
+    const e = new CancelledError();
+    expect(e.code).toBe('CANCELLED');
+    expect(e.retriable).toBe(false);
+    expect(e.recoveryHint).toContain('cancelled');
   });
 });
