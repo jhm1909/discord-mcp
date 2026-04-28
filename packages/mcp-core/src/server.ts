@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import type { REST } from '@discordjs/rest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
@@ -5,21 +7,20 @@ import {
   type Tool as McpTool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { container } from '@sapphire/pieces';
-import { z } from 'zod';
-import { randomUUID } from 'node:crypto';
-import type { REST } from '@discordjs/rest';
 import type { Logger } from 'pino';
+import { z } from 'zod';
+import { runWithCtx } from './als/context.js';
 import type { Config } from './config.js';
-import { ToolStore } from './stores/ToolStore.js';
-import { PreconditionStore } from './stores/PreconditionStore.js';
-import { messagesSend } from './tools/messages/send.js';
+import { formatErrorForUser } from './errors/format.js';
 import { compose, type MiddlewareContext, type ToolMiddleware } from './middleware/compose.js';
-import { validateMiddleware } from './middleware/validate.js';
 import { preconditionMiddleware } from './middleware/precondition.js';
+import { validateMiddleware } from './middleware/validate.js';
+import type { Tool } from './pieces/Tool.js';
 import { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
-import { runWithCtx } from './als/context.js';
-import { formatErrorForUser } from './errors/format.js';
+import { PreconditionStore } from './stores/PreconditionStore.js';
+import { ToolStore } from './stores/ToolStore.js';
+import { messagesSend } from './tools/messages/send.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -42,9 +43,13 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const toolStore = new ToolStore();
   const preconditionStore = new PreconditionStore();
 
+  // messagesSend is typed as `typeof Tool` (abstract) — double-cast to concrete for instantiation.
+  const MessagesSend = messagesSend as unknown as new (
+    ...args: ConstructorParameters<typeof Tool>
+  ) => Tool;
   toolStore.set(
     'messages_send',
-    new (messagesSend)(
+    new MessagesSend(
       { name: 'messages_send', path: 'inline', root: 'inline', store: toolStore as never },
       { name: 'messages_send', enabled: true },
     ),
@@ -92,7 +97,9 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
       tools.push({
         name: tool.name,
         description: tool.description,
-        inputSchema: z.toJSONSchema(inputSchema, { target: 'draft-2020-12' }) as McpTool['inputSchema'],
+        inputSchema: z.toJSONSchema(inputSchema, {
+          target: 'draft-2020-12',
+        }) as McpTool['inputSchema'],
         annotations: tool.annotations,
       });
     }

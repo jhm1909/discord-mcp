@@ -1,16 +1,69 @@
+// AsyncLocalStorage
+export { getCtx, runWithCtx, type ToolRequestContext, tryGetCtx } from './als/context.js';
+// Capabilities
+export { CapabilityRouter } from './capabilities/router.js';
+export type { CapabilityFlag, ClientCapabilitiesSnapshot } from './capabilities/types.js';
 export { type Config, loadConfig } from './config.js';
+export { type FormatErrorContext, formatErrorForUser } from './errors/format.js';
+// Errors
+export {
+  CancelledError,
+  DiscordAuthError,
+  DiscordClientError,
+  DiscordCloudflareBlocked,
+  DiscordError,
+  DiscordNotFoundError,
+  DiscordPermissionError,
+  DiscordRateLimitError,
+  DiscordServerError,
+  DiscordServerErrorImpl,
+  DryRunPreview,
+  GuildNotAllowedError,
+  InternalError,
+  ScopeRejectedError,
+  ValidationError,
+  type ValidationIssue,
+} from './errors/index.js';
 export { createLogger } from './logger.js';
+// Middleware
+export {
+  type CallNext,
+  compose,
+  type MiddlewareContext,
+  type MiddlewareToolInfo,
+  type ToolMiddleware,
+} from './middleware/compose.js';
+export { preconditionMiddleware } from './middleware/precondition.js';
+export { validateMiddleware } from './middleware/validate.js';
+export { Precondition } from './pieces/Precondition.js';
+// Pieces
 export { Tool, type ToolAnnotations, type ToolRunContext } from './pieces/Tool.js';
+// Preconditions
+export { CategoryEnabled } from './preconditions/CategoryEnabled.js';
+export { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 export { type BuildServerDeps, type BuildServerResult, buildServer } from './server.js';
+export { PreconditionStore } from './stores/PreconditionStore.js';
+// Stores
 export { ToolStore } from './stores/ToolStore.js';
+// Tool helpers
 export { defineTool, type ToolDefinition } from './tools/_lib/defineTool.js';
 export { type DualResultOpts, dualResult } from './tools/_lib/response.js';
 export {
+  ApplicationId,
   ChannelId,
+  EmojiId,
   GuildId,
   MessageId,
   RoleId,
   Snowflake,
   UserId,
+  WebhookId,
 } from './tools/_lib/snowflake.js';
+export {
+  type MessageForWrap,
+  type UntrustedKind,
+  wrapMessages,
+  wrapUntrusted,
+} from './tools/_lib/untrusted.js';
+
 export const VERSION = '0.0.0';
