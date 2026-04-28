@@ -13,7 +13,7 @@ interface DiscordMessageResponse {
   guild_id?: string;
 }
 
-export const messagesSend = defineTool({
+export default defineTool({
   name: 'messages_send',
   category: 'messages',
   description: [

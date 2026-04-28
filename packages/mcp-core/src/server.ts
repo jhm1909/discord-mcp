@@ -20,7 +20,7 @@ import { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
-import { messagesSend } from './tools/messages/send.js';
+import MessagesSend from './tools/messages/send.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -43,17 +43,11 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const toolStore = new ToolStore();
   const preconditionStore = new PreconditionStore();
 
-  // messagesSend is typed as `typeof Tool` (abstract) — double-cast to concrete for instantiation.
-  const MessagesSend = messagesSend as unknown as new (
-    ...args: ConstructorParameters<typeof Tool>
-  ) => Tool;
-  toolStore.set(
-    'messages_send',
-    new MessagesSend(
-      { name: 'messages_send', path: 'inline', root: 'inline', store: toolStore as never },
-      { name: 'messages_send', enabled: true },
-    ),
-  );
+  // defineTool returns `typeof Tool` (abstract) — cast to concrete for Sapphire's loadPiece API.
+  type ConcreteTool = new (...args: ConstructorParameters<typeof Tool>) => Tool;
+  await toolStore.loadPiece({ name: 'messages_send', piece: MessagesSend as unknown as ConcreteTool });
+  await toolStore.loadAll();
+
   preconditionStore.set(
     'category_enabled',
     new CategoryEnabled(
