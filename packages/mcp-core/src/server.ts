@@ -31,6 +31,7 @@ import GuildGet from './tools/guild/get.js';
 import AuditLogGet from './tools/audit_log/get.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
 import EventsList from './tools/events/list.js';
+import CommandsListGuild from './tools/commands/list_guild.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -66,6 +67,7 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({ name: 'audit_log_get', piece: AuditLogGet as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'webhooks_list_channel', piece: WebhooksListChannel as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'events_list', piece: EventsList as unknown as ConcreteTool });
+  await toolStore.loadPiece({ name: 'commands_list_guild', piece: CommandsListGuild as unknown as ConcreteTool });
   await toolStore.loadAll();
 
   preconditionStore.set(

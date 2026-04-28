@@ -126,6 +126,12 @@ export const handlers = [
       features: ['COMMUNITY', 'NEWS'],
     });
   }),
+  // commands_list_guild
+  http.get(`${DISCORD_API}/applications/:appId/guilds/:guildId/commands`, async ({ params }) => {
+    return HttpResponse.json([
+      { id: 'cmd1', application_id: params['appId'], guild_id: params['guildId'], name: 'ping', description: 'Ping the bot', type: 1, options: [] },
+    ]);
+  }),
   // webhooks_list_channel
   http.get(`${DISCORD_API}/channels/:channelId/webhooks`, async ({ params }) => {
     return HttpResponse.json([
