@@ -10,9 +10,7 @@ export interface MiddlewareContext<Args = unknown> {
   readonly meta: Map<string, unknown>;
 }
 
-export type CallNext<Args = unknown, R = unknown> = (
-  ctx: MiddlewareContext<Args>,
-) => Promise<R>;
+export type CallNext<Args = unknown, R = unknown> = (ctx: MiddlewareContext<Args>) => Promise<R>;
 
 export interface ToolMiddleware {
   onCallTool?<Args, R>(ctx: MiddlewareContext<Args>, next: () => Promise<R>): Promise<R>;

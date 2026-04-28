@@ -1,13 +1,23 @@
 import { randomBytes } from 'node:crypto';
 
-export type UntrustedKind = 'message' | 'embed' | 'webhook' | 'username' | 'channel_topic' | 'audit_reason';
+export type UntrustedKind =
+  | 'message'
+  | 'embed'
+  | 'webhook'
+  | 'username'
+  | 'channel_topic'
+  | 'audit_reason';
 
 function nonce(): string {
   return randomBytes(8).toString('hex');
 }
 
 function escapeAttr(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function stripTags(content: string, tagPattern: RegExp): string {

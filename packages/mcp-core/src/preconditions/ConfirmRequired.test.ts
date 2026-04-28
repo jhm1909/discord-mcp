@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DryRunPreview } from '../errors/client.js';
 import type { MiddlewareContext } from '../middleware/compose.js';
 import { ConfirmRequired } from './ConfirmRequired.js';
-import { DryRunPreview } from '../errors/client.js';
 
 const piece = (env: Record<string, string | undefined> = {}): ConfirmRequired => {
   return new ConfirmRequired(
@@ -27,7 +27,9 @@ describe('ConfirmRequired', () => {
 
   it('default (MCP_DRY_RUN unset) + __confirm:true → still dry-run (default safe)', async () => {
     const p = piece({});
-    await expect(p.run(ctx({ user_id: '1', __confirm: true }))).rejects.toBeInstanceOf(DryRunPreview);
+    await expect(p.run(ctx({ user_id: '1', __confirm: true }))).rejects.toBeInstanceOf(
+      DryRunPreview,
+    );
   });
 
   it('MCP_DRY_RUN=false + __confirm:true → passes', async () => {

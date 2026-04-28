@@ -1,6 +1,6 @@
-import { Precondition } from '../pieces/Precondition.js';
 import { ScopeRejectedError } from '../errors/client.js';
 import type { MiddlewareContext } from '../middleware/compose.js';
+import { Precondition } from '../pieces/Precondition.js';
 
 export class CategoryEnabled extends Precondition {
   public override readonly identifier = 'category_enabled';

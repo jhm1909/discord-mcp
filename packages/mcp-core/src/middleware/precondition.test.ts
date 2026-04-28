@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { compose, type MiddlewareContext } from './compose.js';
+import { describe, expect, it } from 'vitest';
 import { Precondition } from '../pieces/Precondition.js';
 import { PreconditionStore } from '../stores/PreconditionStore.js';
+import { compose, type MiddlewareContext } from './compose.js';
 import { preconditionMiddleware } from './precondition.js';
 
 class AlwaysOk extends Precondition {
@@ -35,7 +35,10 @@ const ctxBase = (toolPreconditions: readonly string[]): MiddlewareContext<unknow
 describe('preconditionMiddleware', () => {
   it('passes when all required preconditions resolve', async () => {
     const store = makeStore(
-      new AlwaysOk({ name: 'always_ok', path: 'inline', root: 'inline', store: null as never }, { name: 'always_ok', enabled: true }),
+      new AlwaysOk(
+        { name: 'always_ok', path: 'inline', root: 'inline', store: null as never },
+        { name: 'always_ok', enabled: true },
+      ),
     );
     const dispatch = compose([preconditionMiddleware(store)], async () => 'ok');
     expect(await dispatch(ctxBase(['always_ok']))).toBe('ok');
@@ -43,8 +46,14 @@ describe('preconditionMiddleware', () => {
 
   it('throws when any required precondition rejects', async () => {
     const store = makeStore(
-      new AlwaysOk({ name: 'always_ok', path: 'inline', root: 'inline', store: null as never }, { name: 'always_ok', enabled: true }),
-      new AlwaysFail({ name: 'always_fail', path: 'inline', root: 'inline', store: null as never }, { name: 'always_fail', enabled: true }),
+      new AlwaysOk(
+        { name: 'always_ok', path: 'inline', root: 'inline', store: null as never },
+        { name: 'always_ok', enabled: true },
+      ),
+      new AlwaysFail(
+        { name: 'always_fail', path: 'inline', root: 'inline', store: null as never },
+        { name: 'always_fail', enabled: true },
+      ),
     );
     const dispatch = compose([preconditionMiddleware(store)], async () => 'ok');
     await expect(dispatch(ctxBase(['always_ok', 'always_fail']))).rejects.toThrow(/reason: nope/);
@@ -59,6 +68,8 @@ describe('preconditionMiddleware', () => {
   it('throws if tool references an unknown precondition identifier', async () => {
     const store = makeStore();
     const dispatch = compose([preconditionMiddleware(store)], async () => 'unreached');
-    await expect(dispatch(ctxBase(['nonexistent']))).rejects.toThrow(/unknown precondition.*nonexistent/i);
+    await expect(dispatch(ctxBase(['nonexistent']))).rejects.toThrow(
+      /unknown precondition.*nonexistent/i,
+    );
   });
 });

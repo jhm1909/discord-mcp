@@ -35,7 +35,10 @@ export class DiscordRateLimitError extends DiscordClientError {
 export class DiscordNotFoundError extends DiscordClientError {
   public readonly code = 'DISCORD_NOT_FOUND';
   public readonly retriable = false;
-  public constructor(public readonly resourceType: string, public readonly id: string) {
+  public constructor(
+    public readonly resourceType: string,
+    public readonly id: string,
+  ) {
     super(`${resourceType} ${id} not found`);
     this.recoveryHint = `Verify: 1) ${resourceType} exists 2) bot has VIEW permission 3) ID is correct`;
     this.suggestedTool = `${resourceType.toLowerCase()}s_list`;
@@ -54,9 +57,7 @@ export class ValidationError extends DiscordClientError {
   public constructor(public readonly issues: readonly ValidationIssue[]) {
     super('Input validation failed');
     const first = issues[0];
-    this.recoveryHint = first
-      ? `Fix \`${first.path}\`: ${first.message}`
-      : 'Check input schema';
+    this.recoveryHint = first ? `Fix \`${first.path}\`: ${first.message}` : 'Check input schema';
   }
 }
 
@@ -101,7 +102,10 @@ export class GuildNotAllowedError extends DiscordClientError {
 export class DryRunPreview extends DiscordClientError {
   public readonly code = 'DRY_RUN_PREVIEW';
   public readonly retriable = false;
-  public constructor(public readonly tool: string, public readonly preview: unknown) {
+  public constructor(
+    public readonly tool: string,
+    public readonly preview: unknown,
+  ) {
     super(`Dry-run: would call ${tool} with the given args`);
     this.recoveryHint =
       'Set MCP_DRY_RUN=false AND pass __confirm:true (or use elicitation flow) to actually execute';

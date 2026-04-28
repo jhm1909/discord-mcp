@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { compose, type MiddlewareContext, type CallNext, type ToolMiddleware } from './compose.js';
+import { describe, expect, it, vi } from 'vitest';
+import { type CallNext, compose, type MiddlewareContext, type ToolMiddleware } from './compose.js';
 
 interface TestVal {
   readonly args: { v: number };

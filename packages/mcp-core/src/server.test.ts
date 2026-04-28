@@ -13,7 +13,11 @@ describe('buildServer', () => {
     const rest = new REST({ version: '10' }).setToken(config.DISCORD_TOKEN);
     const logger = createLogger(config);
 
-    const { server, registeredTools, registeredPreconditions } = await buildServer({ rest, logger, config });
+    const { server, registeredTools, registeredPreconditions } = await buildServer({
+      rest,
+      logger,
+      config,
+    });
     expect(server).toBeDefined();
     expect(registeredTools).toContain('messages_send');
     expect(registeredPreconditions).toContain('category_enabled');

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { ToolMiddleware } from './compose.js';
 import { ValidationError } from '../errors/client.js';
+import type { ToolMiddleware } from './compose.js';
 
 interface SchemaCarrier {
   readonly inputSchema: Record<string, z.ZodTypeAny>;

@@ -1,15 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  DiscordPermissionError,
-  DiscordRateLimitError,
-  DiscordNotFoundError,
-  ValidationError,
+  CancelledError,
   DiscordAuthError,
   DiscordCloudflareBlocked,
-  ScopeRejectedError,
-  GuildNotAllowedError,
+  DiscordNotFoundError,
+  DiscordPermissionError,
+  DiscordRateLimitError,
   DryRunPreview,
-  CancelledError,
+  GuildNotAllowedError,
+  ScopeRejectedError,
+  ValidationError,
 } from './client.js';
 
 describe('DiscordPermissionError', () => {
@@ -61,8 +61,16 @@ describe('DiscordNotFoundError', () => {
 describe('ValidationError', () => {
   it('captures zod-shape issues and surfaces first issue in recoveryHint', () => {
     const e = new ValidationError([
-      { path: 'channel_id', message: 'Must be a 17-20 digit Discord snowflake', code: 'invalid_string' },
-      { path: 'content', message: 'String must contain at least 1 character(s)', code: 'too_small' },
+      {
+        path: 'channel_id',
+        message: 'Must be a 17-20 digit Discord snowflake',
+        code: 'invalid_string',
+      },
+      {
+        path: 'content',
+        message: 'String must contain at least 1 character(s)',
+        code: 'too_small',
+      },
     ]);
     expect(e.code).toBe('VALIDATION_FAILED');
     expect(e.retriable).toBe(false);

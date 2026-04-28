@@ -1,15 +1,15 @@
-export { DiscordError, DiscordClientError, DiscordServerError } from './base.js';
+export { DiscordClientError, DiscordError, DiscordServerError } from './base.js';
 export {
-  DiscordPermissionError,
-  DiscordRateLimitError,
-  DiscordNotFoundError,
-  ValidationError,
-  type ValidationIssue,
+  CancelledError,
   DiscordAuthError,
   DiscordCloudflareBlocked,
-  ScopeRejectedError,
-  GuildNotAllowedError,
+  DiscordNotFoundError,
+  DiscordPermissionError,
+  DiscordRateLimitError,
   DryRunPreview,
-  CancelledError,
+  GuildNotAllowedError,
+  ScopeRejectedError,
+  ValidationError,
+  type ValidationIssue,
 } from './client.js';
 export { DiscordServerErrorImpl, InternalError } from './server.js';

@@ -1,5 +1,5 @@
-import type { ToolMiddleware } from './compose.js';
 import type { PreconditionStore } from '../stores/PreconditionStore.js';
+import type { ToolMiddleware } from './compose.js';
 
 export function preconditionMiddleware(store: PreconditionStore): ToolMiddleware {
   return {

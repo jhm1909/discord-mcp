@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { DiscordError, DiscordClientError, DiscordServerError } from './base.js';
+import { describe, expect, it } from 'vitest';
+import { DiscordClientError, DiscordError, DiscordServerError } from './base.js';
 
 class _TestClient extends DiscordClientError {
   readonly code = 'TEST_CLIENT';

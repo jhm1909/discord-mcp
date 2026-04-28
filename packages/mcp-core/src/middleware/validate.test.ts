@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { ValidationError } from '../errors/client.js';
 import { compose, type MiddlewareContext, type ToolMiddleware } from './compose.js';
 import { validateMiddleware } from './validate.js';
-import { ValidationError } from '../errors/client.js';
 
 interface DummyTool {
   inputSchema: Record<string, z.ZodTypeAny>;
@@ -15,7 +15,10 @@ const tool: DummyTool = {
   },
 };
 
-function ctx(args: unknown, mw: ToolMiddleware): {
+function ctx(
+  args: unknown,
+  mw: ToolMiddleware,
+): {
   dispatch: (a: unknown) => Promise<unknown>;
   middlewareCtx: MiddlewareContext<unknown>;
 } {

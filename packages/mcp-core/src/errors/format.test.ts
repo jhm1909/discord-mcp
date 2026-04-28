@@ -1,16 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { formatErrorForUser } from './format.js';
 import {
-  DiscordPermissionError,
-  DiscordRateLimitError,
-  DiscordNotFoundError,
-  ValidationError,
+  CancelledError,
   DiscordAuthError,
   DiscordCloudflareBlocked,
-  ScopeRejectedError,
-  GuildNotAllowedError,
+  DiscordNotFoundError,
+  DiscordPermissionError,
+  DiscordRateLimitError,
   DryRunPreview,
-  CancelledError,
+  GuildNotAllowedError,
+  ScopeRejectedError,
+  ValidationError,
 } from './index.js';
 import { DiscordServerErrorImpl, InternalError } from './server.js';
 
@@ -107,10 +107,7 @@ describe('formatErrorForUser', () => {
   });
 
   it('formats DryRunPreview with embedded JSON preview', () => {
-    const r = formatErrorForUser(
-      new DryRunPreview('member_ban', { user_id: '5' }),
-      stdio,
-    );
+    const r = formatErrorForUser(new DryRunPreview('member_ban', { user_id: '5' }), stdio);
     const text = (r.content as Array<{ text: string }>)[0]!.text;
     expect(text).toMatch(/Dry-Run/);
     expect(text).toMatch(/"user_id"/);
@@ -123,10 +120,10 @@ describe('formatErrorForUser', () => {
   });
 
   it('formats DiscordServerErrorImpl as server error with sentryEventId', () => {
-    const r = formatErrorForUser(
-      new DiscordServerErrorImpl(503, 'POST /x'),
-      { ...stdio, sentryEventId: 'abc123' },
-    );
+    const r = formatErrorForUser(new DiscordServerErrorImpl(503, 'POST /x'), {
+      ...stdio,
+      sentryEventId: 'abc123',
+    });
     expect(r.structuredContent).toMatchObject({
       code: 'DISCORD_SERVER_ERROR',
       category: 'server',

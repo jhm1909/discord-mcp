@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { wrapUntrusted, wrapMessages } from './untrusted.js';
+import { describe, expect, it } from 'vitest';
+import { wrapMessages, wrapUntrusted } from './untrusted.js';
 
 describe('wrapUntrusted', () => {
   it('wraps content in tag with random hex nonce', () => {
@@ -53,7 +53,9 @@ describe('wrapMessages', () => {
 
   it('produces outer tag with nonce + channel_id + count, inner <msg> tags', () => {
     const wrapped = wrapMessages(sample, 'channel:1');
-    expect(wrapped).toMatch(/^<untrusted_discord_messages nonce="[0-9a-f]{16}" channel_id="channel:1" count="3">\n/);
+    expect(wrapped).toMatch(
+      /^<untrusted_discord_messages nonce="[0-9a-f]{16}" channel_id="channel:1" count="3">\n/,
+    );
     expect(wrapped).toMatch(/\n<\/untrusted_discord_messages>$/);
     expect(wrapped).toMatch(/<msg id="111" author="alice">hello<\/msg>/);
     expect(wrapped).toMatch(/<msg id="113" author="bob">lol nice try<\/msg>/);

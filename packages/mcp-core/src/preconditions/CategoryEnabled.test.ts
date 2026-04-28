@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ScopeRejectedError } from '../errors/client.js';
 import type { MiddlewareContext } from '../middleware/compose.js';
 import { CategoryEnabled } from './CategoryEnabled.js';
-import { ScopeRejectedError } from '../errors/client.js';
 
 const piece = (env: Record<string, string | undefined>): CategoryEnabled => {
   return new CategoryEnabled(

@@ -1,17 +1,17 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
-  DiscordError,
-  DiscordPermissionError,
-  DiscordRateLimitError,
-  DiscordNotFoundError,
-  ValidationError,
+  CancelledError,
   DiscordAuthError,
   DiscordCloudflareBlocked,
-  ScopeRejectedError,
-  GuildNotAllowedError,
-  DryRunPreview,
-  CancelledError,
+  DiscordError,
+  DiscordNotFoundError,
+  DiscordPermissionError,
+  DiscordRateLimitError,
   DiscordServerError,
+  DryRunPreview,
+  GuildNotAllowedError,
+  ScopeRejectedError,
+  ValidationError,
 } from './index.js';
 
 export interface FormatErrorContext {
@@ -66,7 +66,9 @@ export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToo
 
   if (e instanceof DiscordRateLimitError) {
     const altLine =
-      e.suggestedTool !== undefined ? `**Alternative**: use \`${e.suggestedTool}\` to batch.\n` : '';
+      e.suggestedTool !== undefined
+        ? `**Alternative**: use \`${e.suggestedTool}\` to batch.\n`
+        : '';
     const structured: Record<string, unknown> = {
       retry_after_ms: e.retryAfterMs,
       bucket: e.bucket,
@@ -89,7 +91,8 @@ export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToo
   }
 
   if (e instanceof DiscordNotFoundError) {
-    const suggLine = e.suggestedTool !== undefined ? `**List available**: \`${e.suggestedTool}\`` : '';
+    const suggLine =
+      e.suggestedTool !== undefined ? `**List available**: \`${e.suggestedTool}\`` : '';
     const structured: Record<string, unknown> = {
       resource_type: e.resourceType,
       id: e.id,

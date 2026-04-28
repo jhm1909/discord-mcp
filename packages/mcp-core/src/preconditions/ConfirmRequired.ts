@@ -1,6 +1,6 @@
-import { Precondition } from '../pieces/Precondition.js';
 import { DryRunPreview } from '../errors/client.js';
 import type { MiddlewareContext } from '../middleware/compose.js';
+import { Precondition } from '../pieces/Precondition.js';
 
 export class ConfirmRequired extends Precondition {
   public override readonly identifier = 'confirm_required';
