@@ -8,6 +8,8 @@ import {
   ListToolsRequestSchema,
   type Tool as McpTool,
   ReadResourceRequestSchema,
+  SubscribeRequestSchema,
+  UnsubscribeRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { container } from '@sapphire/pieces';
 import type { Logger } from 'pino';
@@ -15,6 +17,7 @@ import { z } from 'zod';
 import { runWithCtx } from './als/context.js';
 import type { Config } from './config.js';
 import { formatErrorForUser } from './errors/format.js';
+import { SubscriptionRegistry } from './gateway/subscription_registry.js';
 import { compose, type MiddlewareContext, type ToolMiddleware } from './middleware/compose.js';
 import { preconditionMiddleware } from './middleware/precondition.js';
 import { validateMiddleware } from './middleware/validate.js';
@@ -64,6 +67,8 @@ export interface BuildServerResult {
   server: Server;
   registeredTools: string[];
   registeredPreconditions: string[];
+  notifyResource: (uri: string) => Promise<void>;
+  subscriptions: SubscriptionRegistry;
 }
 
 export async function buildServer(deps: BuildServerDeps): Promise<BuildServerResult> {
@@ -211,7 +216,7 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const server = new Server(
     { name: 'discord-mcp', version: '0.0.0' },
     {
-      capabilities: { tools: {}, resources: {} },
+      capabilities: { tools: {}, resources: { subscribe: true } },
       instructions:
         'Discord MCP server. v0/Plan-1 — only messages_send available. ' +
         'Errors return structured CallToolResult with code/retriable/recovery_hint fields. ' +
@@ -351,5 +356,23 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     };
   });
 
-  return { server, registeredTools, registeredPreconditions };
+  const subscriptions = new SubscriptionRegistry();
+
+  server.setRequestHandler(SubscribeRequestSchema, async (req) => {
+    subscriptions.subscribe(req.params.uri);
+    return {};
+  });
+
+  server.setRequestHandler(UnsubscribeRequestSchema, async (req) => {
+    subscriptions.unsubscribe(req.params.uri);
+    return {};
+  });
+
+  const notifyResource = async (uri: string): Promise<void> => {
+    if (subscriptions.has(uri)) {
+      await server.sendResourceUpdated({ uri });
+    }
+  };
+
+  return { server, registeredTools, registeredPreconditions, notifyResource, subscriptions };
 }

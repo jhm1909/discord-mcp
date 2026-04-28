@@ -32,6 +32,9 @@
     "pino": "^9.5.0",
     "zod": "^4.0.0"
   },
+  "optionalDependencies": {
+    "discord.js": "^14.16.3"
+  },
   "devDependencies": {
     "@mswjs/interceptors": "^0.41.3",
     "@types/node": "^22.0.0",

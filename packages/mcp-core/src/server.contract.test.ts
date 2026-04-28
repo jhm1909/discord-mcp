@@ -197,4 +197,10 @@ describe('MCP protocol contract', () => {
     const parsed = JSON.parse(text);
     expect(parsed.name).toBe('announcement');
   });
+
+  it('handles resources/subscribe + resources/unsubscribe roundtrip', async () => {
+    const uri = 'discord://guild/999000999000999000/info';
+    await client.subscribeResource({ uri });
+    await client.unsubscribeResource({ uri });
+  });
 });

@@ -86,7 +86,7 @@ export default defineTool({
 
     if (parsed.ok) {
       return dualResult({
-        text: `**Moderation: ${parsed.data.decision.toUpperCase()}** (confidence ${parsed.data.confidence.toFixed(2)})\n${parsed.data.reasons.length > 0 ? '\nReasons:\n' + parsed.data.reasons.map((r) => `- ${r}`).join('\n') : ''}`,
+        text: `**Moderation: ${parsed.data.decision.toUpperCase()}** (confidence ${parsed.data.confidence.toFixed(2)})\n${parsed.data.reasons.length > 0 ? `\nReasons:\n${parsed.data.reasons.map((r) => `- ${r}`).join('\n')}` : ''}`,
         data: {
           decision: parsed.data.decision,
           reasons: parsed.data.reasons,

@@ -24,6 +24,12 @@ export {
   ValidationError,
   type ValidationIssue,
 } from './errors/index.js';
+export {
+  createGatewayClient,
+  type GatewayClient,
+  type GatewayClientDeps,
+} from './gateway/client.js';
+export { SubscriptionRegistry } from './gateway/subscription_registry.js';
 export { createLogger } from './logger.js';
 // Middleware
 export {
