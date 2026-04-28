@@ -22,6 +22,7 @@ import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
 import MessagesSend from './tools/messages/send.js';
 import MessagesRead from './tools/messages/read.js';
+import ChannelsList from './tools/channels/list.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -48,6 +49,7 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   type ConcreteTool = new (...args: ConstructorParameters<typeof Tool>) => Tool;
   await toolStore.loadPiece({ name: 'messages_send', piece: MessagesSend as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'messages_read', piece: MessagesRead as unknown as ConcreteTool });
+  await toolStore.loadPiece({ name: 'channels_list', piece: ChannelsList as unknown as ConcreteTool });
   await toolStore.loadAll();
 
   preconditionStore.set(
