@@ -1,7 +1,7 @@
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
 import { describe, expect, it } from 'vitest';
-import { messagesSend } from './send.js';
+import messagesSend from './send.js';
 import '../../container.js';
 
 describe('messages_send tool', () => {

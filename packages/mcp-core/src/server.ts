@@ -20,7 +20,21 @@ import { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
-import { messagesSend } from './tools/messages/send.js';
+import AuditLogGet from './tools/audit_log/get.js';
+import ChannelsGet from './tools/channels/get.js';
+import ChannelsList from './tools/channels/list.js';
+import CommandsListGuild from './tools/commands/list_guild.js';
+import EventsList from './tools/events/list.js';
+import GuildGet from './tools/guild/get.js';
+import MembersGet from './tools/members/get.js';
+import MembersSearch from './tools/members/search.js';
+import MessagesDelete from './tools/messages/delete.js';
+import MessagesEdit from './tools/messages/edit.js';
+import MessagesRead from './tools/messages/read.js';
+import MessagesSend from './tools/messages/send.js';
+import RolesList from './tools/roles/list.js';
+import UsersGetCurrent from './tools/users/get_current.js';
+import WebhooksListChannel from './tools/webhooks/list_channel.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -43,17 +57,58 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const toolStore = new ToolStore();
   const preconditionStore = new PreconditionStore();
 
-  // messagesSend is typed as `typeof Tool` (abstract) — double-cast to concrete for instantiation.
-  const MessagesSend = messagesSend as unknown as new (
-    ...args: ConstructorParameters<typeof Tool>
-  ) => Tool;
-  toolStore.set(
-    'messages_send',
-    new MessagesSend(
-      { name: 'messages_send', path: 'inline', root: 'inline', store: toolStore as never },
-      { name: 'messages_send', enabled: true },
-    ),
-  );
+  // defineTool returns `typeof Tool` (abstract) — cast to concrete for Sapphire's loadPiece API.
+  type ConcreteTool = new (...args: ConstructorParameters<typeof Tool>) => Tool;
+  await toolStore.loadPiece({
+    name: 'messages_send',
+    piece: MessagesSend as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_read',
+    piece: MessagesRead as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_edit',
+    piece: MessagesEdit as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_delete',
+    piece: MessagesDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list',
+    piece: ChannelsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_get',
+    piece: ChannelsGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'members_search',
+    piece: MembersSearch as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'roles_list', piece: RolesList as unknown as ConcreteTool });
+  await toolStore.loadPiece({ name: 'guild_get', piece: GuildGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'audit_log_get',
+    piece: AuditLogGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_list_channel',
+    piece: WebhooksListChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'events_list', piece: EventsList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'commands_list_guild',
+    piece: CommandsListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_get_current',
+    piece: UsersGetCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadAll();
+
   preconditionStore.set(
     'category_enabled',
     new CategoryEnabled(

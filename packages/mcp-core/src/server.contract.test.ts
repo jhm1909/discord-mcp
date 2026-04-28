@@ -80,4 +80,38 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/Input Error/);
     expect(text).toMatch(/channel_id/);
   });
+
+  it('lists 15 tools after auto-discovery (Plan 0+1+2 cumulative)', async () => {
+    const { tools } = await client.listTools();
+    expect(tools.length).toBe(15);
+    const names = new Set(tools.map((t) => t.name));
+    for (const expected of [
+      'messages_send',
+      'messages_read',
+      'messages_edit',
+      'messages_delete',
+      'channels_list',
+      'channels_get',
+      'members_get',
+      'members_search',
+      'roles_list',
+      'guild_get',
+      'audit_log_get',
+      'webhooks_list_channel',
+      'events_list',
+      'commands_list_guild',
+      'users_get_current',
+    ]) {
+      expect(names.has(expected)).toBe(true);
+    }
+  });
+
+  it('messages_delete returns DRY_RUN_PREVIEW without __confirm', async () => {
+    const r = await client.callTool({
+      name: 'messages_delete',
+      arguments: { channel_id: '111122223333444455', message_id: '999000999000999000' },
+    });
+    expect(r.isError).toBe(true);
+    expect(r.structuredContent).toMatchObject({ code: 'DRY_RUN_PREVIEW', tool: 'messages_delete' });
+  });
 });
