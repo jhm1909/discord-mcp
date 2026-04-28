@@ -27,6 +27,7 @@ import ChannelsGet from './tools/channels/get.js';
 import MembersGet from './tools/members/get.js';
 import MembersSearch from './tools/members/search.js';
 import RolesList from './tools/roles/list.js';
+import GuildGet from './tools/guild/get.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -58,6 +59,7 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'members_search', piece: MembersSearch as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'roles_list', piece: RolesList as unknown as ConcreteTool });
+  await toolStore.loadPiece({ name: 'guild_get', piece: GuildGet as unknown as ConcreteTool });
   await toolStore.loadAll();
 
   preconditionStore.set(
