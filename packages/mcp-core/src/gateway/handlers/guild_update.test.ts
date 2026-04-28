@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { bindGuildUpdateHandler } from './guild_update.js';
+import { describe, expect, it, vi } from 'vitest';
 import { SubscriptionRegistry } from '../subscription_registry.js';
+import { bindGuildUpdateHandler } from './guild_update.js';
 
 describe('bindGuildUpdateHandler', () => {
   it('notifies subscribed URI on guildUpdate', () => {

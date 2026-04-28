@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { bindVoiceStateUpdateHandler } from './voice_state_update.js';
+import { describe, expect, it, vi } from 'vitest';
 import { SubscriptionRegistry } from '../subscription_registry.js';
+import { bindVoiceStateUpdateHandler } from './voice_state_update.js';
 
 describe('bindVoiceStateUpdateHandler', () => {
   it('notifies subscribed URI on voiceStateUpdate', () => {
@@ -29,7 +29,11 @@ describe('bindVoiceStateUpdateHandler', () => {
     const registry = new SubscriptionRegistry();
     const notify = vi.fn();
     registry.subscribe('discord://voice/g_123/state');
-    const teardown = bindVoiceStateUpdateHandler({ client: fakeClient as never, registry, notifyResource: notify });
+    const teardown = bindVoiceStateUpdateHandler({
+      client: fakeClient as never,
+      registry,
+      notifyResource: notify,
+    });
     teardown();
     fakeClient.emit('voiceStateUpdate', null, { guild: { id: 'g_123' } });
     expect(notify).not.toHaveBeenCalled();

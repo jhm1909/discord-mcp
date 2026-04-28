@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { bindAuditLogPollHandler } from './audit_log_poll.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SubscriptionRegistry } from '../subscription_registry.js';
+import { bindAuditLogPollHandler } from './audit_log_poll.js';
 
 describe('bindAuditLogPollHandler', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -30,7 +30,8 @@ describe('bindAuditLogPollHandler', () => {
   it('only notifies when latest entry id changes', async () => {
     const registry = new SubscriptionRegistry();
     registry.subscribe('discord://guild/111/audit-log/recent');
-    const fetchAuditLog = vi.fn()
+    const fetchAuditLog = vi
+      .fn()
       .mockResolvedValueOnce({ audit_log_entries: [{ id: 'e1' }] })
       .mockResolvedValueOnce({ audit_log_entries: [{ id: 'e1' }] })
       .mockResolvedValueOnce({ audit_log_entries: [{ id: 'e2' }] });

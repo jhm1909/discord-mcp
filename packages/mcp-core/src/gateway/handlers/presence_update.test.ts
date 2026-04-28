@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { bindPresenceUpdateHandler } from './presence_update.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SubscriptionRegistry } from '../subscription_registry.js';
+import { bindPresenceUpdateHandler } from './presence_update.js';
 
 describe('bindPresenceUpdateHandler', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -38,7 +38,11 @@ describe('bindPresenceUpdateHandler', () => {
     const registry = new SubscriptionRegistry();
     registry.subscribe('discord://guild/g1/members/online');
     const notify = vi.fn();
-    const teardown = bindPresenceUpdateHandler({ client: fakeClient as never, registry, notifyResource: notify });
+    const teardown = bindPresenceUpdateHandler({
+      client: fakeClient as never,
+      registry,
+      notifyResource: notify,
+    });
     teardown();
     fakeClient.emit('presenceUpdate', null, { guild: { id: 'g1' } });
     vi.advanceTimersByTime(1000);

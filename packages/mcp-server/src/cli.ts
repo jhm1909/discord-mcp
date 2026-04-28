@@ -8,7 +8,7 @@ const program = new Command('discord-mcp')
   .option('--gateway', 'Enable Discord Gateway resource subscriptions (lazy-imports discord.js)')
   .action(async (options: { gateway?: boolean }) => {
     if (options.gateway === true) {
-      process.env['GATEWAY'] = '1';
+      process.env.GATEWAY = '1';
     }
     try {
       await startStdio();

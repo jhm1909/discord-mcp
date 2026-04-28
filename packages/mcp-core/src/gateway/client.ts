@@ -1,9 +1,9 @@
-import type { SubscriptionRegistry } from './subscription_registry.js';
-import { bindGuildUpdateHandler } from './handlers/guild_update.js';
-import { bindVoiceStateUpdateHandler } from './handlers/voice_state_update.js';
-import { bindTypingStartHandler } from './handlers/typing_start.js';
-import { bindPresenceUpdateHandler } from './handlers/presence_update.js';
 import { bindAuditLogPollHandler } from './handlers/audit_log_poll.js';
+import { bindGuildUpdateHandler } from './handlers/guild_update.js';
+import { bindPresenceUpdateHandler } from './handlers/presence_update.js';
+import { bindTypingStartHandler } from './handlers/typing_start.js';
+import { bindVoiceStateUpdateHandler } from './handlers/voice_state_update.js';
+import type { SubscriptionRegistry } from './subscription_registry.js';
 
 interface MinimalDiscordClient {
   on: (event: string, listener: (...args: unknown[]) => void) => unknown;

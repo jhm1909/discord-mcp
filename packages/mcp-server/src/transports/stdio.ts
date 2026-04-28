@@ -1,4 +1,10 @@
-import { buildServer, createGatewayClient, createLogger, loadConfig, type GatewayClient } from '@discord-mcp/core';
+import {
+  buildServer,
+  createGatewayClient,
+  createLogger,
+  type GatewayClient,
+  loadConfig,
+} from '@discord-mcp/core';
 import { REST } from '@discordjs/rest';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
@@ -10,12 +16,18 @@ export async function startStdio(): Promise<void> {
     config.DISCORD_TOKEN.startsWith('Bot ') ? config.DISCORD_TOKEN.slice(4) : config.DISCORD_TOKEN,
   );
 
-  const { server, registeredTools, notifyResource, subscriptions } = await buildServer({ rest, logger, config });
+  const { server, registeredTools, notifyResource, subscriptions } = await buildServer({
+    rest,
+    logger,
+    config,
+  });
 
   let gatewayClient: GatewayClient | null = null;
   if (config.GATEWAY) {
     gatewayClient = createGatewayClient({
-      token: config.DISCORD_TOKEN.startsWith('Bot ') ? config.DISCORD_TOKEN.slice(4) : config.DISCORD_TOKEN,
+      token: config.DISCORD_TOKEN.startsWith('Bot ')
+        ? config.DISCORD_TOKEN.slice(4)
+        : config.DISCORD_TOKEN,
       registry: subscriptions,
       notifyResource,
     });
@@ -31,7 +43,10 @@ export async function startStdio(): Promise<void> {
     }
   }
 
-  logger.info({ tools: registeredTools.length, gateway: gatewayClient !== null }, 'discord-mcp ready (stdio)');
+  logger.info(
+    { tools: registeredTools.length, gateway: gatewayClient !== null },
+    'discord-mcp ready (stdio)',
+  );
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

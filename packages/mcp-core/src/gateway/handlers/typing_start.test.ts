@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { bindTypingStartHandler } from './typing_start.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SubscriptionRegistry } from '../subscription_registry.js';
+import { bindTypingStartHandler } from './typing_start.js';
 
 describe('bindTypingStartHandler', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -38,7 +38,11 @@ describe('bindTypingStartHandler', () => {
     const registry = new SubscriptionRegistry();
     registry.subscribe('discord://channel/c1/typing');
     const notify = vi.fn();
-    const teardown = bindTypingStartHandler({ client: fakeClient as never, registry, notifyResource: notify });
+    const teardown = bindTypingStartHandler({
+      client: fakeClient as never,
+      registry,
+      notifyResource: notify,
+    });
     teardown();
     fakeClient.emit('typingStart', { channel: { id: 'c1' } });
     vi.advanceTimersByTime(5000);
