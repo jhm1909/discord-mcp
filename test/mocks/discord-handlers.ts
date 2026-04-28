@@ -126,6 +126,17 @@ export const handlers = [
       features: ['COMMUNITY', 'NEWS'],
     });
   }),
+  // users_get_current — @me is percent-encoded as %40me in the actual request URL
+  http.get(`${DISCORD_API}/users/%40me`, async () => {
+    return HttpResponse.json({
+      id: 'bot_id_123456789012345',
+      username: 'discord-mcp-bot',
+      global_name: 'Discord MCP Bot',
+      bot: true,
+      avatar: 'avatar_hash',
+      verified: true,
+    });
+  }),
   // commands_list_guild
   http.get(`${DISCORD_API}/applications/:appId/guilds/:guildId/commands`, async ({ params }) => {
     return HttpResponse.json([
