@@ -149,6 +149,20 @@ export const handlers = [
       { id: 'wh1', name: 'CI Notifier', type: 1, channel_id: params['channelId'], application_id: null, avatar: null },
     ]);
   }),
+  // messages_edit
+  http.patch(`${DISCORD_API}/channels/:channelId/messages/:messageId`, async ({ params, request }) => {
+    const body = (await request.json()) as { content?: string };
+    return HttpResponse.json({
+      id: params['messageId'],
+      channel_id: params['channelId'],
+      content: body.content ?? '',
+      edited_timestamp: '2026-04-28T13:00:00.000000+00:00',
+    });
+  }),
+  // messages_delete
+  http.delete(`${DISCORD_API}/channels/:channelId/messages/:messageId`, async () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
   // audit_log_get
   http.get(`${DISCORD_API}/guilds/:guildId/audit-logs`, async ({ request }) => {
     const url = new URL(request.url);

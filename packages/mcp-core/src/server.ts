@@ -22,6 +22,8 @@ import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
 import MessagesSend from './tools/messages/send.js';
 import MessagesRead from './tools/messages/read.js';
+import MessagesEdit from './tools/messages/edit.js';
+import MessagesDelete from './tools/messages/delete.js';
 import ChannelsList from './tools/channels/list.js';
 import ChannelsGet from './tools/channels/get.js';
 import MembersGet from './tools/members/get.js';
@@ -59,6 +61,8 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   type ConcreteTool = new (...args: ConstructorParameters<typeof Tool>) => Tool;
   await toolStore.loadPiece({ name: 'messages_send', piece: MessagesSend as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'messages_read', piece: MessagesRead as unknown as ConcreteTool });
+  await toolStore.loadPiece({ name: 'messages_edit', piece: MessagesEdit as unknown as ConcreteTool });
+  await toolStore.loadPiece({ name: 'messages_delete', piece: MessagesDelete as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'channels_list', piece: ChannelsList as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'channels_get', piece: ChannelsGet as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
