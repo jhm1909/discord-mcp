@@ -15,6 +15,7 @@ interface DiscordMessageResponse {
 
 export const messagesSend = defineTool({
   name: 'messages_send',
+  category: 'messages',
   description: [
     '**Purpose**: Send a plain-text message to a Discord channel.',
     '',
