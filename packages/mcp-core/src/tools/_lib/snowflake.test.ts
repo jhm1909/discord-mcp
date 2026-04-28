@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { ChannelId, GuildId, MessageId, RoleId, Snowflake, UserId } from './snowflake.js';
+import {
+  ApplicationId,
+  AutoModRuleId,
+  ChannelId,
+  EmojiId,
+  EntitlementId,
+  GuildId,
+  IntegrationId,
+  InteractionId,
+  InviteCode,
+  MessageId,
+  RoleId,
+  ScheduledEventId,
+  SkuId,
+  Snowflake,
+  SoundboardSoundId,
+  StageInstanceId,
+  StickerId,
+  SubscriptionId,
+  UserId,
+  WebhookId,
+} from './snowflake.js';
 
 describe('Snowflake schemas', () => {
   it('accepts a 17-digit snowflake', () => {
@@ -21,5 +42,30 @@ describe('Snowflake schemas', () => {
     for (const s of [ChannelId, GuildId, MessageId, UserId, RoleId]) {
       expect(s.safeParse('123456789012345678').success).toBe(true);
     }
+  });
+  it('exports Plan 7 brand types accepting valid snowflakes', () => {
+    for (const s of [
+      ApplicationId,
+      WebhookId,
+      EmojiId,
+      StickerId,
+      ScheduledEventId,
+      EntitlementId,
+      SkuId,
+      SubscriptionId,
+      IntegrationId,
+      AutoModRuleId,
+      StageInstanceId,
+      SoundboardSoundId,
+      InteractionId,
+    ]) {
+      expect(s.safeParse('123456789012345678').success).toBe(true);
+      expect(s.safeParse('not-a-snowflake').success).toBe(false);
+    }
+  });
+  it('InviteCode brand accepts short base62-style strings, rejects empty and oversize', () => {
+    expect(InviteCode.safeParse('abc123').success).toBe(true);
+    expect(InviteCode.safeParse('').success).toBe(false);
+    expect(InviteCode.safeParse('x'.repeat(33)).success).toBe(false);
   });
 });
