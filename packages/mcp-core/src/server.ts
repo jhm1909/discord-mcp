@@ -38,6 +38,11 @@ import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-templa
 import ComponentsV2Validate from './tools/components-v2/validate.js';
 import EventsList from './tools/events/list.js';
 import GuildGet from './tools/guild/get.js';
+import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
+import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
+import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
+import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
+import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
 import MembersGet from './tools/members/get.js';
 import MembersSearch from './tools/members/search.js';
 import MessagesDelete from './tools/messages/delete.js';
@@ -156,6 +161,26 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     name: 'mcp_pipeline',
     piece: McpPipeline as unknown as ConcreteTool,
   });
+  await toolStore.loadPiece({
+    name: 'intelligence_summarize_channel',
+    piece: IntelligenceSummarizeChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_classify_messages',
+    piece: IntelligenceClassifyMessages as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_draft_response',
+    piece: IntelligenceDraftResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_moderate_content',
+    piece: IntelligenceModerateContent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_extract_entities',
+    piece: IntelligenceExtractEntities as unknown as ConcreteTool,
+  });
   await toolStore.loadAll();
 
   preconditionStore.set(
@@ -210,6 +235,57 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     return { tools };
   });
 
+  // Lazy snapshot of client capabilities (populated after MCP initialize completes).
+  let cachedClientCaps: {
+    sampling?: object;
+    elicitation?: object;
+    experimental?: Record<string, unknown>;
+  } | null = null;
+  const getClientCaps = (): typeof cachedClientCaps => {
+    if (cachedClientCaps !== null) return cachedClientCaps;
+    const fn = (server as unknown as { getClientCapabilities?: () => unknown })
+      .getClientCapabilities;
+    if (typeof fn !== 'function') return null;
+    const result = fn.call(server) as typeof cachedClientCaps;
+    if (result !== null && result !== undefined) {
+      cachedClientCaps = result;
+    }
+    return result;
+  };
+
+  // Sampling wrapper — calls server.createMessage(params) per MCP spec.
+  interface SamplingMessage {
+    role: 'user' | 'assistant';
+    content: { type: 'text'; text: string };
+  }
+  interface SamplingParams {
+    messages: SamplingMessage[];
+    maxTokens: number;
+    modelPreferences?: {
+      intelligencePriority?: number;
+      speedPriority?: number;
+      costPriority?: number;
+      hints?: Array<{ name: string }>;
+    };
+    systemPrompt?: string;
+  }
+  interface SamplingResult {
+    role: 'assistant';
+    content: { type: 'text'; text: string };
+    model?: string;
+    stopReason?: string;
+  }
+
+  const requestSampling = async (params: SamplingParams): Promise<SamplingResult> => {
+    const fn = (
+      server as unknown as { createMessage?: (p: SamplingParams) => Promise<SamplingResult> }
+    ).createMessage;
+    if (typeof fn !== 'function') {
+      throw new Error('SDK does not expose createMessage — sampling unavailable');
+    }
+    return fn.call(server, params);
+  };
+
   const invokeTool = async (
     toolName: string,
     args: unknown,
@@ -231,7 +307,13 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
       ]),
     };
     const dispatch = compose(middlewares, async (c) => {
-      return tool.run(c.args, { signal, invoke: invokeTool } as never);
+      const samplingSupported = getClientCaps()?.sampling !== undefined;
+      return tool.run(c.args, {
+        signal,
+        invoke: invokeTool,
+        requestSampling,
+        samplingSupported,
+      } as never);
     });
     try {
       return (await dispatch(middlewareCtx)) as CallToolResult;
