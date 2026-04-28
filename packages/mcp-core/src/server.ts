@@ -77,6 +77,13 @@ import ReactionsDeleteOwn from './tools/reactions/delete_own.js';
 import ReactionsDeleteUser from './tools/reactions/delete_user.js';
 import ReactionsList from './tools/reactions/list.js';
 import RolesList from './tools/roles/list.js';
+import StickersCreateGuildSticker from './tools/stickers/create_guild_sticker.js';
+import StickersDeleteGuildSticker from './tools/stickers/delete_guild_sticker.js';
+import StickersGet from './tools/stickers/get.js';
+import StickersGetGuildSticker from './tools/stickers/get_guild_sticker.js';
+import StickersListGuild from './tools/stickers/list_guild.js';
+import StickersListPacks from './tools/stickers/list_packs.js';
+import StickersModifyGuildSticker from './tools/stickers/modify_guild_sticker.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
 
@@ -212,6 +219,34 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'app_emojis_delete',
     piece: AppEmojisDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_get',
+    piece: StickersGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_list_packs',
+    piece: StickersListPacks as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_list_guild',
+    piece: StickersListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_get_guild_sticker',
+    piece: StickersGetGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_create_guild_sticker',
+    piece: StickersCreateGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_modify_guild_sticker',
+    piece: StickersModifyGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_delete_guild_sticker',
+    piece: StickersDeleteGuildSticker as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'channels_list',
