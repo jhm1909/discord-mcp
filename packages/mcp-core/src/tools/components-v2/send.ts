@@ -1,11 +1,11 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
-import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId, MessageId } from '../_lib/snowflake.js';
-import { dualResult } from '../_lib/response.js';
-import { validateComponentsV2 } from './_lib/validator.js';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { ValidationError } from '../../errors/client.js';
+import { defineTool } from '../_lib/defineTool.js';
+import { dualResult } from '../_lib/response.js';
+import { ChannelId, MessageId } from '../_lib/snowflake.js';
+import { validateComponentsV2 } from './_lib/validator.js';
 
 const IS_COMPONENTS_V2 = 1 << 15;
 
@@ -23,7 +23,11 @@ export default defineTool({
     '**Purpose**: Send a Components V2 message — rich layout (Container, Section, MediaGallery, ActionRow, ...). MUTUALLY EXCLUSIVE with content/embed/poll/sticker. Flag `IS_COMPONENTS_V2` is irreversible per-message.\n\n**When to use**: announcements, release notes, dashboards, polls — anything beyond plain text.\n\n**When NOT to use**: simple text reply → use `messages_send`.\n\n**Validation**: components are validated via `validateComponentsV2` before sending; the call rejects with VALIDATION_FAILED if the layout is illegal (no API call made).\n\n**Returns**: `{message_id, channel_id, jump_url, component_count}`.',
   inputSchema: {
     channel_id: ChannelId.describe('Target channel'),
-    components: z.array(z.unknown()).min(1).max(40).describe('Components V2 array (1-40 items, recursive)'),
+    components: z
+      .array(z.unknown())
+      .min(1)
+      .max(40)
+      .describe('Components V2 array (1-40 items, recursive)'),
     allowed_mentions: z
       .object({
         parse: z.array(z.enum(['users', 'roles', 'everyone'])).optional(),
@@ -38,18 +42,27 @@ export default defineTool({
     jump_url: z.string().url(),
     component_count: z.number().int(),
   },
-  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   handler: async (args) => {
     const validation = validateComponentsV2(args.components);
     if (!validation.valid) {
-      throw new ValidationError(validation.issues.map((i) => ({ path: i.path, message: i.message, code: i.code })));
+      throw new ValidationError(
+        validation.issues.map((i) => ({ path: i.path, message: i.message, code: i.code })),
+      );
     }
     const body: Record<string, unknown> = {
       flags: IS_COMPONENTS_V2,
       components: args.components,
     };
     if (args.allowed_mentions !== undefined) body['allowed_mentions'] = args.allowed_mentions;
-    const m = (await container.rest.post(Routes.channelMessages(args.channel_id), { body })) as SentMessage;
+    const m = (await container.rest.post(Routes.channelMessages(args.channel_id), {
+      body,
+    })) as SentMessage;
     const jumpRoot = m.guild_id ?? '@me';
     return dualResult({
       text: `Sent V2 message ${m.id} to <#${m.channel_id}> (${args.components.length} top-level components).`,

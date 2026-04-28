@@ -1,11 +1,11 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
-import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId, MessageId } from '../_lib/snowflake.js';
-import { dualResult } from '../_lib/response.js';
-import { validateComponentsV2 } from './_lib/validator.js';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { ValidationError } from '../../errors/client.js';
+import { defineTool } from '../_lib/defineTool.js';
+import { dualResult } from '../_lib/response.js';
+import { ChannelId, MessageId } from '../_lib/snowflake.js';
+import { validateComponentsV2 } from './_lib/validator.js';
 
 const IS_COMPONENTS_V2 = 1 << 15;
 
@@ -24,11 +24,18 @@ export default defineTool({
     channel_id: ChannelId,
     edited_timestamp: z.string(),
   },
-  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   handler: async (args) => {
     const validation = validateComponentsV2(args.components);
     if (!validation.valid) {
-      throw new ValidationError(validation.issues.map((i) => ({ path: i.path, message: i.message, code: i.code })));
+      throw new ValidationError(
+        validation.issues.map((i) => ({ path: i.path, message: i.message, code: i.code })),
+      );
     }
     const m = (await container.rest.patch(Routes.channelMessage(args.channel_id, args.message_id), {
       body: { flags: IS_COMPONENTS_V2, components: args.components },

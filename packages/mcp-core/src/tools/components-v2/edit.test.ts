@@ -1,14 +1,19 @@
-import { describe, it, expect } from 'vitest';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
+import { describe, expect, it } from 'vitest';
 import componentsV2Edit from './edit.js';
 import '../../container.js';
 
 describe('components_v2_edit', () => {
   it('edits with V2 flag set', async () => {
-    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken(
+      'fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    );
     const T = componentsV2Edit;
-    const t = new T({ name: 'components_v2_edit', path: 'inline', root: 'inline', store: null as never }, { name: 'components_v2_edit', enabled: true });
+    const t = new T(
+      { name: 'components_v2_edit', path: 'inline', root: 'inline', store: null as never },
+      { name: 'components_v2_edit', enabled: true },
+    );
     const r = (await t.run(
       {
         channel_id: '111122223333444455',

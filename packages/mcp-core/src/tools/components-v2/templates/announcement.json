@@ -17,9 +17,7 @@
         { "type": 14, "divider": true, "spacing": 1 },
         {
           "type": 1,
-          "components": [
-            { "type": 2, "style": 5, "label": "{{cta_label}}", "url": "{{cta_url}}" }
-          ]
+          "components": [{ "type": 2, "style": 5, "label": "{{cta_label}}", "url": "{{cta_url}}" }]
         }
       ]
     }

@@ -5,8 +5,8 @@ import {
   CallToolRequestSchema,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
-  ReadResourceRequestSchema,
   type Tool as McpTool,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { container } from '@sapphire/pieces';
 import type { Logger } from 'pino';
@@ -20,20 +20,21 @@ import { validateMiddleware } from './middleware/validate.js';
 import type { Tool } from './pieces/Tool.js';
 import { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
+import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
 import AuditLogGet from './tools/audit_log/get.js';
 import ChannelsGet from './tools/channels/get.js';
+import ChannelsList from './tools/channels/list.js';
+import CommandsListGuild from './tools/commands/list_guild.js';
 import ComponentsV2BuildContainer from './tools/components-v2/build_container.js';
 import ComponentsV2BuildMediaGallery from './tools/components-v2/build_media_gallery.js';
 import ComponentsV2BuildSection from './tools/components-v2/build_section.js';
 import ComponentsV2Edit from './tools/components-v2/edit.js';
-import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-template.js';
 import ComponentsV2PreviewTool from './tools/components-v2/preview-tool.js';
 import ComponentsV2Send from './tools/components-v2/send.js';
+import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-template.js';
 import ComponentsV2Validate from './tools/components-v2/validate.js';
-import ChannelsList from './tools/channels/list.js';
-import CommandsListGuild from './tools/commands/list_guild.js';
 import EventsList from './tools/events/list.js';
 import GuildGet from './tools/guild/get.js';
 import MembersGet from './tools/members/get.js';
@@ -45,7 +46,6 @@ import MessagesSend from './tools/messages/send.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
-import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 
 export interface BuildServerDeps {
   rest: REST;

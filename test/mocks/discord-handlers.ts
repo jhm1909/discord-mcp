@@ -5,7 +5,12 @@ const DISCORD_API = 'https://discord.com/api/v10';
 export const handlers = [
   // Default: messages_send happy path
   http.post(`${DISCORD_API}/channels/:channelId/messages`, async ({ params, request }) => {
-    const body = (await request.json()) as { content?: string; tts?: boolean; flags?: number; components?: unknown[] };
+    const body = (await request.json()) as {
+      content?: string;
+      tts?: boolean;
+      flags?: number;
+      components?: unknown[];
+    };
     return HttpResponse.json({
       id: '999000999000999000',
       channel_id: params['channelId'],
@@ -216,7 +221,11 @@ export const handlers = [
   http.patch(
     `${DISCORD_API}/channels/:channelId/messages/:messageId`,
     async ({ params, request }) => {
-      const body = (await request.json()) as { content?: string; flags?: number; components?: unknown[] };
+      const body = (await request.json()) as {
+        content?: string;
+        flags?: number;
+        components?: unknown[];
+      };
       return HttpResponse.json({
         id: params['messageId'],
         channel_id: params['channelId'],

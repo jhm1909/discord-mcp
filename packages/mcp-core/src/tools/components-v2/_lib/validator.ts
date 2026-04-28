@@ -50,7 +50,8 @@ export function validateComponentsV2(input: unknown): ValidatorResult {
       path: 'components',
       code: 'OVER_40',
       message: `Total components ${total} exceeds 40-cap.`,
-      fix_hint: 'Split content across multiple messages or move items into a Container with fewer children.',
+      fix_hint:
+        'Split content across multiple messages or move items into a Container with fewer children.',
     });
   }
 
@@ -67,7 +68,11 @@ export function validateComponentsV2(input: unknown): ValidatorResult {
         });
       }
 
-      if (node.type === ComponentTypeId.Container && Array.isArray(node.components) && node.components.length > 10) {
+      if (
+        node.type === ComponentTypeId.Container &&
+        Array.isArray(node.components) &&
+        node.components.length > 10
+      ) {
         issues.push({
           path: here,
           code: 'CONTAINER_OVER_10',
@@ -76,7 +81,11 @@ export function validateComponentsV2(input: unknown): ValidatorResult {
         });
       }
 
-      if (node.type === ComponentTypeId.ActionRow && Array.isArray(node.components) && node.components.length > 5) {
+      if (
+        node.type === ComponentTypeId.ActionRow &&
+        Array.isArray(node.components) &&
+        node.components.length > 5
+      ) {
         issues.push({
           path: here,
           code: 'ACTIONROW_OVER_5',
@@ -114,7 +123,11 @@ export function validateComponentsV2(input: unknown): ValidatorResult {
         }
       }
 
-      if (node.type === ComponentTypeId.Button && node.custom_id === undefined && node.url === undefined) {
+      if (
+        node.type === ComponentTypeId.Button &&
+        node.custom_id === undefined &&
+        node.url === undefined
+      ) {
         issues.push({
           path: here,
           code: 'BUTTON_NO_ID_OR_URL',
@@ -130,7 +143,11 @@ export function validateComponentsV2(input: unknown): ValidatorResult {
       if (node.type === ComponentTypeId.ActionRow && Array.isArray(node.components)) {
         node.components.forEach((child, cidx) => {
           const childHere = `${here}.components[${cidx}]`;
-          if (child.type === ComponentTypeId.Button && child.custom_id === undefined && child.url === undefined) {
+          if (
+            child.type === ComponentTypeId.Button &&
+            child.custom_id === undefined &&
+            child.url === undefined
+          ) {
             // already walked above via the components walk
           }
           void childHere;

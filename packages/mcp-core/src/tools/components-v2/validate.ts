@@ -22,7 +22,12 @@ export default defineTool({
       }),
     ),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   idempotent: true,
   handler: async (args) => {
     const result = validateComponentsV2(args.components);

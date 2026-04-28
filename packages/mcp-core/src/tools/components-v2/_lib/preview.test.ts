@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderPreview } from './preview.js';
 
 describe('renderPreview', () => {
@@ -51,10 +51,7 @@ describe('renderPreview', () => {
     const out = renderPreview([
       {
         type: 12,
-        items: [
-          { media: { url: 'https://x/a.png' } },
-          { media: { url: 'https://x/b.png' } },
-        ],
+        items: [{ media: { url: 'https://x/a.png' } }, { media: { url: 'https://x/b.png' } }],
       },
     ]);
     expect(out).toContain('MediaGallery');

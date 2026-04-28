@@ -32,7 +32,9 @@ function renderNode(n: Node, indent: number): string[] {
       return [`${pad}[Thumb ${n.media?.url ?? '?'}]`];
 
     case ComponentTypeId.Separator:
-      return [`${pad}${n.divider !== false ? '─'.repeat(40) : '·'.repeat(40)}  (Separator${n.spacing === 2 ? ', large' : ''})`];
+      return [
+        `${pad}${n.divider !== false ? '─'.repeat(40) : '·'.repeat(40)}  (Separator${n.spacing === 2 ? ', large' : ''})`,
+      ];
 
     case ComponentTypeId.MediaGallery:
       return [`${pad}MediaGallery (${(n.items ?? []).length} items)`];
@@ -57,7 +59,9 @@ function renderNode(n: Node, indent: number): string[] {
 
     case ComponentTypeId.Container: {
       const accentHex =
-        n.accent_color !== undefined ? `#${n.accent_color.toString(16).padStart(6, '0').toUpperCase()}` : '';
+        n.accent_color !== undefined
+          ? `#${n.accent_color.toString(16).padStart(6, '0').toUpperCase()}`
+          : '';
       const lines: string[] = [`${pad}Container ${accentHex}`.trimEnd()];
       for (const c of n.components ?? []) lines.push(...renderNode(c, indent + 1));
       return lines;
@@ -68,7 +72,9 @@ function renderNode(n: Node, indent: number): string[] {
     case ComponentTypeId.RoleSelect:
     case ComponentTypeId.MentionableSelect:
     case ComponentTypeId.ChannelSelect:
-      return [`${pad}Select (type ${n.type ?? '?'}, custom_id:${(n as { custom_id?: string }).custom_id ?? '?'})`];
+      return [
+        `${pad}Select (type ${n.type ?? '?'}, custom_id:${(n as { custom_id?: string }).custom_id ?? '?'})`,
+      ];
 
     default:
       return [`${pad}<unknown type ${n.type ?? '?'}>`];

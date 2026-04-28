@@ -1,11 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import buildMediaGallery from './build_media_gallery.js';
 
 describe('components_v2_build_media_gallery', () => {
   it('builds MediaGallery from items', async () => {
     const T = buildMediaGallery;
     const t = new T(
-      { name: 'components_v2_build_media_gallery', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'components_v2_build_media_gallery',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'components_v2_build_media_gallery', enabled: true },
     );
     const r = (await t.run(
@@ -16,7 +21,15 @@ describe('components_v2_build_media_gallery', () => {
         ],
       },
       { signal: new AbortController().signal },
-    )) as { isError: boolean; structuredContent: { component: { type: number; items: Array<{ media: { url: string }; description?: string; spoiler?: boolean }> } } };
+    )) as {
+      isError: boolean;
+      structuredContent: {
+        component: {
+          type: number;
+          items: Array<{ media: { url: string }; description?: string; spoiler?: boolean }>;
+        };
+      };
+    };
     expect(r.isError).toBe(false);
     expect(r.structuredContent.component.type).toBe(12);
     expect(r.structuredContent.component.items).toHaveLength(2);

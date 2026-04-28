@@ -14,7 +14,12 @@ export default defineTool({
   outputSchema: {
     ascii: z.string(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   idempotent: true,
   handler: async (args) => {
     const ascii = renderPreview(args.components as never);

@@ -103,17 +103,29 @@ const Separator = z.object({
   spacing: z.number().int().min(1).max(2).optional(),
 });
 
-const Select = z.discriminatedUnion('type', [StringSelect, UserSelect, RoleSelect, MentionableSelect, ChannelSelect]);
+const Select = z.discriminatedUnion('type', [
+  StringSelect,
+  UserSelect,
+  RoleSelect,
+  MentionableSelect,
+  ChannelSelect,
+]);
 
 const ActionRow = z.object({
   type: z.literal(1),
-  components: z.array(z.union([Button, Select])).min(1).max(5),
+  components: z
+    .array(z.union([Button, Select]))
+    .min(1)
+    .max(5),
 });
 
 const Container: z.ZodType<unknown> = z.lazy(() =>
   z.object({
     type: z.literal(17),
-    components: z.array(z.union([Section, TextDisplay, MediaGallery, File, Separator, ActionRow])).min(1).max(10),
+    components: z
+      .array(z.union([Section, TextDisplay, MediaGallery, File, Separator, ActionRow]))
+      .min(1)
+      .max(10),
     accent_color: z.number().int().min(0).max(0xffffff).optional(),
     spoiler: z.boolean().optional(),
   }),

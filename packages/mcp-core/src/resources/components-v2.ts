@@ -1,5 +1,5 @@
-import { readFile, readdir } from 'node:fs/promises';
-import { dirname, join, basename } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { ComponentsV2Array } from '../tools/components-v2/_lib/schema.js';

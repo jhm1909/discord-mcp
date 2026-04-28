@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { validateComponentsV2 } from './validator.js';
 
 describe('validateComponentsV2', () => {
@@ -6,9 +6,7 @@ describe('validateComponentsV2', () => {
     const r = validateComponentsV2([
       {
         type: 17,
-        components: [
-          { type: 9, components: [{ type: 10, content: 'hi' }] },
-        ],
+        components: [{ type: 9, components: [{ type: 10, content: 'hi' }] }],
       },
     ]);
     expect(r.valid).toBe(true);
@@ -19,9 +17,7 @@ describe('validateComponentsV2', () => {
     const r = validateComponentsV2([
       {
         type: 17,
-        components: [
-          { type: 17, components: [{ type: 10, content: 'inner' }] },
-        ],
+        components: [{ type: 17, components: [{ type: 10, content: 'inner' }] }],
       },
     ]);
     expect(r.valid).toBe(false);
@@ -60,7 +56,9 @@ describe('validateComponentsV2', () => {
 
   it('rejects MediaGallery with 0 items', () => {
     expect(
-      validateComponentsV2([{ type: 12, items: [] as never[] }]).issues.some((i) => i.code === 'GALLERY_RANGE'),
+      validateComponentsV2([{ type: 12, items: [] as never[] }]).issues.some(
+        (i) => i.code === 'GALLERY_RANGE',
+      ),
     ).toBe(true);
   });
 
@@ -68,7 +66,12 @@ describe('validateComponentsV2', () => {
     const r = validateComponentsV2([
       {
         type: 1,
-        components: Array.from({ length: 6 }, (_, i) => ({ type: 2 as const, style: 1, label: 'b', custom_id: `b${i}` })),
+        components: Array.from({ length: 6 }, (_, i) => ({
+          type: 2 as const,
+          style: 1,
+          label: 'b',
+          custom_id: `b${i}`,
+        })),
       },
     ]);
     expect(r.valid).toBe(false);
@@ -91,7 +94,10 @@ describe('validateComponentsV2', () => {
 
   it('issues carry path and fix_hint', () => {
     const r = validateComponentsV2([
-      { type: 17, components: Array.from({ length: 11 }, () => ({ type: 10 as const, content: 'x' })) },
+      {
+        type: 17,
+        components: Array.from({ length: 11 }, () => ({ type: 10 as const, content: 'x' })),
+      },
     ]);
     const overflow = r.issues.find((i) => i.code === 'CONTAINER_OVER_10');
     expect(overflow?.path).toBe('components[0]');

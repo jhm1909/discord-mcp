@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import buildSection from './build_section.js';
 
 describe('components_v2_build_section', () => {
@@ -11,7 +11,12 @@ describe('components_v2_build_section', () => {
     const r = (await t.run(
       { text: ['line 1', 'line 2'] },
       { signal: new AbortController().signal },
-    )) as { isError: boolean; structuredContent: { component: { type: number; components: Array<{ type: number; content: string }> } } };
+    )) as {
+      isError: boolean;
+      structuredContent: {
+        component: { type: number; components: Array<{ type: number; content: string }> };
+      };
+    };
     expect(r.isError).toBe(false);
     expect(r.structuredContent.component.type).toBe(9);
     expect(r.structuredContent.component.components).toHaveLength(2);

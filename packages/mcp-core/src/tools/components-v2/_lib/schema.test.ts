@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { ComponentV2, ComponentsV2Array, ComponentTypeId } from './schema.js';
+import { describe, expect, it } from 'vitest';
+import { ComponentsV2Array, ComponentTypeId, ComponentV2 } from './schema.js';
 
 describe('ComponentV2 discriminated union', () => {
   it('parses a TextDisplay (type 10)', () => {
@@ -13,7 +13,12 @@ describe('ComponentV2 discriminated union', () => {
   });
 
   it('parses a link Button (style 5) with url instead of custom_id', () => {
-    const r = ComponentV2.safeParse({ type: 2, style: 5, label: 'Open', url: 'https://example.com' });
+    const r = ComponentV2.safeParse({
+      type: 2,
+      style: 5,
+      label: 'Open',
+      url: 'https://example.com',
+    });
     expect(r.success).toBe(true);
   });
 
