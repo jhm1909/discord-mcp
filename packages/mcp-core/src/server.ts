@@ -48,6 +48,8 @@ import McpPipeline from './tools/meta/pipeline.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
+import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
+import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -155,6 +157,14 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'mcp_pipeline',
     piece: McpPipeline as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_summarize_channel',
+    piece: IntelligenceSummarizeChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_classify_messages',
+    piece: IntelligenceClassifyMessages as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
