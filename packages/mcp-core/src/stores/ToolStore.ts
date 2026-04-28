@@ -1,5 +1,5 @@
-import { LoaderStrategy, Store, type FilterResult } from '@sapphire/pieces';
 import { basename, extname, normalize, sep } from 'node:path';
+import { type FilterResult, LoaderStrategy, Store } from '@sapphire/pieces';
 import { Tool } from '../pieces/Tool.js';
 
 declare module '@sapphire/pieces' {

@@ -24,7 +24,12 @@ export const handlers = [
       id: `msg_${i + 1}`,
       channel_id: params['channelId'],
       content: `message ${i + 1} content`,
-      author: { id: `user_${i + 1}`, username: `user${i + 1}`, global_name: `User ${i + 1}`, bot: false },
+      author: {
+        id: `user_${i + 1}`,
+        username: `user${i + 1}`,
+        global_name: `User ${i + 1}`,
+        bot: false,
+      },
       timestamp: '2026-04-28T12:00:00.000000+00:00',
       edited_timestamp: null,
       attachments: [],
@@ -35,9 +40,32 @@ export const handlers = [
   // channels_list
   http.get(`${DISCORD_API}/guilds/:guildId/channels`, async ({ params }) => {
     return HttpResponse.json([
-      { id: 'ch1', name: 'general', type: 0, position: 0, parent_id: null, nsfw: false, guild_id: params['guildId'] },
-      { id: 'ch2', name: 'announcements', type: 5, position: 1, parent_id: null, nsfw: false, guild_id: params['guildId'] },
-      { id: 'ch3', name: 'voice-lobby', type: 2, position: 2, parent_id: null, guild_id: params['guildId'] },
+      {
+        id: 'ch1',
+        name: 'general',
+        type: 0,
+        position: 0,
+        parent_id: null,
+        nsfw: false,
+        guild_id: params['guildId'],
+      },
+      {
+        id: 'ch2',
+        name: 'announcements',
+        type: 5,
+        position: 1,
+        parent_id: null,
+        nsfw: false,
+        guild_id: params['guildId'],
+      },
+      {
+        id: 'ch3',
+        name: 'voice-lobby',
+        type: 2,
+        position: 2,
+        parent_id: null,
+        guild_id: params['guildId'],
+      },
     ]);
   }),
   // channels_get — must come AFTER the :channelId/messages route
@@ -91,8 +119,26 @@ export const handlers = [
   // roles_list
   http.get(`${DISCORD_API}/guilds/:guildId/roles`, async () => {
     return HttpResponse.json([
-      { id: 'r1', name: '@everyone', color: 0, position: 0, permissions: '0', mentionable: false, hoist: false, managed: false },
-      { id: 'r2', name: 'Moderator', color: 16711680, position: 5, permissions: '8', mentionable: true, hoist: true, managed: false },
+      {
+        id: 'r1',
+        name: '@everyone',
+        color: 0,
+        position: 0,
+        permissions: '0',
+        mentionable: false,
+        hoist: false,
+        managed: false,
+      },
+      {
+        id: 'r2',
+        name: 'Moderator',
+        color: 16711680,
+        position: 5,
+        permissions: '8',
+        mentionable: true,
+        hoist: true,
+        managed: false,
+      },
     ]);
   }),
   // events_list — must come BEFORE guilds/:guildId to avoid prefix match
@@ -140,25 +186,43 @@ export const handlers = [
   // commands_list_guild
   http.get(`${DISCORD_API}/applications/:appId/guilds/:guildId/commands`, async ({ params }) => {
     return HttpResponse.json([
-      { id: 'cmd1', application_id: params['appId'], guild_id: params['guildId'], name: 'ping', description: 'Ping the bot', type: 1, options: [] },
+      {
+        id: 'cmd1',
+        application_id: params['appId'],
+        guild_id: params['guildId'],
+        name: 'ping',
+        description: 'Ping the bot',
+        type: 1,
+        options: [],
+      },
     ]);
   }),
   // webhooks_list_channel
   http.get(`${DISCORD_API}/channels/:channelId/webhooks`, async ({ params }) => {
     return HttpResponse.json([
-      { id: 'wh1', name: 'CI Notifier', type: 1, channel_id: params['channelId'], application_id: null, avatar: null },
+      {
+        id: 'wh1',
+        name: 'CI Notifier',
+        type: 1,
+        channel_id: params['channelId'],
+        application_id: null,
+        avatar: null,
+      },
     ]);
   }),
   // messages_edit
-  http.patch(`${DISCORD_API}/channels/:channelId/messages/:messageId`, async ({ params, request }) => {
-    const body = (await request.json()) as { content?: string };
-    return HttpResponse.json({
-      id: params['messageId'],
-      channel_id: params['channelId'],
-      content: body.content ?? '',
-      edited_timestamp: '2026-04-28T13:00:00.000000+00:00',
-    });
-  }),
+  http.patch(
+    `${DISCORD_API}/channels/:channelId/messages/:messageId`,
+    async ({ params, request }) => {
+      const body = (await request.json()) as { content?: string };
+      return HttpResponse.json({
+        id: params['messageId'],
+        channel_id: params['channelId'],
+        content: body.content ?? '',
+        edited_timestamp: '2026-04-28T13:00:00.000000+00:00',
+      });
+    },
+  ),
   // messages_delete
   http.delete(`${DISCORD_API}/channels/:channelId/messages/:messageId`, async () => {
     return new HttpResponse(null, { status: 204 });

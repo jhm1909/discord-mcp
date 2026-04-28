@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { UserId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { UserId } from '../_lib/snowflake.js';
 
 interface RawUser {
   id: string;
@@ -28,7 +28,12 @@ export default defineTool({
     bot: z.boolean(),
     verified: z.boolean().optional(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async () => {
     const u = (await container.rest.get(Routes.user('@me'))) as RawUser;

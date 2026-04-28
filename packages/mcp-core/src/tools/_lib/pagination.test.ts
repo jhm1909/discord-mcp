@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { encodeCursor, decodeCursor, type CursorPayload } from './pagination.js';
+import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../../errors/client.js';
+import { type CursorPayload, decodeCursor, encodeCursor } from './pagination.js';
 
 describe('encodeCursor / decodeCursor', () => {
   it('roundtrips a simple payload', () => {
@@ -11,7 +11,12 @@ describe('encodeCursor / decodeCursor', () => {
   });
 
   it('roundtrips a payload with filter_hash', () => {
-    const payload: CursorPayload = { after: '12345', before: '67890', limit: 100, filter_hash: 'abc12345' };
+    const payload: CursorPayload = {
+      after: '12345',
+      before: '67890',
+      limit: 100,
+      filter_hash: 'abc12345',
+    };
     expect(decodeCursor(encodeCursor(payload))).toEqual(payload);
   });
 

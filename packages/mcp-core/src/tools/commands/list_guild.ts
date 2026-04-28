@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { GuildId, ApplicationId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ApplicationId, GuildId } from '../_lib/snowflake.js';
 
 interface RawCommand {
   id: string;
@@ -34,15 +34,27 @@ export default defineTool({
     ),
     count: z.number(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
     const raw = (await container.rest.get(
       Routes.applicationGuildCommands(args.application_id, args.guild_id),
     )) as RawCommand[];
-    const cmds = raw.map((c) => ({ id: c.id, name: c.name, description: c.description, type: c.type }));
+    const cmds = raw.map((c) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      type: c.type,
+    }));
     return dualResult({
-      text: `**${cmds.length} command(s)**:\n` + cmds.map((c) => `- /${c.name} — ${c.description} (\`cmd:${c.id}\`)`).join('\n'),
+      text:
+        `**${cmds.length} command(s)**:\n` +
+        cmds.map((c) => `- /${c.name} — ${c.description} (\`cmd:${c.id}\`)`).join('\n'),
       data: { commands: cmds, count: cmds.length },
     });
   },

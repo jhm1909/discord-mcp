@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { GuildId, RoleId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { GuildId, RoleId } from '../_lib/snowflake.js';
 
 interface RawRole {
   id: string;
@@ -39,14 +39,24 @@ export default defineTool({
     ),
     count: z.number(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
     const raw = (await container.rest.get(Routes.guildRoles(args.guild_id))) as RawRole[];
     return dualResult({
       text:
         `Found ${raw.length} role(s):\n` +
-        raw.map((r) => `- **${r.name}** (\`role:${r.id}\`, color #${r.color.toString(16).padStart(6, '0')}, pos ${r.position})`).join('\n'),
+        raw
+          .map(
+            (r) =>
+              `- **${r.name}** (\`role:${r.id}\`, color #${r.color.toString(16).padStart(6, '0')}, pos ${r.position})`,
+          )
+          .join('\n'),
       data: { roles: raw, count: raw.length },
     });
   },

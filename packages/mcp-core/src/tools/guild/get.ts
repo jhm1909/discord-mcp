@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { GuildId, UserId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { GuildId, UserId } from '../_lib/snowflake.js';
 import { wrapUntrusted } from '../_lib/untrusted.js';
 
 interface RawGuild {
@@ -37,12 +37,20 @@ export default defineTool({
     preferred_locale: z.string(),
     features: z.array(z.string()),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
-    const g = (await container.rest.get(Routes.guild(args.guild_id), { query: new URLSearchParams({ with_counts: 'true' }) })) as RawGuild;
+    const g = (await container.rest.get(Routes.guild(args.guild_id), {
+      query: new URLSearchParams({ with_counts: 'true' }),
+    })) as RawGuild;
     const wrappedName = wrapUntrusted(g.name, 'username');
-    const wrappedDesc = g.description !== null ? wrapUntrusted(g.description, 'channel_topic') : '_(no description)_';
+    const wrappedDesc =
+      g.description !== null ? wrapUntrusted(g.description, 'channel_topic') : '_(no description)_';
     const data: Record<string, unknown> = {
       id: g.id,
       name: g.name,

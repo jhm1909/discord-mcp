@@ -1,14 +1,19 @@
-import { describe, it, expect } from 'vitest';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
+import { describe, expect, it } from 'vitest';
 import messagesEdit from './edit.js';
 import '../../container.js';
 
 describe('messages_edit', () => {
   it('returns updated message id + edited_timestamp', async () => {
-    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken(
+      'fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    );
     const T = messagesEdit;
-    const t = new T({ name: 'messages_edit', path: 'inline', root: 'inline', store: null as never }, { name: 'messages_edit', enabled: true });
+    const t = new T(
+      { name: 'messages_edit', path: 'inline', root: 'inline', store: null as never },
+      { name: 'messages_edit', enabled: true },
+    );
     const r = (await t.run(
       { channel_id: '111122223333444455', message_id: '999000999000999000', content: 'updated' },
       { signal: new AbortController().signal },

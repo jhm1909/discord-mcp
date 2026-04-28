@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId, MessageId, UserId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId, MessageId, UserId } from '../_lib/snowflake.js';
 import { wrapMessages } from '../_lib/untrusted.js';
 
 interface RawDiscordMessage {
@@ -33,7 +33,13 @@ export default defineTool({
   ].join('\n'),
   inputSchema: {
     channel_id: ChannelId.describe('Channel to read'),
-    limit: z.number().int().min(1).max(100).default(50).describe('Messages to fetch (1-100, default 50)'),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(50)
+      .describe('Messages to fetch (1-100, default 50)'),
     before: MessageId.optional().describe('Get messages before this ID (older)'),
     after: MessageId.optional().describe('Get messages after this ID (newer)'),
   },
@@ -53,13 +59,20 @@ export default defineTool({
     oldest_id: MessageId.optional(),
     newest_id: MessageId.optional(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
     const query = new URLSearchParams({ limit: String(args.limit) });
     if (args.before !== undefined) query.set('before', args.before);
     if (args.after !== undefined) query.set('after', args.after);
-    const raw = (await container.rest.get(Routes.channelMessages(args.channel_id), { query })) as RawDiscordMessage[];
+    const raw = (await container.rest.get(Routes.channelMessages(args.channel_id), {
+      query,
+    })) as RawDiscordMessage[];
 
     const messages = raw.map((m) => ({
       id: m.id,
@@ -71,7 +84,11 @@ export default defineTool({
     }));
 
     const wrappedText = wrapMessages(
-      raw.map((m) => ({ id: m.id, author: m.author.global_name ?? m.author.username, content: m.content })),
+      raw.map((m) => ({
+        id: m.id,
+        author: m.author.global_name ?? m.author.username,
+        content: m.content,
+      })),
       args.channel_id,
     );
 

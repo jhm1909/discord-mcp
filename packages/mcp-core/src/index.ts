@@ -47,7 +47,7 @@ export { PreconditionStore } from './stores/PreconditionStore.js';
 export { ToolStore } from './stores/ToolStore.js';
 // Tool helpers
 export { defineTool, type ToolDefinition } from './tools/_lib/defineTool.js';
-export { encodeCursor, decodeCursor, type CursorPayload } from './tools/_lib/pagination.js';
+export { type CursorPayload, decodeCursor, encodeCursor } from './tools/_lib/pagination.js';
 export { type DualResultOpts, dualResult } from './tools/_lib/response.js';
 export {
   ApplicationId,

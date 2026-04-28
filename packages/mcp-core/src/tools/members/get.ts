@@ -1,13 +1,19 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { GuildId, UserId, RoleId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { GuildId, RoleId, UserId } from '../_lib/snowflake.js';
 import { wrapUntrusted } from '../_lib/untrusted.js';
 
 interface RawMember {
-  user: { id: string; username: string; global_name?: string | null; avatar: string | null; bot?: boolean };
+  user: {
+    id: string;
+    username: string;
+    global_name?: string | null;
+    avatar: string | null;
+    bot?: boolean;
+  };
   nick: string | null;
   roles: string[];
   joined_at: string;
@@ -34,10 +40,17 @@ export default defineTool({
     premium_since: z.string().nullable(),
     pending: z.boolean(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
-    const m = (await container.rest.get(Routes.guildMember(args.guild_id, args.user_id))) as RawMember;
+    const m = (await container.rest.get(
+      Routes.guildMember(args.guild_id, args.user_id),
+    )) as RawMember;
     const wrappedNick = m.nick !== null ? wrapUntrusted(m.nick, 'username') : '_(no nick)_';
     const data = {
       user_id: m.user.id,

@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId, GuildId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId, GuildId } from '../_lib/snowflake.js';
 import { wrapUntrusted } from '../_lib/untrusted.js';
 
 interface RawChannelDetail {
@@ -37,12 +37,19 @@ export default defineTool({
     rate_limit_per_user: z.number().int(),
     guild_id: GuildId.optional(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
     const c = (await container.rest.get(Routes.channel(args.channel_id))) as RawChannelDetail;
     const topicWrapped =
-      c.topic !== null && c.topic !== undefined ? wrapUntrusted(c.topic, 'channel_topic') : '_(no topic)_';
+      c.topic !== null && c.topic !== undefined
+        ? wrapUntrusted(c.topic, 'channel_topic')
+        : '_(no topic)_';
     const data: Record<string, unknown> = {
       id: c.id,
       name: c.name,

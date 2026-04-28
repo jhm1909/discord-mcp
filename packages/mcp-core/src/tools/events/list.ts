@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { GuildId, ChannelId, UserId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId, GuildId, UserId } from '../_lib/snowflake.js';
 import { wrapUntrusted } from '../_lib/untrusted.js';
 
 interface RawEvent {
@@ -43,10 +43,17 @@ export default defineTool({
     ),
     count: z.number(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
-    const raw = (await container.rest.get(Routes.guildScheduledEvents(args.guild_id))) as RawEvent[];
+    const raw = (await container.rest.get(
+      Routes.guildScheduledEvents(args.guild_id),
+    )) as RawEvent[];
     const evs = raw.map((e) => ({
       id: e.id,
       name: e.name,
@@ -58,7 +65,9 @@ export default defineTool({
       channel_id: e.channel_id,
       creator_id: e.creator_id,
     }));
-    const lines = evs.map((e) => `- ${wrapUntrusted(e.name, 'username')} starts ${e.scheduled_start_time}`);
+    const lines = evs.map(
+      (e) => `- ${wrapUntrusted(e.name, 'username')} starts ${e.scheduled_start_time}`,
+    );
     return dualResult({
       text: `**${evs.length} scheduled event(s)**:\n${lines.join('\n')}`,
       data: { events: evs, count: evs.length },

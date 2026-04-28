@@ -1,8 +1,8 @@
-import { z } from 'zod';
 import { container } from '@sapphire/pieces';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { GuildId, UserId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { GuildId, UserId } from '../_lib/snowflake.js';
 
 interface SearchMember {
   member: {
@@ -23,7 +23,13 @@ export default defineTool({
   inputSchema: {
     guild_id: GuildId.describe('Guild to search'),
     query: z.string().min(1).max(100).describe('Username/nick prefix or substring'),
-    limit: z.number().int().min(1).max(1000).default(25).describe('Max matches (1-1000, default 25)'),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(25)
+      .describe('Max matches (1-1000, default 25)'),
   },
   outputSchema: {
     matches: z.array(
@@ -36,14 +42,22 @@ export default defineTool({
     ),
     count: z.number(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args) => {
     const body = {
       limit: args.limit,
       and_query: { username: { or_query: [args.query] } },
     };
-    const resp = (await container.rest.post(`/guilds/${args.guild_id}/members-search` as `/${string}`, { body })) as SearchResponse;
+    const resp = (await container.rest.post(
+      `/guilds/${args.guild_id}/members-search` as `/${string}`,
+      { body },
+    )) as SearchResponse;
     const matches = resp.members.map((m) => ({
       user_id: m.member.user.id,
       username: m.member.user.username,
@@ -51,7 +65,9 @@ export default defineTool({
       nick: m.member.nick,
     }));
     return dualResult({
-      text: `Found ${matches.length} member(s) matching \`${args.query}\`:\n` + matches.map((m) => `- ${m.username} (\`user:${m.user_id}\`)`).join('\n'),
+      text:
+        `Found ${matches.length} member(s) matching \`${args.query}\`:\n` +
+        matches.map((m) => `- ${m.username} (\`user:${m.user_id}\`)`).join('\n'),
       data: { matches, count: matches.length },
     });
   },
