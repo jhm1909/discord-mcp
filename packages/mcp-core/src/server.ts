@@ -210,6 +210,50 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     return { tools };
   });
 
+  // Lazy snapshot of client capabilities (populated after MCP initialize completes).
+  let cachedClientCaps: { sampling?: object; elicitation?: object; experimental?: Record<string, unknown> } | null = null;
+  const getClientCaps = (): typeof cachedClientCaps => {
+    if (cachedClientCaps !== null) return cachedClientCaps;
+    const fn = (server as unknown as { getClientCapabilities?: () => unknown }).getClientCapabilities;
+    if (typeof fn !== 'function') return null;
+    const result = fn.call(server) as typeof cachedClientCaps;
+    if (result !== null && result !== undefined) {
+      cachedClientCaps = result;
+    }
+    return result;
+  };
+
+  // Sampling wrapper — calls server.createMessage(params) per MCP spec.
+  interface SamplingMessage {
+    role: 'user' | 'assistant';
+    content: { type: 'text'; text: string };
+  }
+  interface SamplingParams {
+    messages: SamplingMessage[];
+    maxTokens: number;
+    modelPreferences?: {
+      intelligencePriority?: number;
+      speedPriority?: number;
+      costPriority?: number;
+      hints?: Array<{ name: string }>;
+    };
+    systemPrompt?: string;
+  }
+  interface SamplingResult {
+    role: 'assistant';
+    content: { type: 'text'; text: string };
+    model?: string;
+    stopReason?: string;
+  }
+
+  const requestSampling = async (params: SamplingParams): Promise<SamplingResult> => {
+    const fn = (server as unknown as { createMessage?: (p: SamplingParams) => Promise<SamplingResult> }).createMessage;
+    if (typeof fn !== 'function') {
+      throw new Error('SDK does not expose createMessage — sampling unavailable');
+    }
+    return fn.call(server, params);
+  };
+
   const invokeTool = async (
     toolName: string,
     args: unknown,
@@ -231,7 +275,13 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
       ]),
     };
     const dispatch = compose(middlewares, async (c) => {
-      return tool.run(c.args, { signal, invoke: invokeTool } as never);
+      const samplingSupported = getClientCaps()?.sampling !== undefined;
+      return tool.run(c.args, {
+        signal,
+        invoke: invokeTool,
+        requestSampling,
+        samplingSupported,
+      } as never);
     });
     try {
       return (await dispatch(middlewareCtx)) as CallToolResult;
