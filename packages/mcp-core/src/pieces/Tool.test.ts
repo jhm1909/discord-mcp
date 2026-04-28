@@ -27,4 +27,28 @@ describe('Tool base class', () => {
     expect(t.inputSchema.foo).toBeDefined();
     expect(t.annotations.readOnlyHint).toBe(true);
   });
+
+  it('subclass can declare category and preconditions[]', () => {
+    class CategorizedTool extends Tool {
+      override readonly category = 'messages';
+      override readonly preconditions = ['category_enabled'] as const;
+      override readonly inputSchema = {};
+      override readonly description = 'cat';
+      override readonly annotations = {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      };
+      override async run() {
+        return {};
+      }
+    }
+    const t = new CategorizedTool(
+      { name: 'cat', path: 'memory', root: 'memory', store: null as never },
+      { name: 'cat', enabled: true },
+    );
+    expect(t.category).toBe('messages');
+    expect(t.preconditions).toEqual(['category_enabled']);
+  });
 });

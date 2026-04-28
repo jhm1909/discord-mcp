@@ -28,6 +28,15 @@ export abstract class Tool extends Piece<Tool.Options, 'tools'> {
   /** True if the tool is GET-shaped and safe to single-flight-coalesce. */
   public readonly idempotent: boolean = false;
 
+  /** Tool category — used by CategoryEnabled precondition + tools/list grouping. */
+  public readonly category: string = 'misc';
+
+  /** Identifiers of preconditions to run before the handler. */
+  public readonly preconditions: readonly string[] = [];
+
+  /** Optional MCP scopes the tool requires (informational v1; gating lands v2 with OAuth). */
+  public readonly scopes: readonly string[] = [];
+
   /** Implement the tool body. */
   public abstract run(args: unknown, ctx?: ToolRunContext): Promise<unknown>;
 }
