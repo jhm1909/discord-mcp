@@ -14,8 +14,8 @@ export abstract class DiscordError extends Error {
   /** Optional alternate tool the agent can try instead. */
   public suggestedTool?: string;
 
-  public constructor(message: string, public readonly cause?: unknown) {
-    super(message);
+  public constructor(message: string, cause?: unknown) {
+    super(message, { cause });
     this.name = this.constructor.name;
   }
 }
