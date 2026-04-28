@@ -71,4 +71,60 @@ export const handlers = [
       pending: false,
     });
   }),
+  // members_search
+  http.post(`${DISCORD_API}/guilds/:guildId/members-search`, async ({ request }) => {
+    const body = (await request.json()) as { limit?: number };
+    const limit = body.limit ?? 25;
+    return HttpResponse.json({
+      members: Array.from({ length: Math.min(limit, 2) }, (_, i) => ({
+        member: {
+          user: { id: `u_${i + 1}`, username: `match${i + 1}`, global_name: `Match ${i + 1}` },
+          nick: null,
+          roles: [],
+          joined_at: '2026-01-15T10:00:00.000000+00:00',
+          premium_since: null,
+          pending: false,
+        },
+      })),
+    });
+  }),
+  // roles_list
+  http.get(`${DISCORD_API}/guilds/:guildId/roles`, async () => {
+    return HttpResponse.json([
+      { id: 'r1', name: '@everyone', color: 0, position: 0, permissions: '0', mentionable: false, hoist: false, managed: false },
+      { id: 'r2', name: 'Moderator', color: 16711680, position: 5, permissions: '8', mentionable: true, hoist: true, managed: false },
+    ]);
+  }),
+  // guild_get
+  http.get(`${DISCORD_API}/guilds/:guildId`, async ({ params }) => {
+    return HttpResponse.json({
+      id: params['guildId'],
+      name: 'My Test Server',
+      icon: 'icon_hash',
+      owner_id: 'owner1',
+      member_count: 42,
+      description: 'A test guild for discord-mcp',
+      premium_tier: 2,
+      preferred_locale: 'en-US',
+      features: ['COMMUNITY', 'NEWS'],
+    });
+  }),
+  // audit_log_get
+  http.get(`${DISCORD_API}/guilds/:guildId/audit-logs`, async ({ request }) => {
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get('limit') ?? 50);
+    return HttpResponse.json({
+      audit_log_entries: Array.from({ length: Math.min(limit, 2) }, (_, i) => ({
+        id: `entry_${i + 1}`,
+        target_id: `target_${i + 1}`,
+        user_id: `mod_${i + 1}`,
+        action_type: 20 + i,
+        reason: `reason ${i + 1}`,
+        changes: [],
+      })),
+      users: [],
+      webhooks: [],
+      integrations: [],
+    });
+  }),
 ];
