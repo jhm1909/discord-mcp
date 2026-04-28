@@ -121,7 +121,11 @@ describe('MCP protocol contract', () => {
       arguments: {
         steps: [
           { id: 'step1', tool: 'channels_list', args: { guild_id: '999000999000999000' } },
-          { id: 'step2', tool: 'messages_send', args: { channel_id: '{{step1.channels[0].id}}', content: 'pipeline ran' } },
+          {
+            id: 'step2',
+            tool: 'messages_send',
+            args: { channel_id: '{{step1.channels[0].id}}', content: 'pipeline ran' },
+          },
         ],
       },
     });
@@ -144,7 +148,10 @@ describe('MCP protocol contract', () => {
     expect(r.structuredContent).toMatchObject({
       aborted: true,
       steps: expect.arrayContaining([
-        expect.objectContaining({ status: 'error', error: expect.objectContaining({ code: 'PIPELINE_RECURSION' }) }),
+        expect.objectContaining({
+          status: 'error',
+          error: expect.objectContaining({ code: 'PIPELINE_RECURSION' }),
+        }),
       ]),
     });
   });

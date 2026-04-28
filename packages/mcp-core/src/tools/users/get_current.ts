@@ -44,7 +44,7 @@ export default defineTool({
       avatar: u.avatar,
       bot: u.bot,
     };
-    if (u.verified !== undefined) data['verified'] = u.verified;
+    if (u.verified !== undefined) data.verified = u.verified;
     return dualResult({
       text: `**${u.username}** (\`user:${u.id}\`, ${u.bot ? 'bot' : 'user'})`,
       data,

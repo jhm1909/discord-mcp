@@ -16,7 +16,7 @@ export class CategoryEnabled extends Precondition {
   }
 
   public override async run(ctx: MiddlewareContext<unknown>): Promise<void> {
-    const raw = this.env['MCP_CATEGORIES'];
+    const raw = this.env.MCP_CATEGORIES;
     if (raw === undefined || raw.trim() === '') {
       return;
     }

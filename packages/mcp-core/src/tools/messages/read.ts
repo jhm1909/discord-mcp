@@ -98,8 +98,8 @@ export default defineTool({
       channel_id: args.channel_id,
     };
     if (messages.length > 0) {
-      data['oldest_id'] = messages[messages.length - 1]!.id;
-      data['newest_id'] = messages[0]!.id;
+      data.oldest_id = messages[messages.length - 1]!.id;
+      data.newest_id = messages[0]!.id;
     }
 
     return dualResult({ text: wrappedText, data });

@@ -68,13 +68,13 @@ export default defineTool({
         user_id: e.user_id,
         action_type: e.action_type,
       };
-      if (e.reason !== undefined) result['reason'] = e.reason;
+      if (e.reason !== undefined) result.reason = e.reason;
       return result;
     });
     const lines = entries.map((e) => {
       const reasonStr =
-        e['reason'] !== undefined ? wrapUntrusted(String(e['reason']), 'audit_reason') : '';
-      return `- entry ${e['id']}: action ${e['action_type']}, mod \`user:${e['user_id'] ?? '?'}\` → target \`${e['target_id'] ?? '?'}\` ${reasonStr}`;
+        e.reason !== undefined ? wrapUntrusted(String(e.reason), 'audit_reason') : '';
+      return `- entry ${e.id}: action ${e.action_type}, mod \`user:${e.user_id ?? '?'}\` → target \`${e.target_id ?? '?'}\` ${reasonStr}`;
     });
     return dualResult({
       text: `**${entries.length} audit log entr${entries.length === 1 ? 'y' : 'ies'}**:\n${lines.join('\n')}`,

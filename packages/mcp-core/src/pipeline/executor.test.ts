@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { executePipeline, type Step, type PipelineExecutorCtx } from './executor.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { describe, expect, it, vi } from 'vitest';
+import { executePipeline, type PipelineExecutorCtx } from './executor.js';
 
 const ok = (data: Record<string, unknown>): CallToolResult => ({
   isError: false,
@@ -28,18 +28,27 @@ describe('executePipeline', () => {
     expect(result.steps).toHaveLength(1);
     expect(result.steps[0]!.status).toBe('success');
     expect(result.steps[0]!.id).toBe('send');
-    expect(result.variables['send']).toEqual({ message_id: 'm1' });
-    expect(invoke).toHaveBeenCalledWith('messages_send', { channel_id: 'c1', content: 'hi' }, baseCtx.signal);
+    expect(result.variables.send).toEqual({ message_id: 'm1' });
+    expect(invoke).toHaveBeenCalledWith(
+      'messages_send',
+      { channel_id: 'c1', content: 'hi' },
+      baseCtx.signal,
+    );
   });
 
   it('interpolates variables from earlier steps into later step args', async () => {
-    const invoke = vi.fn()
+    const invoke = vi
+      .fn()
       .mockResolvedValueOnce(ok({ messages: [{ id: 'msg_1' }] }))
       .mockResolvedValueOnce(ok({ deleted: true, message_id: 'msg_1' }));
     const result = await executePipeline(
       [
         { id: 'read', tool: 'messages_read', args: { channel_id: 'c1' } },
-        { id: 'del', tool: 'messages_delete', args: { channel_id: 'c1', message_id: '{{read.messages[0].id}}' } },
+        {
+          id: 'del',
+          tool: 'messages_delete',
+          args: { channel_id: 'c1', message_id: '{{read.messages[0].id}}' },
+        },
       ],
       invoke,
       baseCtx,
@@ -55,18 +64,24 @@ describe('executePipeline', () => {
       invoke,
       baseCtx,
     );
-    expect(result.variables['count']).toEqual({ count: 7 });
-    expect(result.variables['channels']).toEqual({ count: 7 });
+    expect(result.variables.count).toEqual({ count: 7 });
+    expect(result.variables.channels).toEqual({ count: 7 });
   });
 
   it('skips a step whose `if` resolves falsy', async () => {
-    const invoke = vi.fn()
+    const invoke = vi
+      .fn()
       .mockResolvedValueOnce(ok({ count: 0 }))
       .mockResolvedValueOnce(ok({ message_id: 'm2' }));
     const result = await executePipeline(
       [
         { id: 'first', tool: 'channels_list', args: { guild_id: 'g1' } },
-        { id: 'maybe', tool: 'messages_send', args: { channel_id: 'c1', content: 'hi' }, if: '{{first.count}}' },
+        {
+          id: 'maybe',
+          tool: 'messages_send',
+          args: { channel_id: 'c1', content: 'hi' },
+          if: '{{first.count}}',
+        },
       ],
       invoke,
       baseCtx,
@@ -76,7 +91,8 @@ describe('executePipeline', () => {
   });
 
   it('aborts the pipeline when a step fails (default continue_on_error: false)', async () => {
-    const invoke = vi.fn()
+    const invoke = vi
+      .fn()
       .mockResolvedValueOnce(ok({ messages: [] }))
       .mockResolvedValueOnce(err('DISCORD_PERMISSION_DENIED', 'no perm'))
       .mockResolvedValueOnce(ok({ never: 'reached' }));
@@ -97,7 +113,8 @@ describe('executePipeline', () => {
   });
 
   it('continues past a failed step when continue_on_error is true', async () => {
-    const invoke = vi.fn()
+    const invoke = vi
+      .fn()
       .mockResolvedValueOnce(err('DISCORD_NOT_FOUND', 'gone'))
       .mockResolvedValueOnce(ok({ ok: true }));
     const result = await executePipeline(
@@ -125,27 +142,19 @@ describe('executePipeline', () => {
     );
     expect(result.steps[0]!.id).toBe('step_0');
     expect(result.steps[1]!.id).toBe('step_1');
-    expect(result.variables['step_0']).toEqual({ ok: true });
+    expect(result.variables.step_0).toEqual({ ok: true });
   });
 
   it('records duration_ms per step (>= 0)', async () => {
     const invoke = vi.fn().mockResolvedValue(ok({}));
-    const result = await executePipeline(
-      [{ id: 'a', tool: 'x', args: {} }],
-      invoke,
-      baseCtx,
-    );
+    const result = await executePipeline([{ id: 'a', tool: 'x', args: {} }], invoke, baseCtx);
     expect(result.steps[0]!.duration_ms).toBeGreaterThanOrEqual(0);
     expect(typeof result.total_duration_ms).toBe('number');
   });
 
   it('captures error code + retriable from a failed CallToolResult', async () => {
     const invoke = vi.fn().mockResolvedValue(err('DISCORD_RATE_LIMITED', 'wait'));
-    const result = await executePipeline(
-      [{ id: 'a', tool: 'x', args: {} }],
-      invoke,
-      baseCtx,
-    );
+    const result = await executePipeline([{ id: 'a', tool: 'x', args: {} }], invoke, baseCtx);
     expect(result.steps[0]!.error?.code).toBe('DISCORD_RATE_LIMITED');
     expect(result.steps[0]!.error?.retriable).toBe(false);
   });
@@ -154,11 +163,9 @@ describe('executePipeline', () => {
     const ac = new AbortController();
     ac.abort();
     const invoke = vi.fn();
-    const result = await executePipeline(
-      [{ id: 'a', tool: 'x', args: {} }],
-      invoke,
-      { signal: ac.signal },
-    );
+    const result = await executePipeline([{ id: 'a', tool: 'x', args: {} }], invoke, {
+      signal: ac.signal,
+    });
     expect(result.aborted).toBe(true);
     expect(result.steps).toHaveLength(0);
     expect(invoke).not.toHaveBeenCalled();

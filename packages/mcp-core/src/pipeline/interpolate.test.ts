@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { interpolate, resolvePath, evalCondition } from './interpolate.js';
+import { describe, expect, it } from 'vitest';
+import { evalCondition, interpolate, resolvePath } from './interpolate.js';
 
 describe('resolvePath', () => {
   const vars = {
@@ -44,7 +44,9 @@ describe('interpolate', () => {
 
   it('stringifies and concatenates multi-template strings', () => {
     expect(interpolate('count is {{step1.count}}', vars)).toBe('count is 5');
-    expect(interpolate('{{step1.id}} at {{step2.url}}', vars)).toBe('msg_123 at https://example.com');
+    expect(interpolate('{{step1.id}} at {{step2.url}}', vars)).toBe(
+      'msg_123 at https://example.com',
+    );
   });
 
   it('leaves missing variables as the literal placeholder in mixed strings', () => {

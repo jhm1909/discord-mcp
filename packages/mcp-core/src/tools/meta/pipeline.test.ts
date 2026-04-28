@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import mcpPipeline from './pipeline.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { describe, expect, it, vi } from 'vitest';
+import mcpPipeline from './pipeline.js';
 
 const ok = (data: Record<string, unknown>): CallToolResult => ({
   isError: false,
@@ -30,10 +30,16 @@ describe('mcp_pipeline tool', () => {
     const result = (await t.run(
       { steps: [{ id: 'nest', tool: 'mcp_pipeline', args: { steps: [] } }] },
       { signal: new AbortController().signal, invoke } as never,
-    )) as { isError?: boolean; structuredContent?: { aborted: boolean; steps: Array<{ status: string; error?: { code: string } }> } };
+    )) as {
+      isError?: boolean;
+      structuredContent?: {
+        aborted: boolean;
+        steps: Array<{ status: string; error?: { code: string } }>;
+      };
+    };
     expect(result.structuredContent?.aborted).toBe(true);
-    expect(result.structuredContent?.steps[0]!.status).toBe('error');
-    expect(result.structuredContent?.steps[0]!.error?.code).toBe('PIPELINE_RECURSION');
+    expect(result.structuredContent?.steps[0]?.status).toBe('error');
+    expect(result.structuredContent?.steps[0]?.error?.code).toBe('PIPELINE_RECURSION');
     expect(invoke).not.toHaveBeenCalled();
   });
 

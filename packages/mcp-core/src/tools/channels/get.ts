@@ -60,9 +60,9 @@ export default defineTool({
       topic: c.topic ?? null,
       rate_limit_per_user: c.rate_limit_per_user ?? 0,
     };
-    if (c.guild_id !== undefined) data['guild_id'] = c.guild_id;
+    if (c.guild_id !== undefined) data.guild_id = c.guild_id;
     return dualResult({
-      text: `**#${c.name}** (\`channel:${c.id}\`, type ${c.type})\nTopic: ${topicWrapped}\nSlowmode: ${data['rate_limit_per_user']}s`,
+      text: `**#${c.name}** (\`channel:${c.id}\`, type ${c.type})\nTopic: ${topicWrapped}\nSlowmode: ${data.rate_limit_per_user}s`,
       data,
     });
   },

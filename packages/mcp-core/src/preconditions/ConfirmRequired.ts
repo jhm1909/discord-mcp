@@ -16,9 +16,9 @@ export class ConfirmRequired extends Precondition {
   }
 
   public override async run(ctx: MiddlewareContext<unknown>): Promise<void> {
-    const dryRunActive = this.env['MCP_DRY_RUN'] !== 'false';
+    const dryRunActive = this.env.MCP_DRY_RUN !== 'false';
     const args = ctx.args as Record<string, unknown>;
-    const confirmed = args['__confirm'] === true;
+    const confirmed = args.__confirm === true;
 
     if (dryRunActive || !confirmed) {
       const preview: Record<string, unknown> = {};

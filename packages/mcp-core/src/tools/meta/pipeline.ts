@@ -1,8 +1,8 @@
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import { executePipeline, type Step, type StepResult } from '../../pipeline/executor.js';
 import { defineTool } from '../_lib/defineTool.js';
 import { dualResult } from '../_lib/response.js';
-import { executePipeline, type Step, type StepResult } from '../../pipeline/executor.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 interface RunCtxWithInvoke {
   readonly signal: AbortSignal;
@@ -15,11 +15,29 @@ const StepSchema = z.object({
     .regex(/^[a-z][a-z0-9_]{0,63}$/i)
     .optional()
     .describe('Reference name for interpolation. Defaults to step_<index>.'),
-  tool: z.string().min(1).describe('Tool name to call. Must exist; not mcp_pipeline (no recursion).'),
-  args: z.record(z.string(), z.unknown()).describe('Tool arguments. String fields support {{step_id.path}} interpolation.'),
-  save_as: z.string().min(1).optional().describe('Save result under this variable name in addition to step ID.'),
-  if: z.string().min(1).optional().describe('Path to truthy check. Step skipped if path resolves falsy. Example: "{{step1.count}}".'),
-  continue_on_error: z.boolean().default(false).describe('If true, pipeline continues after this step fails. Default aborts.'),
+  tool: z
+    .string()
+    .min(1)
+    .describe('Tool name to call. Must exist; not mcp_pipeline (no recursion).'),
+  args: z
+    .record(z.string(), z.unknown())
+    .describe('Tool arguments. String fields support {{step_id.path}} interpolation.'),
+  save_as: z
+    .string()
+    .min(1)
+    .optional()
+    .describe('Save result under this variable name in addition to step ID.'),
+  if: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      'Path to truthy check. Step skipped if path resolves falsy. Example: "{{step1.count}}".',
+    ),
+  continue_on_error: z
+    .boolean()
+    .default(false)
+    .describe('If true, pipeline continues after this step fails. Default aborts.'),
 });
 
 export default defineTool({
@@ -111,7 +129,9 @@ export default defineTool({
       });
     }
 
-    const result = await executePipeline(args.steps as readonly Step[], invoke, { signal: runCtx.signal });
+    const result = await executePipeline(args.steps as readonly Step[], invoke, {
+      signal: runCtx.signal,
+    });
     const summary =
       `**Pipeline ${result.aborted ? '⚠️ aborted' : '✅ complete'}** — ` +
       `${result.steps.filter((s) => s.status === 'success').length}/${result.steps.length} success` +

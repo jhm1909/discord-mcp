@@ -59,7 +59,7 @@ export default defineTool({
       flags: IS_COMPONENTS_V2,
       components: args.components,
     };
-    if (args.allowed_mentions !== undefined) body['allowed_mentions'] = args.allowed_mentions;
+    if (args.allowed_mentions !== undefined) body.allowed_mentions = args.allowed_mentions;
     const m = (await container.rest.post(Routes.channelMessages(args.channel_id), {
       body,
     })) as SentMessage;

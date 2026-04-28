@@ -1,5 +1,5 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { interpolate, evalCondition } from './interpolate.js';
+import { evalCondition, interpolate } from './interpolate.js';
 
 export interface Step {
   readonly id?: string;

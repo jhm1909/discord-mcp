@@ -38,6 +38,16 @@ export { validateMiddleware } from './middleware/validate.js';
 export { Precondition } from './pieces/Precondition.js';
 // Pieces
 export { Tool, type ToolAnnotations, type ToolRunContext } from './pieces/Tool.js';
+// Pipeline
+export {
+  executePipeline,
+  type InvokeFn,
+  type PipelineExecutorCtx,
+  type PipelineResult,
+  type Step,
+  type StepResult,
+} from './pipeline/executor.js';
+export { evalCondition, interpolate, resolvePath } from './pipeline/interpolate.js';
 // Preconditions
 export { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 export { ConfirmRequired } from './preconditions/ConfirmRequired.js';

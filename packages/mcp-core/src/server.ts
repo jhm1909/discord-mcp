@@ -3,10 +3,10 @@ import type { REST } from '@discordjs/rest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
+  type CallToolResult,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   type Tool as McpTool,
-  type CallToolResult,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { container } from '@sapphire/pieces';
@@ -24,7 +24,6 @@ import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
-import McpPipeline from './tools/meta/pipeline.js';
 import AuditLogGet from './tools/audit_log/get.js';
 import ChannelsGet from './tools/channels/get.js';
 import ChannelsList from './tools/channels/list.js';
@@ -45,6 +44,7 @@ import MessagesDelete from './tools/messages/delete.js';
 import MessagesEdit from './tools/messages/edit.js';
 import MessagesRead from './tools/messages/read.js';
 import MessagesSend from './tools/messages/send.js';
+import McpPipeline from './tools/meta/pipeline.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
