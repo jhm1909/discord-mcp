@@ -122,4 +122,21 @@ describe('MCP protocol contract', () => {
     expect(r.isError).toBe(true);
     expect(r.structuredContent).toMatchObject({ code: 'DRY_RUN_PREVIEW', tool: 'messages_delete' });
   });
+
+  it('lists 6 V2 resources via MCP resources/list', async () => {
+    const { resources } = await client.listResources();
+    expect(resources.length).toBe(6);
+    expect(resources.map((r) => r.uri)).toContain('discord://components-v2/templates/announcement');
+    expect(resources.map((r) => r.uri)).toContain('discord://components-v2/schema');
+  });
+
+  it('reads V2 announcement template via resources/read', async () => {
+    const r = await client.readResource({ uri: 'discord://components-v2/templates/announcement' });
+    expect(r.contents).toHaveLength(1);
+    const c = r.contents[0]!;
+    expect(c.mimeType).toBe('application/json');
+    const text = c.text as string;
+    const parsed = JSON.parse(text);
+    expect(parsed.name).toBe('announcement');
+  });
 });

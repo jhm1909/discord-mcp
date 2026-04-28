@@ -3,7 +3,9 @@ import type { REST } from '@discordjs/rest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
+  ListResourcesRequestSchema,
   ListToolsRequestSchema,
+  ReadResourceRequestSchema,
   type Tool as McpTool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { container } from '@sapphire/pieces';
@@ -43,6 +45,7 @@ import MessagesSend from './tools/messages/send.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
+import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -177,7 +180,7 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const server = new Server(
     { name: 'discord-mcp', version: '0.0.0' },
     {
-      capabilities: { tools: {} },
+      capabilities: { tools: {}, resources: {} },
       instructions:
         'Discord MCP server. v0/Plan-1 — only messages_send available. ' +
         'Errors return structured CallToolResult with code/retriable/recovery_hint fields. ' +
@@ -237,6 +240,21 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
       deps.logger.warn({ err: e, tool: tool.name, requestId }, 'tool error');
       return formatErrorForUser(e, { toolName: tool.name, transport: 'stdio' });
     }
+  });
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    const resources = await listV2Resources();
+    return { resources: resources.map((r) => ({ ...r })) };
+  });
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
+    const content = await readV2Resource(req.params.uri);
+    if (content === null) {
+      throw new Error(`Resource not found: ${req.params.uri}`);
+    }
+    return {
+      contents: [{ uri: content.uri, mimeType: content.mimeType, text: content.text }],
+    };
   });
 
   return { server, registeredTools, registeredPreconditions };
