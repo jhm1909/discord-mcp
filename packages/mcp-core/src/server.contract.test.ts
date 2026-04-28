@@ -64,4 +64,20 @@ describe('MCP protocol contract', () => {
       jump_url: expect.stringContaining('discord.com/channels/'),
     });
   });
+
+  it('callTool with malformed channel_id returns DISCORD-formatted ValidationError', async () => {
+    const r = await client.callTool({
+      name: 'messages_send',
+      arguments: { channel_id: 'not-a-snowflake', content: 'hi' },
+    });
+    expect(r.isError).toBe(true);
+    expect(r.structuredContent).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      retriable: false,
+      category: 'client',
+    });
+    const text = (r.content as Array<{ text: string }>)[0]!.text;
+    expect(text).toMatch(/Input Error/);
+    expect(text).toMatch(/channel_id/);
+  });
 });
