@@ -20,3 +20,9 @@ coverage/
 # Editors
 .vscode/
 .idea/
+
+# Local-only design artifacts (specs/plans authored via brainstorming + writing-plans skills)
+docs/
+
+# Claude Code session state
+.claude/
