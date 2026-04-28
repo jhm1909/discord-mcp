@@ -48,7 +48,7 @@ export const handlers = [
   http.get(`${DISCORD_API}/guilds/:guildId/channels`, async ({ params }) => {
     return HttpResponse.json([
       {
-        id: 'ch1',
+        id: '111122223333444401',
         name: 'general',
         type: 0,
         position: 0,
@@ -57,7 +57,7 @@ export const handlers = [
         guild_id: params['guildId'],
       },
       {
-        id: 'ch2',
+        id: '111122223333444402',
         name: 'announcements',
         type: 5,
         position: 1,
@@ -66,7 +66,7 @@ export const handlers = [
         guild_id: params['guildId'],
       },
       {
-        id: 'ch3',
+        id: '111122223333444403',
         name: 'voice-lobby',
         type: 2,
         position: 2,
