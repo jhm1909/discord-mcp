@@ -109,6 +109,12 @@ export const handlers = [
       features: ['COMMUNITY', 'NEWS'],
     });
   }),
+  // webhooks_list_channel
+  http.get(`${DISCORD_API}/channels/:channelId/webhooks`, async ({ params }) => {
+    return HttpResponse.json([
+      { id: 'wh1', name: 'CI Notifier', type: 1, channel_id: params['channelId'], application_id: null, avatar: null },
+    ]);
+  }),
   // audit_log_get
   http.get(`${DISCORD_API}/guilds/:guildId/audit-logs`, async ({ request }) => {
     const url = new URL(request.url);
