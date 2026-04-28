@@ -1,11 +1,16 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId, MessageId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId, MessageId } from '../_lib/snowflake.js';
 import { wrapMessages } from '../_lib/untrusted.js';
-import { buildSamplingPrompt, parseLLMJsonResponse, fallbackData, type SamplingMessage } from './_lib/sampling.js';
+import {
+  buildSamplingPrompt,
+  fallbackData,
+  parseLLMJsonResponse,
+  type SamplingMessage,
+} from './_lib/sampling.js';
 
 interface RawDiscordMessage {
   id: string;
@@ -34,7 +39,15 @@ interface ExtractOutput {
   entities: ExtractedEntity[];
 }
 
-const ENTITY_TYPES = ['user_mention', 'channel_ref', 'date', 'decision', 'action_item', 'url', 'code_snippet'] as const;
+const ENTITY_TYPES = [
+  'user_mention',
+  'channel_ref',
+  'date',
+  'decision',
+  'action_item',
+  'url',
+  'code_snippet',
+] as const;
 
 export default defineTool({
   name: 'intelligence_extract_entities',
@@ -43,7 +56,13 @@ export default defineTool({
     "**Purpose**: Pull structured entities (decisions, action items, dates, mentions, URLs, code) from recent Discord messages using the client's LLM.\n\n**When to use**: post-meeting recap, audit log of decisions, weekly digest builder.\n\n**Returns**: `{entities:[{type, value, source_message_id?, context?}], count, sampling_used}`.",
   inputSchema: {
     channel_id: ChannelId.describe('Channel to scan'),
-    limit: z.number().int().min(5).max(100).default(50).describe('Messages to scan (5-100, default 50)'),
+    limit: z
+      .number()
+      .int()
+      .min(5)
+      .max(100)
+      .default(50)
+      .describe('Messages to scan (5-100, default 50)'),
     entity_types: z
       .array(z.enum(ENTITY_TYPES))
       .min(1)
@@ -62,7 +81,12 @@ export default defineTool({
     count: z.number(),
     sampling_used: z.boolean(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args, ctx) => {
     const c = ctx as RunCtxWithSampling;
@@ -83,11 +107,18 @@ export default defineTool({
         },
         'extract_entities',
       );
-      return dualResult({ text: '[sampling unavailable — host LLM should extract from raw_messages]', data });
+      return dualResult({
+        text: '[sampling unavailable — host LLM should extract from raw_messages]',
+        data,
+      });
     }
 
     const wrapped = wrapMessages(
-      raw.map((m) => ({ id: m.id, author: m.author.global_name ?? m.author.username, content: m.content })),
+      raw.map((m) => ({
+        id: m.id,
+        author: m.author.global_name ?? m.author.username,
+        content: m.content,
+      })),
       args.channel_id,
     );
     const messages = buildSamplingPrompt({

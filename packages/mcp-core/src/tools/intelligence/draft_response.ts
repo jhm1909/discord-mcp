@@ -1,11 +1,16 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId } from '../_lib/snowflake.js';
 import { wrapMessages } from '../_lib/untrusted.js';
-import { buildSamplingPrompt, parseLLMJsonResponse, fallbackData, type SamplingMessage } from './_lib/sampling.js';
+import {
+  buildSamplingPrompt,
+  fallbackData,
+  parseLLMJsonResponse,
+  type SamplingMessage,
+} from './_lib/sampling.js';
 
 interface RawDiscordMessage {
   id: string;
@@ -50,7 +55,12 @@ export default defineTool({
     reasoning: z.string(),
     sampling_used: z.boolean(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   handler: async (args, ctx) => {
     const c = ctx as RunCtxWithSampling;
     const raw = (await container.rest.get(Routes.channelMessages(args.channel_id), {
@@ -71,11 +81,18 @@ export default defineTool({
         },
         'draft_response',
       );
-      return dualResult({ text: '[sampling unavailable — host LLM should draft from raw_context + intent + tone]', data });
+      return dualResult({
+        text: '[sampling unavailable — host LLM should draft from raw_context + intent + tone]',
+        data,
+      });
     }
 
     const wrapped = wrapMessages(
-      raw.map((m) => ({ id: m.id, author: m.author.global_name ?? m.author.username, content: m.content })),
+      raw.map((m) => ({
+        id: m.id,
+        author: m.author.global_name ?? m.author.username,
+        content: m.content,
+      })),
       args.channel_id,
     );
     const messages = buildSamplingPrompt({

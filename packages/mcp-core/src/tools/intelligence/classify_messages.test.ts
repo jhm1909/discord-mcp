@@ -1,15 +1,22 @@
-import { describe, it, expect, vi } from 'vitest';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
+import { describe, expect, it, vi } from 'vitest';
 import classifyMessages from './classify_messages.js';
 import '../../container.js';
 
 describe('intelligence_classify_messages', () => {
   it('returns classifications when sampling is supported', async () => {
-    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken(
+      'fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    );
     const T = classifyMessages;
     const t = new T(
-      { name: 'intelligence_classify_messages', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'intelligence_classify_messages',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'intelligence_classify_messages', enabled: true },
     );
     const requestSampling = vi.fn().mockResolvedValue({
@@ -22,7 +29,14 @@ describe('intelligence_classify_messages', () => {
     const r = (await t.run(
       { channel_id: '112233445566778899', categories: ['greeting', 'question', 'spam'], limit: 25 },
       { signal: new AbortController().signal, samplingSupported: true, requestSampling } as never,
-    )) as { isError: boolean; structuredContent: { classifications: Array<{ message_id: string; category: string; confidence: number }>; count: number; sampling_used: boolean } };
+    )) as {
+      isError: boolean;
+      structuredContent: {
+        classifications: Array<{ message_id: string; category: string; confidence: number }>;
+        count: number;
+        sampling_used: boolean;
+      };
+    };
     expect(r.isError).toBe(false);
     expect(r.structuredContent.count).toBe(3);
     expect(r.structuredContent.classifications[0]!.category).toBe('greeting');
@@ -33,7 +47,12 @@ describe('intelligence_classify_messages', () => {
     container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake');
     const T = classifyMessages;
     const t = new T(
-      { name: 'intelligence_classify_messages', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'intelligence_classify_messages',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'intelligence_classify_messages', enabled: true },
     );
     const requestSampling = vi.fn();
@@ -49,7 +68,12 @@ describe('intelligence_classify_messages', () => {
     container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake');
     const T = classifyMessages;
     const t = new T(
-      { name: 'intelligence_classify_messages', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'intelligence_classify_messages',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'intelligence_classify_messages', enabled: true },
     );
     const requestSampling = vi.fn().mockResolvedValue({
@@ -59,7 +83,10 @@ describe('intelligence_classify_messages', () => {
     const r = (await t.run(
       { channel_id: '112233445566778899', categories: ['a', 'b'], limit: 10 },
       { signal: new AbortController().signal, samplingSupported: true, requestSampling } as never,
-    )) as { isError: boolean; structuredContent: { classifications: unknown[]; sampling_used: boolean; count: number } };
+    )) as {
+      isError: boolean;
+      structuredContent: { classifications: unknown[]; sampling_used: boolean; count: number };
+    };
     expect(r.structuredContent.classifications).toEqual([]);
     expect(r.structuredContent.count).toBe(0);
     expect(r.structuredContent.sampling_used).toBe(true);

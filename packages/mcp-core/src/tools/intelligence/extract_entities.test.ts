@@ -1,15 +1,22 @@
-import { describe, it, expect, vi } from 'vitest';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
+import { describe, expect, it, vi } from 'vitest';
 import extractEntities from './extract_entities.js';
 import '../../container.js';
 
 describe('intelligence_extract_entities', () => {
   it('returns extracted entities when sampling is supported', async () => {
-    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken(
+      'fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    );
     const T = extractEntities;
     const t = new T(
-      { name: 'intelligence_extract_entities', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'intelligence_extract_entities',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'intelligence_extract_entities', enabled: true },
     );
     const requestSampling = vi.fn().mockResolvedValue({
@@ -22,7 +29,14 @@ describe('intelligence_extract_entities', () => {
     const r = (await t.run(
       { channel_id: '112233445566778899', limit: 50, entity_types: ['decision', 'action_item'] },
       { signal: new AbortController().signal, samplingSupported: true, requestSampling } as never,
-    )) as { isError: boolean; structuredContent: { entities: Array<{ type: string; value: string }>; count: number; sampling_used: boolean } };
+    )) as {
+      isError: boolean;
+      structuredContent: {
+        entities: Array<{ type: string; value: string }>;
+        count: number;
+        sampling_used: boolean;
+      };
+    };
     expect(r.isError).toBe(false);
     expect(r.structuredContent.count).toBe(2);
     expect(r.structuredContent.entities[0]!.type).toBe('decision');
@@ -34,7 +48,12 @@ describe('intelligence_extract_entities', () => {
     container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake');
     const T = extractEntities;
     const t = new T(
-      { name: 'intelligence_extract_entities', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'intelligence_extract_entities',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'intelligence_extract_entities', enabled: true },
     );
     const requestSampling = vi.fn();
@@ -50,7 +69,12 @@ describe('intelligence_extract_entities', () => {
     container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake');
     const T = extractEntities;
     const t = new T(
-      { name: 'intelligence_extract_entities', path: 'inline', root: 'inline', store: null as never },
+      {
+        name: 'intelligence_extract_entities',
+        path: 'inline',
+        root: 'inline',
+        store: null as never,
+      },
       { name: 'intelligence_extract_entities', enabled: true },
     );
     const requestSampling = vi.fn().mockResolvedValue({
@@ -60,7 +84,10 @@ describe('intelligence_extract_entities', () => {
     const r = (await t.run(
       { channel_id: '112233445566778899', limit: 50, entity_types: ['decision'] },
       { signal: new AbortController().signal, samplingSupported: true, requestSampling } as never,
-    )) as { isError: boolean; structuredContent: { entities: unknown[]; count: number; sampling_used: boolean } };
+    )) as {
+      isError: boolean;
+      structuredContent: { entities: unknown[]; count: number; sampling_used: boolean };
+    };
     expect(r.structuredContent.entities).toEqual([]);
     expect(r.structuredContent.count).toBe(0);
     expect(r.structuredContent.sampling_used).toBe(true);

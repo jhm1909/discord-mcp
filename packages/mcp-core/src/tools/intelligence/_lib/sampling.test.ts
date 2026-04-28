@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { buildSamplingPrompt, parseLLMJsonResponse, fallbackData } from './sampling.js';
+import { describe, expect, it } from 'vitest';
+import { buildSamplingPrompt, fallbackData, parseLLMJsonResponse } from './sampling.js';
 
 describe('buildSamplingPrompt', () => {
   it('produces a single user message with the system prompt prepended', () => {

@@ -1,11 +1,16 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId, MessageId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId, MessageId } from '../_lib/snowflake.js';
 import { wrapMessages } from '../_lib/untrusted.js';
-import { buildSamplingPrompt, parseLLMJsonResponse, fallbackData, type SamplingMessage } from './_lib/sampling.js';
+import {
+  buildSamplingPrompt,
+  fallbackData,
+  parseLLMJsonResponse,
+  type SamplingMessage,
+} from './_lib/sampling.js';
 
 interface RawDiscordMessage {
   id: string;
@@ -44,7 +49,13 @@ export default defineTool({
       .min(2)
       .max(20)
       .describe('Category labels (2-20)'),
-    limit: z.number().int().min(5).max(100).default(25).describe('Messages to classify (5-100, default 25)'),
+    limit: z
+      .number()
+      .int()
+      .min(5)
+      .max(100)
+      .default(25)
+      .describe('Messages to classify (5-100, default 25)'),
   },
   outputSchema: {
     classifications: z.array(
@@ -58,7 +69,12 @@ export default defineTool({
     count: z.number(),
     sampling_used: z.boolean(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args, ctx) => {
     const c = ctx as RunCtxWithSampling;
@@ -86,7 +102,11 @@ export default defineTool({
     }
 
     const wrapped = wrapMessages(
-      raw.map((m) => ({ id: m.id, author: m.author.global_name ?? m.author.username, content: m.content })),
+      raw.map((m) => ({
+        id: m.id,
+        author: m.author.global_name ?? m.author.username,
+        content: m.content,
+      })),
       args.channel_id,
     );
     const messages = buildSamplingPrompt({

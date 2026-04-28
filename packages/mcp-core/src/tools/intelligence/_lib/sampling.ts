@@ -22,9 +22,7 @@ export function buildSamplingPrompt(opts: BuildPromptOpts): SamplingMessage[] {
   return [{ role: 'user', content: { type: 'text', text } }];
 }
 
-export type ParseLLMResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; raw: string; error: string };
+export type ParseLLMResult<T> = { ok: true; data: T } | { ok: false; raw: string; error: string };
 
 export function parseLLMJsonResponse<T>(raw: string): ParseLLMResult<T> {
   const stripped = raw

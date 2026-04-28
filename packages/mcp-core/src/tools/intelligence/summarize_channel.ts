@@ -1,11 +1,16 @@
-import { z } from 'zod';
-import { Routes } from 'discord-api-types/v10';
 import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
 import { defineTool } from '../_lib/defineTool.js';
-import { ChannelId } from '../_lib/snowflake.js';
 import { dualResult } from '../_lib/response.js';
+import { ChannelId } from '../_lib/snowflake.js';
 import { wrapMessages } from '../_lib/untrusted.js';
-import { buildSamplingPrompt, parseLLMJsonResponse, fallbackData, type SamplingMessage } from './_lib/sampling.js';
+import {
+  buildSamplingPrompt,
+  fallbackData,
+  parseLLMJsonResponse,
+  type SamplingMessage,
+} from './_lib/sampling.js';
 
 interface RawDiscordMessage {
   id: string;
@@ -33,10 +38,16 @@ export default defineTool({
   name: 'intelligence_summarize_channel',
   category: 'intelligence',
   description:
-    "**Purpose**: Summarize recent messages in a Discord channel using the client's LLM (MCP sampling).\n\n**When to use**: \"what was discussed in #X?\", \"catch me up\", \"TL;DR\".\n\n**Returns**: `{summary, key_topics, action_items, message_count_used, sampling_used}`. Server ships ZERO API keys — uses your client's model.\n\n**Fallback**: when client lacks sampling support (Claude Desktop, Cursor, ChatGPT, Cline, Continue, Windsurf), returns raw messages + `_meta.fallback: \"host_llm_should_process\"` so the host LLM can summarize locally.",
+    '**Purpose**: Summarize recent messages in a Discord channel using the client\'s LLM (MCP sampling).\n\n**When to use**: "what was discussed in #X?", "catch me up", "TL;DR".\n\n**Returns**: `{summary, key_topics, action_items, message_count_used, sampling_used}`. Server ships ZERO API keys — uses your client\'s model.\n\n**Fallback**: when client lacks sampling support (Claude Desktop, Cursor, ChatGPT, Cline, Continue, Windsurf), returns raw messages + `_meta.fallback: "host_llm_should_process"` so the host LLM can summarize locally.',
   inputSchema: {
     channel_id: ChannelId.describe('Channel to summarize'),
-    limit: z.number().int().min(10).max(100).default(50).describe('Messages to consider (10-100, default 50)'),
+    limit: z
+      .number()
+      .int()
+      .min(10)
+      .max(100)
+      .default(50)
+      .describe('Messages to consider (10-100, default 50)'),
     style: z.enum(['bullet', 'paragraph', 'executive']).default('bullet').describe('Summary style'),
   },
   outputSchema: {
@@ -46,7 +57,12 @@ export default defineTool({
     message_count_used: z.number(),
     sampling_used: z.boolean(),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   idempotent: true,
   handler: async (args, ctx) => {
     const c = ctx as RunCtxWithSampling;
@@ -68,11 +84,18 @@ export default defineTool({
         },
         'summarize',
       );
-      return dualResult({ text: '[sampling unavailable — host LLM should summarize from raw_messages]', data });
+      return dualResult({
+        text: '[sampling unavailable — host LLM should summarize from raw_messages]',
+        data,
+      });
     }
 
     const wrapped = wrapMessages(
-      raw.map((m) => ({ id: m.id, author: m.author.global_name ?? m.author.username, content: m.content })),
+      raw.map((m) => ({
+        id: m.id,
+        author: m.author.global_name ?? m.author.username,
+        content: m.content,
+      })),
       args.channel_id,
     );
     const messages = buildSamplingPrompt({

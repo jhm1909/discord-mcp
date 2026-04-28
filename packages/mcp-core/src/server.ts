@@ -38,6 +38,11 @@ import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-templa
 import ComponentsV2Validate from './tools/components-v2/validate.js';
 import EventsList from './tools/events/list.js';
 import GuildGet from './tools/guild/get.js';
+import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
+import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
+import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
+import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
+import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
 import MembersGet from './tools/members/get.js';
 import MembersSearch from './tools/members/search.js';
 import MessagesDelete from './tools/messages/delete.js';
@@ -48,11 +53,6 @@ import McpPipeline from './tools/meta/pipeline.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
-import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
-import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
-import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
-import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
-import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -236,10 +236,15 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   });
 
   // Lazy snapshot of client capabilities (populated after MCP initialize completes).
-  let cachedClientCaps: { sampling?: object; elicitation?: object; experimental?: Record<string, unknown> } | null = null;
+  let cachedClientCaps: {
+    sampling?: object;
+    elicitation?: object;
+    experimental?: Record<string, unknown>;
+  } | null = null;
   const getClientCaps = (): typeof cachedClientCaps => {
     if (cachedClientCaps !== null) return cachedClientCaps;
-    const fn = (server as unknown as { getClientCapabilities?: () => unknown }).getClientCapabilities;
+    const fn = (server as unknown as { getClientCapabilities?: () => unknown })
+      .getClientCapabilities;
     if (typeof fn !== 'function') return null;
     const result = fn.call(server) as typeof cachedClientCaps;
     if (result !== null && result !== undefined) {
@@ -272,7 +277,9 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   }
 
   const requestSampling = async (params: SamplingParams): Promise<SamplingResult> => {
-    const fn = (server as unknown as { createMessage?: (p: SamplingParams) => Promise<SamplingResult> }).createMessage;
+    const fn = (
+      server as unknown as { createMessage?: (p: SamplingParams) => Promise<SamplingResult> }
+    ).createMessage;
     if (typeof fn !== 'function') {
       throw new Error('SDK does not expose createMessage — sampling unavailable');
     }
