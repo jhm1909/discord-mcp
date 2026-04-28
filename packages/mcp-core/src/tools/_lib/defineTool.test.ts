@@ -47,4 +47,29 @@ describe('defineTool', () => {
       }),
     ).toThrow(/snake_case/);
   });
+
+  it('passes category, preconditions, and scopes from config to subclass', async () => {
+    const Tool = defineTool({
+      name: 'with_meta',
+      description: 'meta',
+      category: 'messages',
+      preconditions: ['category_enabled'] as const,
+      scopes: ['write'] as const,
+      inputSchema: {},
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+      handler: async () => ({}),
+    });
+    const t = new Tool(
+      { name: 'with_meta', path: 'memory', root: 'memory', store: null as never },
+      { name: 'with_meta', enabled: true },
+    );
+    expect(t.category).toBe('messages');
+    expect(t.preconditions).toEqual(['category_enabled']);
+    expect(t.scopes).toEqual(['write']);
+  });
 });

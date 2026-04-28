@@ -6,6 +6,12 @@ const TOOL_NAME_RE = /^[a-z][a-z0-9_]{0,63}$/;
 export interface ToolDefinition<I extends Record<string, z.ZodTypeAny>, O> {
   name: string;
   description: string;
+  /** Tool category (e.g. "messages", "channels", "intelligence"). Default "misc". */
+  category?: string;
+  /** Precondition identifiers to run before the handler. */
+  preconditions?: readonly string[];
+  /** Required MCP scopes (informational v1). */
+  scopes?: readonly string[];
   inputSchema: I;
   outputSchema?: Record<string, z.ZodTypeAny>;
   annotations: ToolAnnotations;
@@ -29,6 +35,9 @@ export function defineTool<I extends Record<string, z.ZodTypeAny>, O>(
     // avoid overriding the base undefined with an explicit undefined.
     public override readonly annotations = def.annotations;
     public override readonly idempotent = def.idempotent ?? false;
+    public override readonly category = def.category ?? 'misc';
+    public override readonly preconditions = def.preconditions ?? [];
+    public override readonly scopes = def.scopes ?? [];
 
     constructor(...args: ConstructorParameters<typeof Tool>) {
       super(...args);
