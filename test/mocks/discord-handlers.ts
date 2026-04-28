@@ -95,6 +95,23 @@ export const handlers = [
       { id: 'r2', name: 'Moderator', color: 16711680, position: 5, permissions: '8', mentionable: true, hoist: true, managed: false },
     ]);
   }),
+  // events_list — must come BEFORE guilds/:guildId to avoid prefix match
+  http.get(`${DISCORD_API}/guilds/:guildId/scheduled-events`, async () => {
+    return HttpResponse.json([
+      {
+        id: 'ev1',
+        guild_id: '999000999000999000',
+        name: 'Office Hours',
+        scheduled_start_time: '2026-05-01T15:00:00Z',
+        scheduled_end_time: '2026-05-01T16:00:00Z',
+        status: 1,
+        entity_type: 2,
+        channel_id: 'voice1',
+        description: null,
+        creator_id: 'u1',
+      },
+    ]);
+  }),
   // guild_get
   http.get(`${DISCORD_API}/guilds/:guildId`, async ({ params }) => {
     return HttpResponse.json({
