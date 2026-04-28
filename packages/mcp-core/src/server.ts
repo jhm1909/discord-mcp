@@ -61,6 +61,11 @@ import MessagesSearchRecent from './tools/messages/search_recent.js';
 import MessagesSend from './tools/messages/send.js';
 import MessagesUnpin from './tools/messages/unpin.js';
 import McpPipeline from './tools/meta/pipeline.js';
+import ReactionsCreate from './tools/reactions/create.js';
+import ReactionsDeleteAll from './tools/reactions/delete_all.js';
+import ReactionsDeleteOwn from './tools/reactions/delete_own.js';
+import ReactionsDeleteUser from './tools/reactions/delete_user.js';
+import ReactionsList from './tools/reactions/list.js';
 import RolesList from './tools/roles/list.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
@@ -137,6 +142,26 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'messages_search_recent',
     piece: MessagesSearchRecent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_create',
+    piece: ReactionsCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_delete_own',
+    piece: ReactionsDeleteOwn as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_delete_user',
+    piece: ReactionsDeleteUser as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_list',
+    piece: ReactionsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_delete_all',
+    piece: ReactionsDeleteAll as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'channels_list',
