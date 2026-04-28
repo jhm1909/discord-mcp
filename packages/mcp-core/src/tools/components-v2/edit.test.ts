@@ -1,0 +1,23 @@
+import { describe, it, expect } from 'vitest';
+import { REST } from '@discordjs/rest';
+import { container } from '@sapphire/pieces';
+import componentsV2Edit from './edit.js';
+import '../../container.js';
+
+describe('components_v2_edit', () => {
+  it('edits with V2 flag set', async () => {
+    container.rest = new REST({ version: '10', makeRequest: fetch }).setToken('fake-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    const T = componentsV2Edit;
+    const t = new T({ name: 'components_v2_edit', path: 'inline', root: 'inline', store: null as never }, { name: 'components_v2_edit', enabled: true });
+    const r = (await t.run(
+      {
+        channel_id: '111122223333444455',
+        message_id: '999000999000999000',
+        components: [{ type: 10, content: 'updated' }],
+      },
+      { signal: new AbortController().signal },
+    )) as { isError: boolean; structuredContent: { message_id: string; edited_timestamp: string } };
+    expect(r.isError).toBe(false);
+    expect(r.structuredContent.message_id).toBe('999000999000999000');
+  });
+});
