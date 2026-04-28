@@ -1,0 +1,22 @@
+{
+  "name": "poll_results",
+  "description": "Poll question + bar-chart-as-text + winner highlight",
+  "variables": ["question", "bars_text", "winner"],
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 16776960,
+      "components": [
+        {
+          "type": 9,
+          "components": [
+            { "type": 10, "content": "## Poll: {{question}}" },
+            { "type": 10, "content": "{{bars_text}}" }
+          ]
+        },
+        { "type": 14, "divider": true, "spacing": 1 },
+        { "type": 10, "content": "**Winner**: {{winner}}" }
+      ]
+    }
+  ]
+}

@@ -81,9 +81,9 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/channel_id/);
   });
 
-  it('lists 15 tools after auto-discovery (Plan 0+1+2 cumulative)', async () => {
+  it('lists 23 tools after auto-discovery (Plan 0+1+2+3D+3E+3F cumulative)', async () => {
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(15);
+    expect(tools.length).toBe(23);
     const names = new Set(tools.map((t) => t.name));
     for (const expected of [
       'messages_send',
@@ -101,6 +101,14 @@ describe('MCP protocol contract', () => {
       'events_list',
       'commands_list_guild',
       'users_get_current',
+      'components_v2_build_container',
+      'components_v2_build_section',
+      'components_v2_build_media_gallery',
+      'components_v2_validate',
+      'components_v2_preview',
+      'components_v2_send',
+      'components_v2_edit',
+      'components_v2_send_from_template',
     ]) {
       expect(names.has(expected)).toBe(true);
     }
@@ -113,5 +121,22 @@ describe('MCP protocol contract', () => {
     });
     expect(r.isError).toBe(true);
     expect(r.structuredContent).toMatchObject({ code: 'DRY_RUN_PREVIEW', tool: 'messages_delete' });
+  });
+
+  it('lists 6 V2 resources via MCP resources/list', async () => {
+    const { resources } = await client.listResources();
+    expect(resources.length).toBe(6);
+    expect(resources.map((r) => r.uri)).toContain('discord://components-v2/templates/announcement');
+    expect(resources.map((r) => r.uri)).toContain('discord://components-v2/schema');
+  });
+
+  it('reads V2 announcement template via resources/read', async () => {
+    const r = await client.readResource({ uri: 'discord://components-v2/templates/announcement' });
+    expect(r.contents).toHaveLength(1);
+    const c = r.contents[0]!;
+    expect(c.mimeType).toBe('application/json');
+    const text = c.text as string;
+    const parsed = JSON.parse(text);
+    expect(parsed.name).toBe('announcement');
   });
 });

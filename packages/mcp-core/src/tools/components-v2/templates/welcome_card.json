@@ -1,0 +1,38 @@
+{
+  "name": "welcome_card",
+  "description": "Welcome new member with avatar thumbnail + role-claim button",
+  "variables": ["username", "avatar_url", "role_id_member", "rules_channel_id"],
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 16711935,
+      "components": [
+        {
+          "type": 9,
+          "components": [
+            { "type": 10, "content": "## Welcome, {{username}}!" },
+            {
+              "type": 10,
+              "content": "Read the rules in <#{{rules_channel_id}}> then claim your role below."
+            }
+          ],
+          "accessory": {
+            "type": 11,
+            "media": { "url": "{{avatar_url}}" }
+          }
+        },
+        {
+          "type": 1,
+          "components": [
+            {
+              "type": 2,
+              "style": 3,
+              "label": "Claim Member",
+              "custom_id": "welcome_claim_{{role_id_member}}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

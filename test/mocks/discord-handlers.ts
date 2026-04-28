@@ -5,15 +5,22 @@ const DISCORD_API = 'https://discord.com/api/v10';
 export const handlers = [
   // Default: messages_send happy path
   http.post(`${DISCORD_API}/channels/:channelId/messages`, async ({ params, request }) => {
-    const body = (await request.json()) as { content?: string; tts?: boolean };
+    const body = (await request.json()) as {
+      content?: string;
+      tts?: boolean;
+      flags?: number;
+      components?: unknown[];
+    };
     return HttpResponse.json({
       id: '999000999000999000',
-      channel_id: params.channelId,
+      channel_id: params['channelId'],
       content: body.content ?? '',
       tts: body.tts ?? false,
       timestamp: '2026-04-28T12:00:00.000000+00:00',
       author: { id: '111', username: 'TestBot', global_name: 'TestBot', bot: true },
       type: 0,
+      ...(body.flags !== undefined && { flags: body.flags }),
+      ...(body.components !== undefined && { components: body.components }),
     });
   }),
   // messages_read
@@ -214,12 +221,18 @@ export const handlers = [
   http.patch(
     `${DISCORD_API}/channels/:channelId/messages/:messageId`,
     async ({ params, request }) => {
-      const body = (await request.json()) as { content?: string };
+      const body = (await request.json()) as {
+        content?: string;
+        flags?: number;
+        components?: unknown[];
+      };
       return HttpResponse.json({
         id: params['messageId'],
         channel_id: params['channelId'],
         content: body.content ?? '',
         edited_timestamp: '2026-04-28T13:00:00.000000+00:00',
+        ...(body.flags !== undefined && { flags: body.flags }),
+        ...(body.components !== undefined && { components: body.components }),
       });
     },
   ),
