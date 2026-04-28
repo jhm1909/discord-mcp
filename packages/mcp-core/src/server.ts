@@ -23,6 +23,7 @@ import { ToolStore } from './stores/ToolStore.js';
 import AuditLogGet from './tools/audit_log/get.js';
 import ChannelsGet from './tools/channels/get.js';
 import ComponentsV2BuildContainer from './tools/components-v2/build_container.js';
+import ComponentsV2BuildSection from './tools/components-v2/build_section.js';
 import ChannelsList from './tools/channels/list.js';
 import CommandsListGuild from './tools/commands/list_guild.js';
 import EventsList from './tools/events/list.js';
@@ -111,6 +112,10 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'components_v2_build_container',
     piece: ComponentsV2BuildContainer as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'components_v2_build_section',
+    piece: ComponentsV2BuildSection as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
