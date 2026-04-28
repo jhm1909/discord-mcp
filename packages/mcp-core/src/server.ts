@@ -39,6 +39,11 @@ import ComponentsV2PreviewTool from './tools/components-v2/preview-tool.js';
 import ComponentsV2Send from './tools/components-v2/send.js';
 import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-template.js';
 import ComponentsV2Validate from './tools/components-v2/validate.js';
+import EmojisCreate from './tools/emojis/create.js';
+import EmojisDelete from './tools/emojis/delete.js';
+import EmojisGet from './tools/emojis/get.js';
+import EmojisListGuild from './tools/emojis/list_guild.js';
+import EmojisModify from './tools/emojis/modify.js';
 import EventsList from './tools/events/list.js';
 import GuildGet from './tools/guild/get.js';
 import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
@@ -162,6 +167,26 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'reactions_delete_all',
     piece: ReactionsDeleteAll as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_list_guild',
+    piece: EmojisListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_get',
+    piece: EmojisGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_create',
+    piece: EmojisCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_modify',
+    piece: EmojisModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_delete',
+    piece: EmojisDelete as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'channels_list',
