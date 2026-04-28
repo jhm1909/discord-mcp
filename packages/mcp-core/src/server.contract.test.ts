@@ -81,9 +81,9 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/channel_id/);
   });
 
-  it('lists 28 tools after auto-discovery (Plan 0+1+2+3+4+5 cumulative)', async () => {
+  it('lists 29 tools after auto-discovery (Plan 0+1+2+3+4+5 cumulative)', async () => {
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(28);
+    expect(tools.length).toBe(29);
     const names = new Set(tools.map((t) => t.name));
     for (const expected of [
       'messages_send',
@@ -114,9 +114,21 @@ describe('MCP protocol contract', () => {
       'intelligence_classify_messages',
       'intelligence_draft_response',
       'intelligence_moderate_content',
+      'intelligence_extract_entities',
     ]) {
       expect(names.has(expected)).toBe(true);
     }
+  });
+
+  it('intelligence_summarize_channel returns fallback when client lacks sampling', async () => {
+    const r = await client.callTool({
+      name: 'intelligence_summarize_channel',
+      arguments: { channel_id: '112233445566778899', limit: 10, style: 'bullet' },
+    });
+    expect(r.isError).toBe(false);
+    expect(r.structuredContent).toMatchObject({
+      _meta: expect.objectContaining({ fallback: 'host_llm_should_process' }),
+    });
   });
 
   it('mcp_pipeline executes a 2-step pipeline end-to-end', async () => {

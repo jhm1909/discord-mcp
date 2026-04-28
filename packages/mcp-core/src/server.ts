@@ -52,6 +52,7 @@ import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel
 import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
 import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
 import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
+import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -175,6 +176,10 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'intelligence_moderate_content',
     piece: IntelligenceModerateContent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'intelligence_extract_entities',
+    piece: IntelligenceExtractEntities as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
