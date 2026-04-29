@@ -32,6 +32,11 @@ import AppEmojisDelete from './tools/app_emojis/delete.js';
 import AppEmojisGet from './tools/app_emojis/get.js';
 import AppEmojisList from './tools/app_emojis/list.js';
 import AppEmojisModify from './tools/app_emojis/modify.js';
+import ApplicationGetActivityInstance from './tools/application/get_activity_instance.js';
+import ApplicationGetCurrent from './tools/application/get_current.js';
+import ApplicationGetRoleConnectionMetadata from './tools/application/get_role_connection_metadata.js';
+import ApplicationModifyCurrent from './tools/application/modify_current.js';
+import ApplicationModifyRoleConnectionMetadata from './tools/application/modify_role_connection_metadata.js';
 import AuditLogGet from './tools/audit_log/get.js';
 import AutomodCreateRule from './tools/automod/create_rule.js';
 import AutomodDeleteRule from './tools/automod/delete_rule.js';
@@ -839,6 +844,26 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'interactions_delete_followup',
     piece: InteractionsDeleteFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_get_current',
+    piece: ApplicationGetCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_modify_current',
+    piece: ApplicationModifyCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_get_role_connection_metadata',
+    piece: ApplicationGetRoleConnectionMetadata as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_modify_role_connection_metadata',
+    piece: ApplicationModifyRoleConnectionMetadata as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_get_activity_instance',
+    piece: ApplicationGetActivityInstance as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
