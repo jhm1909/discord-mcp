@@ -193,6 +193,9 @@ import UsersGetCurrent from './tools/users/get_current.js';
 import UsersLeaveGuild from './tools/users/leave_guild.js';
 import UsersListCurrentUserGuilds from './tools/users/list_current_user_guilds.js';
 import UsersModifyCurrent from './tools/users/modify_current.js';
+import VoiceGetCurrentUserState from './tools/voice/get_current_user_state.js';
+import VoiceGetUserState from './tools/voice/get_user_state.js';
+import VoiceListRegions from './tools/voice/list_regions.js';
 import WebhooksCreate from './tools/webhooks/create.js';
 import WebhooksDelete from './tools/webhooks/delete.js';
 import WebhooksDeleteMessage from './tools/webhooks/delete_message.js';
@@ -927,6 +930,18 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     piece: PollsGetVoters as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'polls_end', piece: PollsEnd as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'voice_list_regions',
+    piece: VoiceListRegions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'voice_get_current_user_state',
+    piece: VoiceGetCurrentUserState as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'voice_get_user_state',
+    piece: VoiceGetUserState as unknown as ConcreteTool,
+  });
   await toolStore.loadAll();
 
   preconditionStore.set(
