@@ -161,6 +161,13 @@ import RolesDelete from './tools/roles/delete.js';
 import RolesList from './tools/roles/list.js';
 import RolesModify from './tools/roles/modify.js';
 import RolesModifyPositions from './tools/roles/modify_positions.js';
+import SoundboardCreateGuildSound from './tools/soundboard/create_guild_sound.js';
+import SoundboardDeleteGuildSound from './tools/soundboard/delete_guild_sound.js';
+import SoundboardGetGuildSound from './tools/soundboard/get_guild_sound.js';
+import SoundboardListDefaultSounds from './tools/soundboard/list_default_sounds.js';
+import SoundboardListGuildSounds from './tools/soundboard/list_guild_sounds.js';
+import SoundboardModifyGuildSound from './tools/soundboard/modify_guild_sound.js';
+import SoundboardSendSound from './tools/soundboard/send_sound.js';
 import StageInstancesCreate from './tools/stage_instances/create.js';
 import StageInstancesDelete from './tools/stage_instances/delete.js';
 import StageInstancesGet from './tools/stage_instances/get.js';
@@ -884,6 +891,34 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'stage_instances_delete',
     piece: StageInstancesDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_list_default_sounds',
+    piece: SoundboardListDefaultSounds as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_list_guild_sounds',
+    piece: SoundboardListGuildSounds as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_get_guild_sound',
+    piece: SoundboardGetGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_create_guild_sound',
+    piece: SoundboardCreateGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_modify_guild_sound',
+    piece: SoundboardModifyGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_delete_guild_sound',
+    piece: SoundboardDeleteGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_send_sound',
+    piece: SoundboardSendSound as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
