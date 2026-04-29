@@ -107,6 +107,14 @@ import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
 import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
 import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
 import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
+import InteractionsCreateFollowup from './tools/interactions/create_followup.js';
+import InteractionsCreateResponse from './tools/interactions/create_response.js';
+import InteractionsDeleteFollowup from './tools/interactions/delete_followup.js';
+import InteractionsDeleteOriginalResponse from './tools/interactions/delete_original_response.js';
+import InteractionsEditFollowup from './tools/interactions/edit_followup.js';
+import InteractionsEditOriginalResponse from './tools/interactions/edit_original_response.js';
+import InteractionsGetFollowup from './tools/interactions/get_followup.js';
+import InteractionsGetOriginalResponse from './tools/interactions/get_original_response.js';
 import InvitesCreateChannel from './tools/invites/create_channel.js';
 import InvitesDelete from './tools/invites/delete.js';
 import InvitesGet from './tools/invites/get.js';
@@ -799,6 +807,38 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'intelligence_extract_entities',
     piece: IntelligenceExtractEntities as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_create_response',
+    piece: InteractionsCreateResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_get_original_response',
+    piece: InteractionsGetOriginalResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_edit_original_response',
+    piece: InteractionsEditOriginalResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_delete_original_response',
+    piece: InteractionsDeleteOriginalResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_create_followup',
+    piece: InteractionsCreateFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_get_followup',
+    piece: InteractionsGetFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_edit_followup',
+    piece: InteractionsEditFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_delete_followup',
+    piece: InteractionsDeleteFollowup as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
