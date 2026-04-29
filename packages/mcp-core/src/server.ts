@@ -66,7 +66,12 @@ import EmojisDelete from './tools/emojis/delete.js';
 import EmojisGet from './tools/emojis/get.js';
 import EmojisListGuild from './tools/emojis/list_guild.js';
 import EmojisModify from './tools/emojis/modify.js';
+import EventsCreate from './tools/events/create.js';
+import EventsDelete from './tools/events/delete.js';
+import EventsGet from './tools/events/get.js';
 import EventsList from './tools/events/list.js';
+import EventsListUsers from './tools/events/list_users.js';
+import EventsModify from './tools/events/modify.js';
 import GuildBeginPrune from './tools/guild/begin_prune.js';
 import GuildDeleteIntegration from './tools/guild/delete_integration.js';
 import GuildGet from './tools/guild/get.js';
@@ -622,6 +627,23 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     piece: WebhooksDeleteMessage as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'events_list', piece: EventsList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'events_create',
+    piece: EventsCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'events_get', piece: EventsGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'events_modify',
+    piece: EventsModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'events_delete',
+    piece: EventsDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'events_list_users',
+    piece: EventsListUsers as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({
     name: 'commands_list_guild',
     piece: CommandsListGuild as unknown as ConcreteTool,
