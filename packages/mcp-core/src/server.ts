@@ -72,8 +72,20 @@ import InvitesCreateChannel from './tools/invites/create_channel.js';
 import InvitesDelete from './tools/invites/delete.js';
 import InvitesGet from './tools/invites/get.js';
 import InvitesListChannel from './tools/invites/list_channel.js';
+import MembersAddRole from './tools/members/add_role.js';
+import MembersBan from './tools/members/ban.js';
+import MembersBulkBan from './tools/members/bulk_ban.js';
 import MembersGet from './tools/members/get.js';
+import MembersGetBan from './tools/members/get_ban.js';
+import MembersGetCurrentUser from './tools/members/get_current_user.js';
+import MembersKick from './tools/members/kick.js';
+import MembersList from './tools/members/list.js';
+import MembersListBans from './tools/members/list_bans.js';
+import MembersModify from './tools/members/modify.js';
+import MembersModifyCurrent from './tools/members/modify_current.js';
+import MembersRemoveRole from './tools/members/remove_role.js';
 import MembersSearch from './tools/members/search.js';
+import MembersUnban from './tools/members/unban.js';
 import MessagesBulkDelete from './tools/messages/bulk_delete.js';
 import MessagesCreateThread from './tools/messages/create_thread.js';
 import MessagesCrosspost from './tools/messages/crosspost.js';
@@ -370,6 +382,54 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'members_search',
     piece: MembersSearch as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_list',
+    piece: MembersList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_modify',
+    piece: MembersModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_modify_current',
+    piece: MembersModifyCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_add_role',
+    piece: MembersAddRole as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_remove_role',
+    piece: MembersRemoveRole as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_kick',
+    piece: MembersKick as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_ban',
+    piece: MembersBan as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_unban',
+    piece: MembersUnban as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_list_bans',
+    piece: MembersListBans as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_get_ban',
+    piece: MembersGetBan as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_bulk_ban',
+    piece: MembersBulkBan as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_get_current_user',
+    piece: MembersGetCurrentUser as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'roles_list', piece: RolesList as unknown as ConcreteTool });
   await toolStore.loadPiece({ name: 'guild_get', piece: GuildGet as unknown as ConcreteTool });
