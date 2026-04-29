@@ -151,6 +151,14 @@ import MessagesSearchRecent from './tools/messages/search_recent.js';
 import MessagesSend from './tools/messages/send.js';
 import MessagesUnpin from './tools/messages/unpin.js';
 import McpPipeline from './tools/meta/pipeline.js';
+import EntitlementsConsume from './tools/monetization/entitlements_consume.js';
+import EntitlementsCreateTest from './tools/monetization/entitlements_create_test.js';
+import EntitlementsDeleteTest from './tools/monetization/entitlements_delete_test.js';
+import EntitlementsGet from './tools/monetization/entitlements_get.js';
+import EntitlementsList from './tools/monetization/entitlements_list.js';
+import SkusList from './tools/monetization/skus_list.js';
+import SubscriptionsGet from './tools/monetization/subscriptions_get.js';
+import SubscriptionsList from './tools/monetization/subscriptions_list.js';
 import OnboardingGet from './tools/onboarding/get.js';
 import OnboardingModify from './tools/onboarding/modify.js';
 import PollsEnd from './tools/polls/end.js';
@@ -951,6 +959,35 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'onboarding_modify',
     piece: OnboardingModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'skus_list', piece: SkusList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'subscriptions_list',
+    piece: SubscriptionsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'subscriptions_get',
+    piece: SubscriptionsGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_list',
+    piece: EntitlementsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_get',
+    piece: EntitlementsGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_consume',
+    piece: EntitlementsConsume as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_create_test',
+    piece: EntitlementsCreateTest as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_delete_test',
+    piece: EntitlementsDeleteTest as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
