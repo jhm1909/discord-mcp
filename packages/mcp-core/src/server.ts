@@ -104,7 +104,11 @@ import ReactionsDeleteAll from './tools/reactions/delete_all.js';
 import ReactionsDeleteOwn from './tools/reactions/delete_own.js';
 import ReactionsDeleteUser from './tools/reactions/delete_user.js';
 import ReactionsList from './tools/reactions/list.js';
+import RolesCreate from './tools/roles/create.js';
+import RolesDelete from './tools/roles/delete.js';
 import RolesList from './tools/roles/list.js';
+import RolesModify from './tools/roles/modify.js';
+import RolesModifyPositions from './tools/roles/modify_positions.js';
 import StickersCreateGuildSticker from './tools/stickers/create_guild_sticker.js';
 import StickersDeleteGuildSticker from './tools/stickers/delete_guild_sticker.js';
 import StickersGet from './tools/stickers/get.js';
@@ -432,6 +436,22 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     piece: MembersGetCurrentUser as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'roles_list', piece: RolesList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'roles_create',
+    piece: RolesCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'roles_modify',
+    piece: RolesModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'roles_modify_positions',
+    piece: RolesModifyPositions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'roles_delete',
+    piece: RolesDelete as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({ name: 'guild_get', piece: GuildGet as unknown as ConcreteTool });
   await toolStore.loadPiece({
     name: 'audit_log_get',
