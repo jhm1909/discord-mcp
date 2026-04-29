@@ -143,7 +143,19 @@ import ThreadsLeave from './tools/threads/leave.js';
 import ThreadsListMembers from './tools/threads/list_members.js';
 import ThreadsRemoveMember from './tools/threads/remove_member.js';
 import UsersGetCurrent from './tools/users/get_current.js';
+import WebhooksCreate from './tools/webhooks/create.js';
+import WebhooksDelete from './tools/webhooks/delete.js';
+import WebhooksDeleteMessage from './tools/webhooks/delete_message.js';
+import WebhooksDeleteWithToken from './tools/webhooks/delete_with_token.js';
+import WebhooksEditMessage from './tools/webhooks/edit_message.js';
+import WebhooksExecute from './tools/webhooks/execute.js';
+import WebhooksGet from './tools/webhooks/get.js';
+import WebhooksGetMessage from './tools/webhooks/get_message.js';
+import WebhooksGetWithToken from './tools/webhooks/get_with_token.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
+import WebhooksListGuild from './tools/webhooks/list_guild.js';
+import WebhooksModify from './tools/webhooks/modify.js';
+import WebhooksModifyWithToken from './tools/webhooks/modify_with_token.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -560,6 +572,54 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'webhooks_list_channel',
     piece: WebhooksListChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_list_guild',
+    piece: WebhooksListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_create',
+    piece: WebhooksCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_get',
+    piece: WebhooksGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_get_with_token',
+    piece: WebhooksGetWithToken as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_modify',
+    piece: WebhooksModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_modify_with_token',
+    piece: WebhooksModifyWithToken as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_delete',
+    piece: WebhooksDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_delete_with_token',
+    piece: WebhooksDeleteWithToken as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_execute',
+    piece: WebhooksExecute as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_get_message',
+    piece: WebhooksGetMessage as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_edit_message',
+    piece: WebhooksEditMessage as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_delete_message',
+    piece: WebhooksDeleteMessage as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'events_list', piece: EventsList as unknown as ConcreteTool });
   await toolStore.loadPiece({

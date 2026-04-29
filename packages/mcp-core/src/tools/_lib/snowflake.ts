@@ -40,6 +40,15 @@ export const InviteCode = z
   .brand<'InviteCode'>()
   .describe('Discord invite code (base62, NOT a snowflake)');
 
+// Webhook tokens are long opaque secrets, NOT snowflakes. They live here in the
+// brand registry alongside other Discord identifiers for ergonomic imports.
+export const WebhookToken = z
+  .string()
+  .min(60)
+  .max(100)
+  .brand<'WebhookToken'>()
+  .describe('Discord webhook token (secret — treat as credential, do not log)');
+
 // Inferred branded types for compile-time safety:
 export type ChannelId = z.infer<typeof ChannelId>;
 export type GuildId = z.infer<typeof GuildId>;
