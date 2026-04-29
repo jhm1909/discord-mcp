@@ -67,7 +67,22 @@ import EmojisGet from './tools/emojis/get.js';
 import EmojisListGuild from './tools/emojis/list_guild.js';
 import EmojisModify from './tools/emojis/modify.js';
 import EventsList from './tools/events/list.js';
+import GuildBeginPrune from './tools/guild/begin_prune.js';
+import GuildDeleteIntegration from './tools/guild/delete_integration.js';
 import GuildGet from './tools/guild/get.js';
+import GuildGetPruneCount from './tools/guild/get_prune_count.js';
+import GuildGetVanityUrl from './tools/guild/get_vanity_url.js';
+import GuildGetWelcomeScreen from './tools/guild/get_welcome_screen.js';
+import GuildGetWidget from './tools/guild/get_widget.js';
+import GuildGetWidgetImageUrl from './tools/guild/get_widget_image_url.js';
+import GuildGetWidgetSettings from './tools/guild/get_widget_settings.js';
+import GuildListIntegrations from './tools/guild/list_integrations.js';
+import GuildListVoiceRegions from './tools/guild/list_voice_regions.js';
+import GuildModify from './tools/guild/modify.js';
+import GuildModifyCurrentVoiceState from './tools/guild/modify_current_voice_state.js';
+import GuildModifyUserVoiceState from './tools/guild/modify_user_voice_state.js';
+import GuildModifyWelcomeScreen from './tools/guild/modify_welcome_screen.js';
+import GuildModifyWidget from './tools/guild/modify_widget.js';
 import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
 import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
 import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
@@ -458,6 +473,66 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     piece: RolesDelete as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'guild_get', piece: GuildGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'guild_modify',
+    piece: GuildModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_list_voice_regions',
+    piece: GuildListVoiceRegions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_list_integrations',
+    piece: GuildListIntegrations as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_delete_integration',
+    piece: GuildDeleteIntegration as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_widget_settings',
+    piece: GuildGetWidgetSettings as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_widget',
+    piece: GuildModifyWidget as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_widget',
+    piece: GuildGetWidget as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_widget_image_url',
+    piece: GuildGetWidgetImageUrl as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_vanity_url',
+    piece: GuildGetVanityUrl as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_welcome_screen',
+    piece: GuildGetWelcomeScreen as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_welcome_screen',
+    piece: GuildModifyWelcomeScreen as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_prune_count',
+    piece: GuildGetPruneCount as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_begin_prune',
+    piece: GuildBeginPrune as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_user_voice_state',
+    piece: GuildModifyUserVoiceState as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_current_voice_state',
+    piece: GuildModifyCurrentVoiceState as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({
     name: 'audit_log_get',
     piece: AuditLogGet as unknown as ConcreteTool,
