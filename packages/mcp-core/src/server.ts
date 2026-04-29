@@ -161,6 +161,10 @@ import RolesDelete from './tools/roles/delete.js';
 import RolesList from './tools/roles/list.js';
 import RolesModify from './tools/roles/modify.js';
 import RolesModifyPositions from './tools/roles/modify_positions.js';
+import StageInstancesCreate from './tools/stage_instances/create.js';
+import StageInstancesDelete from './tools/stage_instances/delete.js';
+import StageInstancesGet from './tools/stage_instances/get.js';
+import StageInstancesModify from './tools/stage_instances/modify.js';
 import StickersCreateGuildSticker from './tools/stickers/create_guild_sticker.js';
 import StickersDeleteGuildSticker from './tools/stickers/delete_guild_sticker.js';
 import StickersGet from './tools/stickers/get.js';
@@ -864,6 +868,22 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'application_get_activity_instance',
     piece: ApplicationGetActivityInstance as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_create',
+    piece: StageInstancesCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_get',
+    piece: StageInstancesGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_modify',
+    piece: StageInstancesModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_delete',
+    piece: StageInstancesDelete as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 

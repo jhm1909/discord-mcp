@@ -81,9 +81,9 @@ describe('MCP protocol contract', () => {
     expect(text).toMatch(/channel_id/);
   });
 
-  it('lists 166 tools after auto-discovery (Plan 0+1+2+3+4+5 + Plan 7 A + B + C + D + E complete)', async () => {
+  it('lists 170 tools after auto-discovery (Plan 0+1+2+3+4+5 + Plan 7 A + B + C + D + E + F1 complete)', async () => {
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(166);
+    expect(tools.length).toBe(170);
     const names = new Set(tools.map((t) => t.name));
     for (const expected of [
       'messages_send',
