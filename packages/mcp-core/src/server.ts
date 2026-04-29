@@ -151,6 +151,8 @@ import MessagesSearchRecent from './tools/messages/search_recent.js';
 import MessagesSend from './tools/messages/send.js';
 import MessagesUnpin from './tools/messages/unpin.js';
 import McpPipeline from './tools/meta/pipeline.js';
+import OnboardingGet from './tools/onboarding/get.js';
+import OnboardingModify from './tools/onboarding/modify.js';
 import PollsEnd from './tools/polls/end.js';
 import PollsGetVoters from './tools/polls/get_voters.js';
 import ReactionsCreate from './tools/reactions/create.js';
@@ -941,6 +943,14 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'voice_get_user_state',
     piece: VoiceGetUserState as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'onboarding_get',
+    piece: OnboardingGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'onboarding_modify',
+    piece: OnboardingModify as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
