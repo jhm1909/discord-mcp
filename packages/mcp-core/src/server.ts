@@ -33,6 +33,11 @@ import AppEmojisGet from './tools/app_emojis/get.js';
 import AppEmojisList from './tools/app_emojis/list.js';
 import AppEmojisModify from './tools/app_emojis/modify.js';
 import AuditLogGet from './tools/audit_log/get.js';
+import AutomodCreateRule from './tools/automod/create_rule.js';
+import AutomodDeleteRule from './tools/automod/delete_rule.js';
+import AutomodGetRule from './tools/automod/get_rule.js';
+import AutomodListRules from './tools/automod/list_rules.js';
+import AutomodModifyRule from './tools/automod/modify_rule.js';
 import ChannelsCreateGuildChannel from './tools/channels/create_guild_channel.js';
 import ChannelsDelete from './tools/channels/delete.js';
 import ChannelsDeletePermissions from './tools/channels/delete_permissions.js';
@@ -456,6 +461,26 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'audit_log_get',
     piece: AuditLogGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_list_rules',
+    piece: AutomodListRules as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_get_rule',
+    piece: AutomodGetRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_create_rule',
+    piece: AutomodCreateRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_modify_rule',
+    piece: AutomodModifyRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_delete_rule',
+    piece: AutomodDeleteRule as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'webhooks_list_channel',
