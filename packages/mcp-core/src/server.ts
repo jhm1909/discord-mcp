@@ -151,6 +151,8 @@ import MessagesSearchRecent from './tools/messages/search_recent.js';
 import MessagesSend from './tools/messages/send.js';
 import MessagesUnpin from './tools/messages/unpin.js';
 import McpPipeline from './tools/meta/pipeline.js';
+import PollsEnd from './tools/polls/end.js';
+import PollsGetVoters from './tools/polls/get_voters.js';
 import ReactionsCreate from './tools/reactions/create.js';
 import ReactionsDeleteAll from './tools/reactions/delete_all.js';
 import ReactionsDeleteOwn from './tools/reactions/delete_own.js';
@@ -920,6 +922,11 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     name: 'soundboard_send_sound',
     piece: SoundboardSendSound as unknown as ConcreteTool,
   });
+  await toolStore.loadPiece({
+    name: 'polls_get_voters',
+    piece: PollsGetVoters as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'polls_end', piece: PollsEnd as unknown as ConcreteTool });
   await toolStore.loadAll();
 
   preconditionStore.set(
