@@ -68,6 +68,10 @@ import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
 import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
 import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
 import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
+import InvitesCreateChannel from './tools/invites/create_channel.js';
+import InvitesDelete from './tools/invites/delete.js';
+import InvitesGet from './tools/invites/get.js';
+import InvitesListChannel from './tools/invites/list_channel.js';
 import MembersGet from './tools/members/get.js';
 import MembersSearch from './tools/members/search.js';
 import MessagesBulkDelete from './tools/messages/bulk_delete.js';
@@ -345,6 +349,22 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'threads_list_members',
     piece: ThreadsListMembers as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_get',
+    piece: InvitesGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_delete',
+    piece: InvitesDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_list_channel',
+    piece: InvitesListChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_create_channel',
+    piece: InvitesCreateChannel as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
   await toolStore.loadPiece({
