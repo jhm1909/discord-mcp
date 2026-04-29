@@ -33,8 +33,20 @@ import AppEmojisGet from './tools/app_emojis/get.js';
 import AppEmojisList from './tools/app_emojis/list.js';
 import AppEmojisModify from './tools/app_emojis/modify.js';
 import AuditLogGet from './tools/audit_log/get.js';
+import ChannelsCreateGuildChannel from './tools/channels/create_guild_channel.js';
+import ChannelsDelete from './tools/channels/delete.js';
+import ChannelsDeletePermissions from './tools/channels/delete_permissions.js';
+import ChannelsFollowAnnouncement from './tools/channels/follow_announcement.js';
+import ChannelsForumCreateThread from './tools/channels/forum_create_thread.js';
 import ChannelsGet from './tools/channels/get.js';
 import ChannelsList from './tools/channels/list.js';
+import ChannelsListActiveThreadsGuild from './tools/channels/list_active_threads_guild.js';
+import ChannelsListJoinedPrivateArchivedThreads from './tools/channels/list_joined_private_archived_threads.js';
+import ChannelsListPrivateArchivedThreads from './tools/channels/list_private_archived_threads.js';
+import ChannelsListPublicArchivedThreads from './tools/channels/list_public_archived_threads.js';
+import ChannelsModify from './tools/channels/modify.js';
+import ChannelsModifyPermissions from './tools/channels/modify_permissions.js';
+import ChannelsTriggerTyping from './tools/channels/trigger_typing.js';
 import CommandsListGuild from './tools/commands/list_guild.js';
 import ComponentsV2BuildContainer from './tools/components-v2/build_container.js';
 import ComponentsV2BuildMediaGallery from './tools/components-v2/build_media_gallery.js';
@@ -255,6 +267,54 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'channels_get',
     piece: ChannelsGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_create_guild_channel',
+    piece: ChannelsCreateGuildChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_modify',
+    piece: ChannelsModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_delete',
+    piece: ChannelsDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_modify_permissions',
+    piece: ChannelsModifyPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_delete_permissions',
+    piece: ChannelsDeletePermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_follow_announcement',
+    piece: ChannelsFollowAnnouncement as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_trigger_typing',
+    piece: ChannelsTriggerTyping as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_active_threads_guild',
+    piece: ChannelsListActiveThreadsGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_public_archived_threads',
+    piece: ChannelsListPublicArchivedThreads as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_private_archived_threads',
+    piece: ChannelsListPrivateArchivedThreads as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_joined_private_archived_threads',
+    piece: ChannelsListJoinedPrivateArchivedThreads as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_forum_create_thread',
+    piece: ChannelsForumCreateThread as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
   await toolStore.loadPiece({
