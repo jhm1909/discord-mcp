@@ -1,0 +1,58 @@
+import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import type { z } from 'zod';
+import { defineTool } from '../_lib/defineTool.js';
+import { dualResult } from '../_lib/response.js';
+import { ApplicationId, GuildId } from '../_lib/snowflake.js';
+import { commandBodyFields, commandOutputShape, pickCommandBody } from './_lib.js';
+
+interface RawCommand {
+  id: string;
+  application_id: string;
+  guild_id: string;
+  name: string;
+  description?: string;
+  type: number;
+}
+
+export default defineTool({
+  name: 'commands_create_guild',
+  category: 'commands',
+  description: [
+    '**Purpose**: Create or upsert a guild-scoped slash command. Guild commands propagate immediately (vs ~1h for global).',
+    '',
+    '**Returns**: `{id, name, description, type, application_id, guild_id}`.',
+  ].join('\n'),
+  inputSchema: {
+    application_id: ApplicationId.describe('Bot/app application ID'),
+    guild_id: GuildId.describe('Guild scope'),
+    ...commandBodyFields,
+  },
+  outputSchema: commandOutputShape,
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  idempotent: true,
+  handler: async (args) => {
+    const body = pickCommandBody(args as unknown as Record<string, unknown>);
+    const cmd = (await container.rest.post(
+      Routes.applicationGuildCommands(args.application_id, args.guild_id),
+      { body },
+    )) as RawCommand;
+    const out: Record<string, unknown> = {
+      id: cmd.id,
+      application_id: cmd.application_id,
+      guild_id: cmd.guild_id,
+      name: cmd.name,
+      type: cmd.type,
+    };
+    if (cmd.description !== undefined) out.description = cmd.description;
+    return dualResult({
+      text: `Created guild command \`/${cmd.name}\` (\`cmd:${cmd.id}\`) in guild \`${cmd.guild_id}\`.`,
+      data: out as z.infer<z.ZodObject<typeof commandOutputShape>>,
+    });
+  },
+});

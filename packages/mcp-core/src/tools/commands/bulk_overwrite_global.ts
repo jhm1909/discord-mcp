@@ -1,0 +1,72 @@
+import { container } from '@sapphire/pieces';
+import { Routes } from 'discord-api-types/v10';
+import { z } from 'zod';
+import { defineTool } from '../_lib/defineTool.js';
+import { dualResult } from '../_lib/response.js';
+import { ApplicationId } from '../_lib/snowflake.js';
+import { CommandOption, commandBodyFields } from './_lib.js';
+
+interface RawCommand {
+  id: string;
+  name: string;
+  type: number;
+}
+
+// Bulk overwrite expects an array of full command bodies (each with `name` required).
+const bulkCommandShape = z.object({
+  name: commandBodyFields.name,
+  name_localizations: commandBodyFields.name_localizations,
+  description: commandBodyFields.description,
+  description_localizations: commandBodyFields.description_localizations,
+  options: z.array(CommandOption).optional(),
+  default_member_permissions: commandBodyFields.default_member_permissions,
+  dm_permission: commandBodyFields.dm_permission,
+  default_permission: commandBodyFields.default_permission,
+  type: commandBodyFields.type,
+  nsfw: commandBodyFields.nsfw,
+  integration_types: commandBodyFields.integration_types,
+  contexts: commandBodyFields.contexts,
+  handler: commandBodyFields.handler,
+});
+
+export default defineTool({
+  name: 'commands_bulk_overwrite_global',
+  category: 'commands',
+  description: [
+    '**Purpose**: Atomically REPLACE the entire global command registry. Any commands not in `commands` are deleted.',
+    '',
+    '**When to use**:',
+    '- CI deploy: re-sync the canonical command list from source-of-truth.',
+    '',
+    '**Caution**: this is a wholesale replace — call `commands_list_global` first to confirm scope.',
+    '',
+    '**Returns**: `{commands:[{id, name, type}], count}`.',
+  ].join('\n'),
+  inputSchema: {
+    application_id: ApplicationId.describe('Bot/app application ID'),
+    commands: z
+      .array(bulkCommandShape)
+      .describe('Full set of commands to register globally (replaces existing registry).'),
+  },
+  outputSchema: {
+    commands: z.array(z.object({ id: z.string(), name: z.string(), type: z.number().int() })),
+    count: z.number(),
+  },
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  idempotent: true,
+  handler: async (args) => {
+    const raw = (await container.rest.put(Routes.applicationCommands(args.application_id), {
+      body: args.commands,
+    })) as RawCommand[];
+    const cmds = raw.map((c) => ({ id: c.id, name: c.name, type: c.type }));
+    return dualResult({
+      text: `Bulk-overwrote global registry: **${cmds.length} command(s)**.`,
+      data: { commands: cmds, count: cmds.length },
+    });
+  },
+});

@@ -52,7 +52,21 @@ import ChannelsListPublicArchivedThreads from './tools/channels/list_public_arch
 import ChannelsModify from './tools/channels/modify.js';
 import ChannelsModifyPermissions from './tools/channels/modify_permissions.js';
 import ChannelsTriggerTyping from './tools/channels/trigger_typing.js';
+import CommandsBulkOverwriteGlobal from './tools/commands/bulk_overwrite_global.js';
+import CommandsBulkOverwriteGuild from './tools/commands/bulk_overwrite_guild.js';
+import CommandsCreateGlobal from './tools/commands/create_global.js';
+import CommandsCreateGuild from './tools/commands/create_guild.js';
+import CommandsDeleteGlobal from './tools/commands/delete_global.js';
+import CommandsDeleteGuild from './tools/commands/delete_guild.js';
+import CommandsEditCommandPermissions from './tools/commands/edit_command_permissions.js';
+import CommandsGetCommandPermissions from './tools/commands/get_command_permissions.js';
+import CommandsGetGlobal from './tools/commands/get_global.js';
+import CommandsGetGuild from './tools/commands/get_guild.js';
+import CommandsGetGuildCommandPermissions from './tools/commands/get_guild_command_permissions.js';
+import CommandsListGlobal from './tools/commands/list_global.js';
 import CommandsListGuild from './tools/commands/list_guild.js';
+import CommandsModifyGlobal from './tools/commands/modify_global.js';
+import CommandsModifyGuild from './tools/commands/modify_guild.js';
 import ComponentsV2BuildContainer from './tools/components-v2/build_container.js';
 import ComponentsV2BuildMediaGallery from './tools/components-v2/build_media_gallery.js';
 import ComponentsV2BuildSection from './tools/components-v2/build_section.js';
@@ -652,6 +666,62 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'commands_list_guild',
     piece: CommandsListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_list_global',
+    piece: CommandsListGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_create_global',
+    piece: CommandsCreateGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_global',
+    piece: CommandsGetGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_modify_global',
+    piece: CommandsModifyGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_delete_global',
+    piece: CommandsDeleteGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_bulk_overwrite_global',
+    piece: CommandsBulkOverwriteGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_create_guild',
+    piece: CommandsCreateGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_guild',
+    piece: CommandsGetGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_modify_guild',
+    piece: CommandsModifyGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_delete_guild',
+    piece: CommandsDeleteGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_bulk_overwrite_guild',
+    piece: CommandsBulkOverwriteGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_guild_command_permissions',
+    piece: CommandsGetGuildCommandPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_command_permissions',
+    piece: CommandsGetCommandPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_edit_command_permissions',
+    piece: CommandsEditCommandPermissions as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'users_get_current',
