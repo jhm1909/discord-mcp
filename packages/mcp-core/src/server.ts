@@ -147,7 +147,12 @@ import ThreadsJoin from './tools/threads/join.js';
 import ThreadsLeave from './tools/threads/leave.js';
 import ThreadsListMembers from './tools/threads/list_members.js';
 import ThreadsRemoveMember from './tools/threads/remove_member.js';
+import UsersCreateDm from './tools/users/create_dm.js';
+import UsersGet from './tools/users/get.js';
 import UsersGetCurrent from './tools/users/get_current.js';
+import UsersLeaveGuild from './tools/users/leave_guild.js';
+import UsersListCurrentUserGuilds from './tools/users/list_current_user_guilds.js';
+import UsersModifyCurrent from './tools/users/modify_current.js';
 import WebhooksCreate from './tools/webhooks/create.js';
 import WebhooksDelete from './tools/webhooks/delete.js';
 import WebhooksDeleteMessage from './tools/webhooks/delete_message.js';
@@ -651,6 +656,23 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'users_get_current',
     piece: UsersGetCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'users_get', piece: UsersGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'users_modify_current',
+    piece: UsersModifyCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_list_current_user_guilds',
+    piece: UsersListCurrentUserGuilds as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_leave_guild',
+    piece: UsersLeaveGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_create_dm',
+    piece: UsersCreateDm as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'components_v2_build_container',
