@@ -96,6 +96,12 @@ import StickersGetGuildSticker from './tools/stickers/get_guild_sticker.js';
 import StickersListGuild from './tools/stickers/list_guild.js';
 import StickersListPacks from './tools/stickers/list_packs.js';
 import StickersModifyGuildSticker from './tools/stickers/modify_guild_sticker.js';
+import ThreadsAddMember from './tools/threads/add_member.js';
+import ThreadsGetMember from './tools/threads/get_member.js';
+import ThreadsJoin from './tools/threads/join.js';
+import ThreadsLeave from './tools/threads/leave.js';
+import ThreadsListMembers from './tools/threads/list_members.js';
+import ThreadsRemoveMember from './tools/threads/remove_member.js';
 import UsersGetCurrent from './tools/users/get_current.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
 
@@ -315,6 +321,30 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'channels_forum_create_thread',
     piece: ChannelsForumCreateThread as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_join',
+    piece: ThreadsJoin as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_leave',
+    piece: ThreadsLeave as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_add_member',
+    piece: ThreadsAddMember as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_remove_member',
+    piece: ThreadsRemoveMember as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_get_member',
+    piece: ThreadsGetMember as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_list_members',
+    piece: ThreadsListMembers as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
   await toolStore.loadPiece({
