@@ -45,11 +45,38 @@ program
 
 program
   .command('init')
-  .description('Generate a starter mcp.json config and .env scaffold')
-  .action(async () => {
-    const { initAction } = await import('./commands/init.js');
-    await initAction();
-  });
+  .description(
+    'Generate an MCP client config snippet (Claude Desktop / Claude Code / Cursor / Generic)',
+  )
+  .option(
+    '--client <id>',
+    'MCP client (claude-desktop|claude-code|cursor|generic). Default: prompt if TTY, else "generic".',
+  )
+  .option(
+    '--token <token>',
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal placeholder shown in --help
+    'Discord bot token. WARNING: writes the value into the config file unredacted. Omit to use the ${env:DISCORD_TOKEN} placeholder.',
+  )
+  .option(
+    '--gateway',
+    'Append --gateway to the snippet so the server enables Discord Gateway resource subscriptions',
+  )
+  .option('--output <path>', 'Write the snippet to this path instead of stdout')
+  .option('--force', 'Overwrite the --output path if it already exists')
+  .option('--json', 'Emit machine-readable JSON instead of pretty output')
+  .action(
+    async (options: {
+      client?: string;
+      token?: string;
+      gateway?: boolean;
+      output?: string;
+      force?: boolean;
+      json?: boolean;
+    }) => {
+      const { initAction } = await import('./commands/init.js');
+      await initAction(options);
+    },
+  );
 
 program
   .command('migrate')
