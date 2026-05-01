@@ -91,6 +91,18 @@ function stdoutOutput(): string {
   return stdoutWrites.join('');
 }
 
+/**
+ * Drain helper (Plan 12 Phase C.2). Mirrors the pattern in
+ * doctor.integration.test.ts: await doctorAction, yield to setImmediate so
+ * pending microtasks flush, then read the captured stdout. Eliminates a
+ * documented JSON.parse race under parallel CPU pressure.
+ */
+async function runAndCapture(fn: () => Promise<void>): Promise<string> {
+  await fn();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  return stdoutOutput();
+}
+
 // CSI byte = ESC + '['. Avoid embedded control bytes in regex per
 // biome's noControlCharactersInRegex (mirrors output.test.ts).
 const CSI_BYTE = '\x1b[';
@@ -103,8 +115,8 @@ describe('doctorAction — online check selection', () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
     const fetchMock = DEFAULT_FETCH_MOCK();
     vi.stubGlobal('fetch', fetchMock);
-    await doctorAction({ json: true });
-    const parsed = JSON.parse(stdoutOutput()) as {
+    const out = await runAndCapture(() => doctorAction({ json: true }));
+    const parsed = JSON.parse(out) as {
       data?: { checks?: Array<{ id: string }> };
     };
     const ids = parsed.data?.checks?.map((c) => c.id) ?? [];
@@ -124,8 +136,8 @@ describe('doctorAction — online check selection', () => {
       }),
     );
     vi.stubGlobal('fetch', fetchMock);
-    await doctorAction({ json: true, online: true });
-    const parsed = JSON.parse(stdoutOutput()) as {
+    const out = await runAndCapture(() => doctorAction({ json: true, online: true }));
+    const parsed = JSON.parse(out) as {
       data?: { checks?: Array<{ id: string }> };
     };
     const ids = parsed.data?.checks?.map((c) => c.id) ?? [];
@@ -147,9 +159,9 @@ describe('doctorAction — online check selection', () => {
 describe('doctorAction — exit code mapping', () => {
   it('returns exit code 2 when token-format fails', async () => {
     // No DISCORD_TOKEN → token-format + env-vars both fail.
-    await doctorAction({ json: true });
+    const out = await runAndCapture(() => doctorAction({ json: true }));
     expect(process.exitCode).toBe(2);
-    const parsed = JSON.parse(stdoutOutput());
+    const parsed = JSON.parse(out);
     expect(parsed.ok).toBe(false);
     const tokenCheck = (parsed.data.checks as Array<{ id: string; status: string }>).find(
       (c) => c.id === 'token-format',
@@ -160,9 +172,9 @@ describe('doctorAction — exit code mapping', () => {
   it('returns exit code 1 (warn) when only token-format warns and rest are ok', async () => {
     // Valid shape but no "Bot " prefix → token-format warn.
     process.env.DISCORD_TOKEN = 'a'.repeat(60);
-    await doctorAction({ json: true });
+    const out = await runAndCapture(() => doctorAction({ json: true }));
     expect(process.exitCode).toBe(1);
-    const parsed = JSON.parse(stdoutOutput());
+    const parsed = JSON.parse(out);
     expect(parsed.exitCode).toBe(1);
     expect(parsed.warnings).toBeDefined();
     expect(parsed.warnings.length).toBeGreaterThan(0);
@@ -170,9 +182,9 @@ describe('doctorAction — exit code mapping', () => {
 
   it('returns exit code 0 when all checks pass', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
-    await doctorAction({ json: true });
+    const out = await runAndCapture(() => doctorAction({ json: true }));
     expect(process.exitCode).toBe(0);
-    const parsed = JSON.parse(stdoutOutput());
+    const parsed = JSON.parse(out);
     expect(parsed.ok).toBe(true);
     expect(parsed.exitCode).toBe(0);
   });
@@ -182,8 +194,8 @@ describe('doctorAction — audit-sink branches', () => {
   it('reports audit-sink ok when stderr sink is selected', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
     process.env.MCP_AUDIT_SINK = 'stderr';
-    await doctorAction({ json: true });
-    const parsed = JSON.parse(stdoutOutput());
+    const out = await runAndCapture(() => doctorAction({ json: true }));
+    const parsed = JSON.parse(out);
     const auditCheck = (parsed.data.checks as Array<{ id: string; status: string }>).find(
       (c) => c.id === 'audit-sink',
     );
@@ -197,9 +209,9 @@ describe('doctorAction — audit-sink branches', () => {
     accessSyncImpl = () => {
       throw new Error('EACCES: permission denied');
     };
-    await doctorAction({ json: true });
+    const out = await runAndCapture(() => doctorAction({ json: true }));
     expect(process.exitCode).toBe(2);
-    const parsed = JSON.parse(stdoutOutput());
+    const parsed = JSON.parse(out);
     const auditCheck = (parsed.data.checks as Array<{ id: string; status: string }>).find(
       (c) => c.id === 'audit-sink',
     );
@@ -211,8 +223,7 @@ describe('doctorAction — output formatting', () => {
   it('pretty mode includes ANSI color codes when stdout is a TTY', async () => {
     setTTY(true);
     process.env.DISCORD_TOKEN = VALID_TOKEN;
-    await doctorAction({ json: false });
-    const out = stdoutOutput();
+    const out = await runAndCapture(() => doctorAction({ json: false }));
     expect(hasAnsi(out)).toBe(true);
     expect(out).toContain('OK');
   });
@@ -220,16 +231,14 @@ describe('doctorAction — output formatting', () => {
   it('pretty mode without TTY omits ANSI codes', async () => {
     setTTY(false);
     process.env.DISCORD_TOKEN = VALID_TOKEN;
-    await doctorAction({ json: false });
-    const out = stdoutOutput();
+    const out = await runAndCapture(() => doctorAction({ json: false }));
     expect(hasAnsi(out)).toBe(false);
   });
 
   it('json mode strips ANSI even on TTY and produces parseable output', async () => {
     setTTY(true);
     process.env.DISCORD_TOKEN = VALID_TOKEN;
-    await doctorAction({ json: true });
-    const out = stdoutOutput();
+    const out = await runAndCapture(() => doctorAction({ json: true }));
     expect(hasAnsi(out)).toBe(false);
     expect(() => JSON.parse(out)).not.toThrow();
     const parsed = JSON.parse(out);
@@ -238,8 +247,8 @@ describe('doctorAction — output formatting', () => {
 
   it('summary string follows the "N checks: F fail, W warn, O ok" format (offline-only)', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
-    await doctorAction({ json: true });
-    const parsed = JSON.parse(stdoutOutput());
+    const out = await runAndCapture(() => doctorAction({ json: true }));
+    const parsed = JSON.parse(out);
     // 5 offline checks when --online is absent.
     expect(parsed.summary).toMatch(/^5 checks: \d+ fail, \d+ warn, \d+ ok$/);
   });
@@ -247,8 +256,8 @@ describe('doctorAction — output formatting', () => {
   it('summary reports 7 checks when --online is true', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
     vi.stubGlobal('fetch', DEFAULT_FETCH_MOCK());
-    await doctorAction({ json: true, online: true });
-    const parsed = JSON.parse(stdoutOutput());
+    const out = await runAndCapture(() => doctorAction({ json: true, online: true }));
+    const parsed = JSON.parse(out);
     expect(parsed.summary).toMatch(/^7 checks: \d+ fail, \d+ warn, \d+ ok$/);
   });
 });
