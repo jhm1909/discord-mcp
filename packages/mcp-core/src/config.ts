@@ -17,7 +17,7 @@ const ConfigSchema = z.object({
   // Master switch. When false, mcp-server skips SDK boot entirely (default behavior).
   OTEL_ENABLED: boolish(false),
   OTEL_SERVICE_NAME: z.string().default('discord-mcp'),
-  OTEL_SERVICE_VERSION: z.string().default('0.11.0'),
+  OTEL_SERVICE_VERSION: z.string().default('0.12.0'),
   // OTLP collector endpoint (e.g. http://localhost:4318). Optional — when unset
   // the SDK still boots (if OTEL_CONSOLE_EXPORTER=true) or stays inert.
   OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
