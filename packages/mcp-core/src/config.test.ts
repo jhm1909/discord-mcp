@@ -43,9 +43,9 @@ describe('loadConfig', () => {
       expect(overridden.OTEL_SERVICE_NAME).toBe('custom');
     });
 
-    it('OTEL_SERVICE_VERSION defaults to "0.9.0" and accepts override', () => {
+    it('OTEL_SERVICE_VERSION defaults to "0.10.0" and accepts override', () => {
       const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
-      expect(def.OTEL_SERVICE_VERSION).toBe('0.9.0');
+      expect(def.OTEL_SERVICE_VERSION).toBe('0.10.0');
       const overridden = loadConfig({
         DISCORD_TOKEN: VALID_TOKEN,
         OTEL_SERVICE_VERSION: '1.2.3',
