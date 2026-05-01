@@ -7,10 +7,20 @@ import {
 } from '@discord-mcp/core';
 import { REST } from '@discordjs/rest';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { type OtelHandle, startOtel } from '../otel.js';
 
 export async function startStdio(): Promise<void> {
   const config = loadConfig();
   const logger = createLogger(config);
+
+  // Boot OTel BEFORE buildServer so global tracer/meter providers exist
+  // by the time the telemetry middleware fetches them. Returns null when
+  // OTEL_ENABLED is false (default), preserving v0.7.0 behavior.
+  const otel: OtelHandle | null = startOtel(config);
+  if (otel !== null) {
+    logger.info({ otel: 'enabled' }, 'OpenTelemetry SDK started');
+  }
+
   const rest = new REST({ version: '10' }).setToken(
     // Discord REST does not want the "Bot " prefix here — discord.js's REST adds it.
     config.DISCORD_TOKEN.startsWith('Bot ') ? config.DISCORD_TOKEN.slice(4) : config.DISCORD_TOKEN,
@@ -62,6 +72,13 @@ export async function startStdio(): Promise<void> {
       }
     }
     await server.close();
+    if (otel !== null) {
+      try {
+        await otel.shutdown();
+      } catch (e) {
+        logger.warn({ err: e instanceof Error ? e.message : String(e) }, 'otel shutdown failed');
+      }
+    }
     process.exit(0);
   };
   process.on('SIGINT', () => void shutdown('SIGINT'));
