@@ -1,8 +1,97 @@
 ---
 title: Recipes
-description: Common task recipes for discord-mcp (moderation, onboarding, content workflows).
+description: Hand-written cookbook recipes showing how agents compose multiple discord-mcp tools to solve real workflows.
+sidebar:
+  order: 0
 ---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
 
 # Recipes
 
-*Content coming soon (populated in Phase C).*
+The auto-generated [Tools](/discord-mcp/tools/) reference describes **what each
+of the 192 tools does**. These recipes describe **how to compose them** — the
+multi-step workflows that come up in real agent loops, with realistic Discord
+input and output.
+
+Each recipe walks through one use case end-to-end: the user prompt, the chain
+of tool calls, the JSON shape of every input and output, and the failure modes
+the agent has to handle. The examples use realistic snowflake IDs and the same
+JSON envelopes the server actually returns, so they double as integration-test
+fixtures when you wire up a new client.
+
+The six recipes below cover the most common composition patterns: a destructive
+batch operation, a rich-layout post, an atomic multi-tool chain, a
+zero-API-key intelligence task, a high-volume non-bot publishing path, and a
+push-based subscription model. Pick the closest one to your workflow and adapt
+from there.
+
+<CardGrid>
+  <Card title="Moderation — bulk ban a raid" icon="warning">
+    Find raid accounts with `members_search`, confirm with the human, ban up to
+    200 users in one call. Covers `__confirm:true` and partial failure
+    handling.
+
+    [Read recipe →](/discord-mcp/recipes/moderation-bulk-ban/)
+  </Card>
+
+  <Card title="Components V2 — rich announcement" icon="seti:image">
+    Compose a launch announcement from sections, a media gallery, and a
+    container; validate before sending; understand the
+    `flags = 32768` requirement.
+
+    [Read recipe →](/discord-mcp/recipes/components-v2-announcement/)
+  </Card>
+
+  <Card title="Pipeline — chain three calls atomically" icon="seti:cjsc">
+    Use `mcp_pipeline` to announce, schedule an event, and grant a role in one
+    request. Covers `{{step.path}}` interpolation and the recursion guard.
+
+    [Read recipe →](/discord-mcp/recipes/pipeline-multistep/)
+  </Card>
+
+  <Card title="Intelligence — summarize a busy channel" icon="seti:smarty">
+    Use MCP sampling to summarize the last 50 messages without an LLM API key.
+    Covers the `host_llm_should_process` fallback for clients without
+    sampling.
+
+    [Read recipe →](/discord-mcp/recipes/intelligence-summarize/)
+  </Card>
+
+  <Card title="Webhooks — bypass bot rate limits" icon="rocket">
+    Provision a webhook once, then post high-volume notifications without
+    consuming the bot's bucket. Covers token security and Components V2 over
+    webhooks.
+
+    [Read recipe →](/discord-mcp/recipes/webhook-execute/)
+  </Card>
+
+  <Card title="Gateway — subscribe to live state" icon="seti:bsl">
+    Replace REST polling with `resources/subscribe` backed by Discord Gateway
+    events. Covers the five subscribable URIs, debounce, and client
+    compatibility.
+
+    [Read recipe →](/discord-mcp/recipes/gateway-subscribe/)
+  </Card>
+</CardGrid>
+
+## Conventions used in these recipes
+
+- **Tool calls** are shown as the JSON-RPC `tools/call` argument shape — the
+  `name` and `arguments` fields. Wrap them in your client's
+  `tools/call` envelope as needed.
+- **Snowflake IDs** in examples are realistic 18–19 digit Discord IDs, not
+  placeholder integers. Substitute your own when adapting.
+- **Output shapes** match what the server actually returns, including the
+  `untrusted_*` envelopes for user-controlled fields.
+- **Internal links** use the `/discord-mcp/` prefix because the docs site is
+  served from a base path on GitHub Pages.
+
+## Looking for something else?
+
+- Single tool reference → [Tools](/discord-mcp/tools/) (192 auto-generated
+  pages).
+- Operational concerns (deploy, observability, security) →
+  [Operations](/discord-mcp/operations/).
+- How the server is built → [Architecture](/discord-mcp/architecture/).
+- Glossary, environment variables, error codes → [Reference](/discord-mcp/reference/).
