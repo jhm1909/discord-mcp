@@ -20,6 +20,7 @@ import { formatErrorForUser } from './errors/format.js';
 import { SubscriptionRegistry } from './gateway/subscription_registry.js';
 import { compose, type MiddlewareContext, type ToolMiddleware } from './middleware/compose.js';
 import { preconditionMiddleware } from './middleware/precondition.js';
+import { telemetryMiddleware } from './middleware/telemetry.js';
 import { validateMiddleware } from './middleware/validate.js';
 import type { Tool } from './pieces/Tool.js';
 import { CategoryEnabled } from './preconditions/CategoryEnabled.js';
@@ -1010,7 +1011,10 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const registeredPreconditions = [...preconditionStore.keys()];
 
   // --- Middleware chain (outer → inner) ---
+  // Order matters: telemetry must be outermost so spans cover the entire
+  // call (including validation/precondition errors and middleware overhead).
   const middlewares: ToolMiddleware[] = [
+    telemetryMiddleware(),
     validateMiddleware(),
     preconditionMiddleware(preconditionStore),
   ];
