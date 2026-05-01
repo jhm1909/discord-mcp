@@ -32,6 +32,27 @@ export interface MigrationSource {
   /** Single-line human-readable description shown in `--help` listing. */
   readonly description: string;
   /**
+   * Optional link to the upstream repository. Surfaced by
+   * `discord-mcp migrate --list` so users can read the source project
+   * before running the adapter against a local clone.
+   */
+  readonly homepage?: string;
+  /**
+   * Languages the source project is written in. Used by `--list` to
+   * help users understand at a glance what kind of project this adapter
+   * targets (a Go codebase needs a Go clone; a TypeScript codebase
+   * needs a JS/TS clone). `'mixed'` covers polyglot repos. Plan 11
+   * Phase A makes this required so every adapter declares its target.
+   */
+  readonly languages: readonly ('typescript' | 'go' | 'python' | 'mixed')[];
+  /**
+   * Best-effort guess at how many tools the upstream project exposes.
+   * Shown by `--list` so users get a sense of migration scope before
+   * running. Optional because some adapters target dynamic surfaces
+   * (config-driven tool sets) where the count isn't a fixed number.
+   */
+  readonly toolCountEstimate?: number;
+  /**
    * Return true if `rootPath` looks like this kind of source. MUST NOT
    * throw — wrap fs ops in try/catch and return false on missing paths.
    */

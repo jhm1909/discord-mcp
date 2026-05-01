@@ -1,0 +1,195 @@
+---
+title: From quadslab
+description: Migrate from @quadslab.io/discord-mcp's ~138-tool surface onto discord-mcp's 192-tool catalog.
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Migrate from quadslab
+
+quadslab (`@quadslab.io/discord-mcp`) is the largest of the third-party
+Discord MCPs by tool count — ~138 tools across 20 categories. The
+`quadslab` adapter walks a local clone, intersects against a known-tool
+catalog (139 entries) for high-precision extraction, and reports the
+discord-mcp equivalents.
+
+## Source
+
+- **Repo**:
+  [`HardHeadHackerHead/discord-mcp`](https://github.com/HardHeadHackerHead/discord-mcp)
+- **Package**: `@quadslab.io/discord-mcp` (v2.1.1 at cutoff)
+- **Tool count (cutoff 2026-05-01)**: ~138 across 20 categories (guild, roles,
+  channels, members, messages, reactions, server, threads, forums, emojis,
+  stickers, webhooks, events, stage, automod, polls, DMs, presence,
+  templates, commands, onboarding).
+- **Adapter source**:
+  [`packages/mcp-server/src/lib/migrate-adapters/quadslab.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-server/src/lib/migrate-adapters/quadslab.ts)
+
+## Why migrate to discord-mcp
+
+- **Production hardening** — first-class OpenTelemetry traces and cockatiel
+  resilience policies on every REST call; sustained 200/min headroom even at
+  full surface load. See [Operations: telemetry](/discord-mcp/operations/telemetry/).
+- **Components V2 first-class** — every send/edit tool accepts `flags = 32768`
+  layouts. See the
+  [Components V2 announcement recipe](/discord-mcp/recipes/components-v2-announcement/).
+- **Confirmation envelope on destructive tools** — every destructive call
+  requires a `__confirm: true` argument before the underlying REST call fires,
+  so prompt injection can't silently delete a guild.
+  See [Architecture: confirmation](/discord-mcp/architecture/confirmation/).
+- **Pipeline atomicity** — `mcp_pipeline` chains multiple tool calls in a
+  single round-trip with `{{step.path}}` interpolation between them.
+  See [Architecture: pipeline](/discord-mcp/architecture/pipeline/).
+
+## MCP Resources overlap
+
+quadslab exposes MCP **resources** (server-side `resources/list` +
+`resources/subscribe`) for live channel/message state. This is **not** a tool
+— it's the MCP server-level resource surface, which is a different MCP
+capability than `tools/call`. discord-mcp covers this via the gateway client
+(Plan 6): run with `--gateway` and your MCP client gets the equivalent
+subscribable URIs (channels, threads, messages, members, presence) backed by
+Discord Gateway events instead of REST polling.
+
+The `quadslab` adapter does **not** translate resource subscriptions —
+they don't appear in `<category>Tools` arrays, so they're invisible to the
+extraction step. You get the equivalent surface for free by running discord-mcp
+with `--gateway`. See [Architecture: gateway](/discord-mcp/architecture/gateway/)
+and the [gateway-subscribe recipe](/discord-mcp/recipes/gateway-subscribe/).
+
+## Step-by-step migration
+
+<Steps>
+
+1. **Clone quadslab locally.**
+
+   ```bash
+   git clone https://github.com/HardHeadHackerHead/discord-mcp.git ~/quadslab-clone
+   ```
+
+2. **Run the migration report.**
+
+   ```bash
+   discord-mcp migrate --from quadslab --source ~/quadslab-clone
+   ```
+
+   For machine-readable output: `--json`.
+
+3. **Review the report.**
+
+   The output groups tools into mapped / unmapped / manual review. Read every
+   `medium` and `low` confidence note before swapping argument shapes.
+
+4. **Update agent prompts.**
+
+   Swap names per the mapped table. Pay particular attention to:
+
+   - The five `<verb>_<channel-type>` tools (`create_text_channel`,
+     `create_voice_channel`, `create_category`, `create_forum_channel`,
+     `create_announcement_channel`) — they all collapse onto
+     `channels_create_guild_channel` with a different `type` integer.
+     Read the per-entry note for the type ID.
+   - Embed-and-file variants (`send_embed`, `send_message_with_file`,
+     `send_dm_embed`) — all collapse onto `messages_send` with the embed or
+     attachment hoisted into the appropriate payload field.
+
+5. **Generate your new client config.**
+
+   ```bash
+   discord-mcp init --client claude-desktop --token "Bot YOUR.TOKEN"
+   ```
+
+   Restart your MCP client.
+
+6. **Optional — enable gateway resources.**
+
+   ```bash
+   discord-mcp serve --gateway
+   ```
+
+   This backs `resources/subscribe` with Discord Gateway events,
+   replacing quadslab's resource subscriptions.
+
+</Steps>
+
+## Top 25 mappings
+
+This is a representative cut; the full NAME_MAP covers ~96 mapped entries.
+
+| quadslab tool             | discord-mcp tool                   | Confidence | Notes                                                                |
+| ------------------------- | ---------------------------------- | ---------- | -------------------------------------------------------------------- |
+| `list_guilds`             | `users_list_current_user_guilds`   | high       | —                                                                    |
+| `get_guild_info`          | `guild_get`                        | high       | —                                                                    |
+| `edit_server`             | `guild_modify`                     | high       | —                                                                    |
+| `list_channels`           | `channels_list`                    | high       | —                                                                    |
+| `create_text_channel`     | `channels_create_guild_channel`    | high       | Pass `type=0` (`GUILD_TEXT`).                                        |
+| `create_voice_channel`    | `channels_create_guild_channel`    | high       | Pass `type=2` (`GUILD_VOICE`).                                       |
+| `create_category`         | `channels_create_guild_channel`    | high       | Pass `type=4` (`GUILD_CATEGORY`).                                    |
+| `create_forum_channel`    | `channels_create_guild_channel`    | high       | Pass `type=15` (`GUILD_FORUM`).                                      |
+| `delete_channel`          | `channels_delete`                  | high       | —                                                                    |
+| `modify_channel`          | `channels_modify`                  | high       | —                                                                    |
+| `set_channel_permissions` | `channels_modify_permissions`      | high       | —                                                                    |
+| `lock_channel`            | `channels_modify_permissions`      | medium     | Lock = explicit deny SEND_MESSAGES on `@everyone`.                   |
+| `unlock_channel`          | `channels_delete_permissions`      | medium     | Unlock = remove the `@everyone` deny overwrite.                      |
+| `send_message`            | `messages_send`                    | high       | —                                                                    |
+| `send_embed`              | `messages_send`                    | medium     | Pass `embeds[]` in the `messages_send` payload.                      |
+| `send_message_with_file`  | `messages_send`                    | medium     | Attach files via `attachments[]` in the payload.                     |
+| `edit_message`            | `messages_edit`                    | high       | —                                                                    |
+| `bulk_delete_messages`    | `messages_bulk_delete`             | high       | —                                                                    |
+| `add_reaction`            | `reactions_create`                 | high       | —                                                                    |
+| `list_members`            | `members_list`                     | high       | —                                                                    |
+| `ban_member`              | `members_ban`                      | high       | —                                                                    |
+| `bulk_ban`                | `members_bulk_ban`                 | high       | —                                                                    |
+| `assign_role`             | `members_add_role`                 | high       | —                                                                    |
+| `list_roles`              | `roles_list`                       | high       | —                                                                    |
+| `get_audit_log`           | `audit_log_get`                    | high       | —                                                                    |
+| `list_emojis`             | `emojis_list_guild`                | high       | —                                                                    |
+| `create_event`            | `events_create`                    | high       | —                                                                    |
+| `list_automod_rules`      | `automod_list_rules`               | high       | —                                                                    |
+| `end_poll`                | `polls_end`                        | high       | —                                                                    |
+| `get_onboarding`          | `onboarding_get`                   | high       | —                                                                    |
+
+Notable low-confidence entries (always re-read the per-entry `notes`):
+
+| quadslab tool          | discord-mcp tool          | Confidence | Notes                                                                                  |
+| ---------------------- | ------------------------- | ---------- | -------------------------------------------------------------------------------------- |
+| `bulk_assign_role`     | `members_add_role`        | low        | Iterate per user; discord-mcp has no bulk variant.                                     |
+| `bulk_remove_role`     | `members_remove_role`     | low        | Iterate per user.                                                                      |
+| `purge_user_messages`  | `messages_bulk_delete`    | low        | Compose: `messages_search_recent` + filter by author, then `messages_bulk_delete`.    |
+| `send_poll`            | `messages_send`           | low        | discord-mcp creates polls inline via the `poll: {...}` field on the send payload.     |
+| `send_dm`              | `messages_send`           | low        | Call `users_create_dm` first to get the DM channel ID.                                 |
+| `list_role_members`    | `members_list`            | low        | discord-mcp has no by-role lookup; list members and filter on role IDs client-side.   |
+| `list_stage_instances` | `stage_instances_get`     | low        | discord-mcp has no list endpoint; fetch per channel.                                   |
+
+## Gap analysis
+
+About 14 quadslab tools have no discord-mcp equivalent and surface in the
+report's `unmapped` list. Reasons grouped by category:
+
+- **Presence (2)** — `set_bot_status`, `get_bot_info`. These belong to gateway
+  state, not REST. discord-mcp manages bot presence via the gateway client
+  configuration, not via tools. Move presence config from your agent prompt
+  into the discord-mcp serve flags or environment.
+- **Templates (4)** — `list_templates`, `create_template`, `delete_template`,
+  `sync_template`. Discord guild templates have no discord-mcp tool wrapper
+  yet (planned for a future release). Workaround: continue calling the REST
+  endpoint directly, or omit the feature.
+- **Helper composites (3)** — `clone_channel`, `copy_channel_permissions`,
+  `check_permissions`. Compose from primitives:
+  `channels_get` + `channels_create_guild_channel` + `channels_modify_permissions`.
+- **Voice helpers (5)** — `move_to_voice`, `disconnect_from_voice`,
+  `set_voice_region`, `set_voice_status`, `list_voice_members`. discord-mcp's
+  `voice_*` tools cover state and regions but not the channel-side helpers;
+  partial overlap with low value, so left unmapped.
+
+## See also
+
+- [Adapter authoring guide](/discord-mcp/migrate/authoring/)
+- [discord-mcp tools (192)](/discord-mcp/tools/)
+- [CLI reference: `migrate`](/discord-mcp/reference/cli/#migrate)
+- [Architecture: gateway](/discord-mcp/architecture/gateway/) — for the
+  resource subscription overlap.
+- [Architecture: confirmation](/discord-mcp/architecture/confirmation/) —
+  the `__confirm: true` pattern on every destructive tool.

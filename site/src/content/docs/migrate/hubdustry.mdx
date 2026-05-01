@@ -1,0 +1,99 @@
+---
+title: From Hubdustry (reference)
+description: Reference adapter — Hubdustry is a Go MCP for server administration, not Discord. Ships as the framework smoke test.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+# Reference: Hubdustry Go MCP
+
+Hubdustry is the **reference adapter** — included to validate the migration
+framework end-to-end against a known-zero-overlap source. It does not
+migrate any Discord tools because Hubdustry has none.
+
+## Source
+
+- **Repo**:
+  [`jhm1909/Hubdustry`](https://github.com/jhm1909/Hubdustry/tree/main/apps/mcp)
+- **Language**: Go (`mcp.NewTool(...)` registration pattern)
+- **Tool count (cutoff 2026-05-02)**: 8 tools — all server-admin /
+  files / containers / deploy / system-stats. Zero Discord tools.
+- **Adapter source**:
+  [`packages/mcp-server/src/lib/migrate-adapters/hubdustry-go-mcp.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-server/src/lib/migrate-adapters/hubdustry-go-mcp.ts)
+
+## What this is
+
+Hubdustry's MCP server is a Go-based tool server for server administration:
+file operations, container lifecycle, deploy triggers, system metrics. It
+predates discord-mcp and lives in a different problem space entirely.
+
+It ships in Plan 11 as the **reference adapter** — the simplest possible
+implementation of the `MigrationSource` interface, with an empty NAME_MAP
+and a Go-specific extraction regex. Running it against a real Hubdustry
+clone produces:
+
+```
+mapped:    0
+unmapped:  8  (all Hubdustry tools)
+manual:    0
+warnings:  []
+```
+
+That's the **intended** output. It demonstrates the framework working
+end-to-end while honestly reporting that there's nothing to translate.
+
+## Why mostly unmapped
+
+discord-mcp is a Discord REST + Gateway server. Hubdustry's tools
+(`files.read`, `containers.deploy`, `system.stats`, etc.) have no Discord
+equivalents — they belong in a different MCP server entirely.
+
+## What you actually need
+
+If you're a Hubdustry user adding Discord capabilities to your agent:
+
+- **Don't migrate anything.** discord-mcp and Hubdustry MCP are
+  complementary, not competing.
+- **Install discord-mcp alongside Hubdustry.** Both can be registered with
+  the same MCP client (Claude Desktop, Cline, etc.) — they expose disjoint
+  tool surfaces. Your agent can call both in the same conversation.
+- **Use `discord-mcp init`** to generate the discord-mcp client config:
+
+  ```bash
+  discord-mcp init --client claude-desktop --token "Bot YOUR.TOKEN"
+  ```
+
+  Restart your MCP client. You now have N+1 servers configured, with
+  discord-mcp's 192 Discord tools added next to Hubdustry's 8 system tools.
+
+## Test the framework
+
+Even though there's nothing to translate, running the adapter against a
+Hubdustry clone is a useful smoke test for the migration framework itself
+— it confirms that detection, file walking, and tool extraction all work
+on a Go codebase:
+
+```bash
+git clone https://github.com/jhm1909/Hubdustry.git ~/hubdustry-clone
+discord-mcp migrate --from hubdustry-go-mcp --source ~/hubdustry-clone
+```
+
+Expected output: 8 unmapped tools, 0 mapped, 0 manual review, exit code 1
+(unmapped tools are non-fatal).
+
+If you're authoring a new adapter, this is also a useful negative test:
+your adapter's `detect()` MUST return `false` against the Hubdustry fixture,
+and the Hubdustry adapter MUST return `false` against yours. See the
+[adapter authoring guide](/discord-mcp/migrate/authoring/) for the
+cross-detection pattern.
+
+## See also
+
+- [Adapter authoring guide](/discord-mcp/migrate/authoring/) — Hubdustry
+  is the canonical "empty NAME_MAP" example for new adapter authors.
+- [discord-mcp tools (192)](/discord-mcp/tools/) — what you get if you
+  install discord-mcp alongside Hubdustry.
+- [CLI reference: `migrate`](/discord-mcp/reference/cli/#migrate) — flags
+  and exit codes (the `1` for non-empty unmapped is normal here).

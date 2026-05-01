@@ -14,6 +14,29 @@ the merge commit of the plan's PR into `main`.
 For PR-level history, see the [GitHub releases](https://github.com/cappylab/discord-mcp/releases)
 page. Tag dates and SHAs below come from `git for-each-ref refs/tags/v0.*`.
 
+## v0.11.0 — Migration adapters
+
+Released **2026-05-01**. Tag: [`v0.11.0`](https://github.com/cappylab/discord-mcp/releases/tag/v0.11.0).
+
+Plan 11 ships four production migration adapters so teams can move to
+discord-mcp from the most-established community Discord MCP servers
+without re-tooling their agents from scratch.
+
+- **PaSympa** (`@pasympa/discord-mcp`) — ~91 tools, TypeScript, Zod-based
+  schemas. Adapter maps 78 tools, intentionally leaves 13 unmapped.
+- **quadslab** (`@quadslab.io/discord-mcp`) — ~138 tools with MCP
+  Resources support. Adapter maps 96 tools, leaves 14 unmapped.
+- **discord-ops** (`bookedsolidtech/discord-ops`) — multi-guild routing,
+  tool profiles, dry-run mode, saved templates. Adapter maps 36 tools and
+  documents the architectural mismatches that don't translate cleanly.
+- **Hubdustry** (reference adapter, non-Discord) — kept as the canonical
+  adapter-authoring example.
+- `discord-mcp migrate --list` flag for adapter discovery (TTY + JSON).
+- 4-way cross-detection: every adapter rejects all other adapters'
+  fixtures so detection never silently misroutes.
+- Migration docs section at [cappylab.github.io/discord-mcp/migrate](https://cappylab.github.io/discord-mcp/migrate/):
+  per-adapter guides + adapter authoring guide for community contributors.
+
 ## v0.10.0 — Documentation site
 
 Released **2026-05-01**. Tag cut from the Plan 10 merge commit on `main`.

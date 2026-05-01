@@ -45,12 +45,21 @@ function stdoutOutput(): string {
   return stdoutWrites.join('');
 }
 
+interface AdapterSummary {
+  id: string;
+  description: string;
+  homepage?: string;
+  languages: string[];
+  toolCountEstimate?: number;
+}
+
 interface MigrateJsonResult {
   ok: boolean;
   exitCode: number;
   summary: string;
   data?: {
     available?: { id: string; description: string }[] | string[];
+    adapters?: AdapterSummary[];
     requested?: string;
     adapter?: string;
     sourcePath?: string;
@@ -165,5 +174,65 @@ describe('migrateAction — JSON output is parseable', () => {
     stdoutWrites = [];
     await migrateAction({ json: true, from: 'hubdustry-go-mcp', source: FIXTURE_ROOT });
     expect(() => JSON.parse(stdoutOutput())).not.toThrow();
+
+    stdoutWrites = [];
+    await migrateAction({ json: true, list: true });
+    expect(() => JSON.parse(stdoutOutput())).not.toThrow();
+  });
+});
+
+describe('migrateAction — --list flag (Plan 11 Phase A)', () => {
+  it('TTY mode prints the listing with id, description, languages, tools, homepage', async () => {
+    await migrateAction({ list: true });
+    const out = stdoutOutput();
+    expect(out).toContain('Available migration adapters');
+    expect(out).toContain('hubdustry-go-mcp');
+    expect(out).toContain('Hubdustry Go MCP server');
+    expect(out).toContain('Languages: go');
+    expect(out).toContain('Tools: ~8');
+    expect(out).toContain('https://github.com/jhm1909/Hubdustry');
+    expect(out).toContain('Use: discord-mcp migrate --from <id>');
+  });
+
+  it('--list --json emits a parseable adapters[] payload with full metadata', async () => {
+    await migrateAction({ list: true, json: true });
+    const parsed = JSON.parse(stdoutOutput()) as MigrateJsonResult;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.exitCode).toBe(0);
+    const adapters = parsed.data?.adapters;
+    expect(Array.isArray(adapters)).toBe(true);
+    expect(adapters?.length).toBeGreaterThanOrEqual(1);
+    const hubdustry = adapters?.find((a) => a.id === 'hubdustry-go-mcp');
+    expect(hubdustry).toBeDefined();
+    expect(hubdustry?.description).toContain('Hubdustry');
+    expect(hubdustry?.languages).toEqual(['go']);
+    expect(hubdustry?.toolCountEstimate).toBe(8);
+    expect(hubdustry?.homepage).toBe('https://github.com/jhm1909/Hubdustry/tree/main/apps/mcp');
+  });
+
+  it('--list exits with code 0 (informational query, not an error)', async () => {
+    await migrateAction({ list: true });
+    expect(process.exitCode).toBe(0);
+
+    // Same for the JSON path.
+    stdoutWrites = [];
+    process.exitCode = 0;
+    await migrateAction({ list: true, json: true });
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('no --from AND no --list still exits 2 (Plan 9 backward compat)', async () => {
+    // Plan 11 leaves the legacy "missing --from" error path alone so
+    // existing scripts that depend on the non-zero exit don't break.
+    // The bare invocation must keep exit code 2 even though `--list`
+    // produces the same listing under exit 0.
+    await migrateAction({ json: true });
+    expect(process.exitCode).toBe(2);
+    const parsed = JSON.parse(stdoutOutput()) as MigrateJsonResult;
+    expect(parsed.summary).toContain('--from');
+    // Plan 11 enriches data with `adapters` so --json consumers still
+    // get the new metadata even on this legacy path.
+    expect(parsed.data?.adapters).toBeDefined();
+    expect(parsed.data?.adapters?.[0]?.id).toBe('hubdustry-go-mcp');
   });
 });

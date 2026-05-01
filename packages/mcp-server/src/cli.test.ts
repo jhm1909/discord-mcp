@@ -233,11 +233,29 @@ describe('cli — migrate sub-command (Plan 9 Phase E)', () => {
     expect(out).toContain('hubdustry-go-mcp');
   });
 
-  it('migrate --help lists --from / --source / --json', async () => {
+  it('migrate --help lists --from / --source / --list / --json', async () => {
     await runCli(['migrate', '--help']);
     const out = stdoutOutput();
     expect(out).toContain('--from');
     expect(out).toContain('--source');
+    expect(out).toContain('--list');
     expect(out).toContain('--json');
+  });
+});
+
+describe('cli — migrate --list (Plan 11 Phase A)', () => {
+  it('migrate --list --help shows the --list flag', async () => {
+    await runCli(['migrate', '--list', '--help']);
+    const out = stdoutOutput();
+    expect(out).toContain('--list');
+    expect(out).toContain('List all available adapters');
+  });
+
+  it('migrate --list exits 0 and prints the adapter listing', async () => {
+    await runCli(['migrate', '--list']);
+    expect(process.exitCode).toBe(0);
+    const out = stdoutOutput();
+    expect(out).toContain('Available migration adapters');
+    expect(out).toContain('hubdustry-go-mcp');
   });
 });

@@ -1,0 +1,182 @@
+---
+title: From PaSympa
+description: Migrate from PaSympa's discord_* tool surface (~91 tools) onto discord-mcp's 192-tool catalog.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Migrate from PaSympa
+
+PaSympa is a TypeScript Discord MCP server using the `discord_*` tool prefix.
+The `pasympa` adapter walks a local clone, extracts every `discord_<verb>_<noun>`
+literal, and reports the discord-mcp equivalents with confidence levels and
+per-entry notes.
+
+## Source
+
+- **Repo**:
+  [`PaSympa/discord-mcp`](https://github.com/PaSympa/discord-mcp)
+- **Package**: `@pasympa/discord-mcp`
+- **Tool count (cutoff 2026-05-01)**: ~91 across 13 modules (discovery,
+  messages, channels, permissions, members, roles, moderation, screening,
+  forums, webhooks, scheduled events, invites, DMs).
+- **Adapter source**:
+  [`packages/mcp-server/src/lib/migrate-adapters/pasympa.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-server/src/lib/migrate-adapters/pasympa.ts)
+
+## Why migrate to discord-mcp
+
+- **Production hardening** — first-class OpenTelemetry traces and cockatiel
+  resilience policies (retry / circuit breaker / bulkhead) on every REST call.
+  See [Operations: telemetry](/discord-mcp/operations/telemetry/) and
+  [Architecture: rate limits](/discord-mcp/architecture/rate-limits/).
+- **Full Discord REST surface (192 tools)** — discord-mcp covers ~110% of
+  PaSympa's tool count, including stickers, automod, polls, application
+  commands, onboarding, voice state, stage instances, scheduled events
+  (subscribers + invites), and the Components V2 layout primitives.
+- **Components V2 first-class** — every send/edit tool accepts `flags = 32768`
+  layouts. See the
+  [Components V2 announcement recipe](/discord-mcp/recipes/components-v2-announcement/).
+- **Gateway resource subscriptions** — `resources/subscribe` over Discord
+  Gateway events replaces REST polling. See
+  [Architecture: gateway](/discord-mcp/architecture/gateway/) and the
+  [gateway-subscribe recipe](/discord-mcp/recipes/gateway-subscribe/).
+
+## Step-by-step migration
+
+<Steps>
+
+1. **Clone PaSympa locally.**
+
+   ```bash
+   git clone https://github.com/PaSympa/discord-mcp.git ~/pasympa-clone
+   ```
+
+   The adapter does not fetch over the network — it requires a real
+   filesystem path so it can walk `src/tools/*.ts`.
+
+2. **Run the migration report.**
+
+   ```bash
+   discord-mcp migrate --from pasympa --source ~/pasympa-clone
+   ```
+
+   For machine-readable output, add `--json`:
+
+   ```bash
+   discord-mcp migrate --from pasympa --source ~/pasympa-clone --json > migrate-report.json
+   ```
+
+3. **Review the report.**
+
+   The output groups tools into three buckets:
+
+   - **mapped** — the adapter found a discord-mcp equivalent. Check the
+     `confidence` field on each entry and read the `notes` for every
+     `medium` or `low` mapping.
+   - **unmapped** — PaSympa tools with no discord-mcp equivalent (typically
+     scheduled events, `audit_permissions`, `copy_permissions`, `server_stats`,
+     `clone_channel`, forum getters).
+   - **manual review** — empty for PaSympa as of cutoff; the adapter never
+     defers to a human.
+
+4. **Update agent prompts.**
+
+   For every `mapped` entry, swap the old tool name for the new one in your
+   agent prompt templates. For `medium` / `low` confidence entries, also
+   adjust the argument shape per the per-entry `notes` (e.g. `discord_send_embed`
+   becomes `messages_send` with the embed hoisted into the `embeds[]` array).
+
+   For every `unmapped` entry, decide whether to drop the capability, replace
+   it with a discord-mcp composition (e.g. `audit_permissions` becomes a
+   sequence of `channels_get` + client-side overlay), or keep PaSympa
+   running side-by-side until the gap is closed.
+
+5. **Generate your new client config.**
+
+   ```bash
+   discord-mcp init --client claude-desktop --token "Bot YOUR.TOKEN"
+   ```
+
+   Restart your MCP client. The 192 discord-mcp tools replace PaSympa's 91.
+
+</Steps>
+
+## Top 20 mappings
+
+The table below shows the most common PaSympa operations and their
+discord-mcp equivalents. These are the calls every agent uses; the full
+NAME_MAP covers another ~58 entries — see the
+[adapter source](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-server/src/lib/migrate-adapters/pasympa.ts)
+for the complete list.
+
+| PaSympa tool                       | discord-mcp tool                  | Confidence | Notes                                                          |
+| ---------------------------------- | --------------------------------- | ---------- | -------------------------------------------------------------- |
+| `discord_list_guilds`              | `users_list_current_user_guilds`  | high       | —                                                              |
+| `discord_get_guild_info`           | `guild_get`                       | high       | —                                                              |
+| `discord_list_channels`            | `channels_list`                   | high       | —                                                              |
+| `discord_send_message`             | `messages_send`                   | high       | —                                                              |
+| `discord_read_messages`            | `messages_read`                   | high       | —                                                              |
+| `discord_edit_message`             | `messages_edit`                   | high       | —                                                              |
+| `discord_delete_message`           | `messages_delete`                 | high       | —                                                              |
+| `discord_pin_message`              | `messages_pin`                    | high       | —                                                              |
+| `discord_search_messages`          | `messages_search_recent`          | high       | —                                                              |
+| `discord_add_reaction`             | `reactions_create`                | high       | —                                                              |
+| `discord_get_reactions`            | `reactions_list`                  | high       | —                                                              |
+| `discord_create_channel`           | `channels_create_guild_channel`   | high       | —                                                              |
+| `discord_edit_channel`             | `channels_modify`                 | high       | —                                                              |
+| `discord_list_members`             | `members_list`                    | high       | —                                                              |
+| `discord_kick_member`              | `members_kick`                    | high       | —                                                              |
+| `discord_ban_member`               | `members_ban`                     | high       | —                                                              |
+| `discord_search_members`           | `members_search`                  | high       | —                                                              |
+| `discord_list_roles`               | `roles_list`                      | high       | —                                                              |
+| `discord_create_role`              | `roles_create`                    | high       | —                                                              |
+| `discord_get_audit_log`            | `audit_log_get`                   | high       | —                                                              |
+
+A handful of PaSympa wrappers fold onto a single discord-mcp tool — these are
+the medium-confidence collapses you should re-read before swapping:
+
+| PaSympa tool                       | discord-mcp tool                  | Confidence | Notes                                                          |
+| ---------------------------------- | --------------------------------- | ---------- | -------------------------------------------------------------- |
+| `discord_send_embed`               | `messages_send`                   | medium     | Embed becomes `embeds[]` in the `messages_send` payload.       |
+| `discord_send_multiple_embeds`     | `messages_send`                   | medium     | Pass the full `embeds[]` array directly.                       |
+| `discord_reply_message`            | `messages_send`                   | medium     | Set `message_reference.message_id` in the send payload.        |
+| `discord_timeout_member`           | `members_modify`                  | medium     | Pass `communication_disabled_until` (ISO-8601 timestamp).      |
+| `discord_lock_channel_permissions` | `channels_modify_permissions`     | medium     | Lock = explicit deny SEND_MESSAGES on `@everyone`.             |
+
+## Gap analysis
+
+About 13 PaSympa tools have no discord-mcp equivalent and surface in the
+report's `unmapped` list:
+
+- **Scheduled events (7 tools)** — `discord_list_scheduled_events`,
+  `discord_get_scheduled_event`, `discord_create_scheduled_event`,
+  `discord_edit_scheduled_event`, `discord_delete_scheduled_event`,
+  `discord_get_event_subscribers`, `discord_create_event_invite`. discord-mcp
+  exposes the events via `events_*` tools (different verb prefix); the adapter
+  treats these as unmapped because the verb prefixes don't match the
+  string-extraction step. Manual swap: `events_list`, `events_get`,
+  `events_create`, etc.
+- **Permissions helpers (2)** — `discord_audit_permissions`,
+  `discord_copy_permissions`. These are higher-level compositions on top
+  of the channel-permissions REST endpoint; rebuild client-side from
+  `channels_get` + `channels_modify_permissions`.
+- **Server stats (1)** — `discord_get_server_stats` is a client-side
+  computation in PaSympa (counts derived from `members_list` +
+  `channels_list`). discord-mcp expects the agent to compute this itself.
+- **Channel clone (1)** — `discord_clone_channel`. Compose from
+  `channels_get` (read source overwrites + topic + slowmode) + 
+  `channels_create_guild_channel` (apply to new channel).
+- **Forum getters (2)** — `discord_get_forum_channels`, `discord_get_forum_post`.
+  Use `channels_list` filtered by `type === 15` and `channels_get` respectively.
+
+## See also
+
+- [Adapter authoring guide](/discord-mcp/migrate/authoring/) — for adding
+  more source servers to this list.
+- [discord-mcp tools (192)](/discord-mcp/tools/) — auto-generated reference.
+- [CLI reference: `migrate`](/discord-mcp/reference/cli/#migrate) — flags
+  and exit codes.
+- [Architecture: gateway](/discord-mcp/architecture/gateway/) — what
+  `resources/subscribe` does that PaSympa polling does not.
