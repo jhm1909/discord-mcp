@@ -61,6 +61,9 @@ export { type BuildServerDeps, type BuildServerResult, buildServer } from './ser
 export { PreconditionStore } from './stores/PreconditionStore.js';
 // Stores
 export { ToolStore } from './stores/ToolStore.js';
+// Telemetry (Plan 8 Phase A)
+export * as TelemetryConventions from './telemetry/conventions.js';
+export { buildResource } from './telemetry/resource.js';
 // Tool helpers
 export { defineTool, type ToolDefinition } from './tools/_lib/defineTool.js';
 export { type CursorPayload, decodeCursor, encodeCursor } from './tools/_lib/pagination.js';
