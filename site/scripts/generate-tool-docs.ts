@@ -13,7 +13,12 @@
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { z } from 'zod';
+// Resolve zod via the mcp-core workspace package — pnpm ensures
+// packages/mcp-core/node_modules/zod is always present for the workspace,
+// avoiding a duplicate zod copy at site/node_modules that would conflict
+// with Astro's content schema (which uses its own bundled zod via
+// astro:content).
+import { z } from '../../packages/mcp-core/node_modules/zod/index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '../..');
@@ -148,7 +153,11 @@ export function renderSchemaTable(fields: Record<string, z.ZodTypeAny> | undefin
   for (const [name, prop] of Object.entries(props)) {
     const type = Array.isArray(prop.type) ? prop.type.join(' \\| ') : (prop.type ?? 'unknown');
     const req = required.has(name) ? 'yes' : 'no';
-    const description = (prop.description ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+    // Description text appears inside an MDX paragraph. Escape `<`, `{`, `}`
+    // so placeholders like `<channel_id>` and `{{...}}` render as text.
+    const description = escapeMdx(prop.description ?? '')
+      .replace(/\|/g, '\\|')
+      .replace(/\n/g, ' ');
     rows.push(`| \`${name}\` | ${type} | ${req} | ${description} |`);
   }
   return rows.join('\n');
@@ -162,7 +171,11 @@ export function renderToolMdx(tool: ToolMetadata): string {
   const sourceRelative = relative(ROOT, tool.sourcePath).replace(/\\/g, '/');
   const ghUrl = `https://github.com/cappylab/discord-mcp/blob/main/${sourceRelative}`;
 
-  const fmDesc = desc.purpose.replace(/['"]/g, '').replace(/\n/g, ' ').slice(0, 150).trim();
+  // Wrap in single quotes (YAML safe-mode) so colons, brackets, and other YAML
+  // metacharacters in the description don't break frontmatter parsing.
+  // YAML escapes single quotes by doubling them.
+  const fmDescRaw = desc.purpose.replace(/\n/g, ' ').slice(0, 150).trim();
+  const fmDesc = `'${fmDescRaw.replace(/'/g, "''")}'`;
 
   const a = tool.annotations;
   const requiresConfirm = tool.preconditions.includes('confirm_required');
@@ -234,10 +247,13 @@ export function renderCategoryIndex(category: string, tools: ToolMetadata[]): st
   const cards = tools
     .map((t) => {
       const slug = t.name.startsWith(`${category}_`) ? t.name.slice(category.length + 1) : t.name;
+      // The description is rendered as a JSX attribute value, so we must
+      // HTML-encode `"`, `&`, `<` rather than backslash-escape them.
       const cardDesc = parseDescription(t.description)
-        .purpose.replace(/\|/g, '\\|')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, ' ')
+        .purpose.replace(/\n/g, ' ')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/"/g, '&quot;')
         .slice(0, 100);
       return `  <LinkCard title="${t.name}" href="/discord-mcp/tools/${category}/${slug}/" description="${cardDesc}" />`;
     })
