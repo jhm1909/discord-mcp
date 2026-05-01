@@ -224,11 +224,12 @@ describe('cli — init sub-command (Plan 9 Phase D)', () => {
   });
 });
 
-describe('cli — placeholder sub-commands', () => {
-  it('migrate exits with code 2 and prints not-yet-implemented', async () => {
+describe('cli — migrate sub-command (Plan 9 Phase E)', () => {
+  it('migrate without --from exits 2 and lists available adapters', async () => {
     await runCli(['migrate']);
     expect(process.exitCode).toBe(2);
-    expect(stdoutOutput()).toContain('not yet implemented');
-    expect(stdoutOutput()).toContain('migrate');
+    const out = stdoutOutput();
+    expect(out).toContain('--from');
+    expect(out).toContain('hubdustry-go-mcp');
   });
 });
