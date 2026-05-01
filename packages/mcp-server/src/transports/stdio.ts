@@ -1,9 +1,11 @@
 import {
+  buildPolicy,
   buildServer,
   createGatewayClient,
   createLogger,
   type GatewayClient,
   loadConfig,
+  wrapRestWithResilience,
 } from '@discord-mcp/core';
 import { REST } from '@discordjs/rest';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -21,10 +23,17 @@ export async function startStdio(): Promise<void> {
     logger.info({ otel: 'enabled' }, 'OpenTelemetry SDK started');
   }
 
-  const rest = new REST({ version: '10' }).setToken(
+  // `retries: 0` is non-negotiable here. Plan 8 §13 risk register: cockatiel
+  // owns retry semantics from this point on; leaving the default (3) would
+  // double-retry on 5xx and stack delays on 429.
+  const baseRest = new REST({ version: '10', retries: 0 }).setToken(
     // Discord REST does not want the "Bot " prefix here — discord.js's REST adds it.
     config.DISCORD_TOKEN.startsWith('Bot ') ? config.DISCORD_TOKEN.slice(4) : config.DISCORD_TOKEN,
   );
+
+  // Wrap the rate-limit-queue-aware REST in cockatiel's resilience policy
+  // (timeout + retry-on-DiscordRetryableError honoring 429 Retry-After).
+  const rest = wrapRestWithResilience(baseRest, buildPolicy(config));
 
   const { server, registeredTools, notifyResource, subscriptions } = await buildServer({
     rest,
