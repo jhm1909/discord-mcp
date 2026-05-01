@@ -13,7 +13,7 @@
 import { readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '../..');
@@ -85,7 +85,142 @@ export async function loadAllTools(toolsDir: string = TOOLS_DIR): Promise<ToolMe
 }
 
 // ---------------------------------------------------------------------------
-// Orchestration (renderers + main land in subsequent commits)
+// Tool MDX renderer
+// ---------------------------------------------------------------------------
+
+/**
+ * Tool descriptions follow the established 4-section format used across the
+ * 192 tools. Headings are bold-asterisk markdown — capture body text up to
+ * the next bold-asterisk heading or end of string.
+ */
+export function parseDescription(desc: string): {
+  purpose: string;
+  whenToUse: string;
+  whenNotToUse: string;
+  returns: string;
+} {
+  const sections = { purpose: '', whenToUse: '', whenNotToUse: '', returns: '' };
+
+  const sectionRegex = /\*\*([^*]+)\*\*:\s*([\s\S]*?)(?=\n\s*\*\*[^*]+\*\*:|$)/g;
+  for (const m of desc.matchAll(sectionRegex)) {
+    const heading = (m[1] ?? '').trim().toLowerCase();
+    const body = (m[2] ?? '').trim();
+    if (heading === 'purpose') sections.purpose = body;
+    else if (heading === 'when to use') sections.whenToUse = body;
+    else if (heading === 'when not to use') sections.whenNotToUse = body;
+    else if (heading === 'returns') sections.returns = body;
+  }
+
+  return sections;
+}
+
+/**
+ * Escape characters MDX would interpret as JSX. Tool descriptions sometimes
+ * contain `<channel_id>` placeholders or `{key:value}` examples that MDX
+ * would otherwise try to parse as JSX expressions.
+ */
+export function escapeMdx(s: string): string {
+  return s.replace(/</g, '\\<').replace(/\{/g, '\\{').replace(/\}/g, '\\}');
+}
+
+export function renderSchemaTable(fields: Record<string, z.ZodTypeAny> | undefined): string {
+  if (!fields || Object.keys(fields).length === 0) return '*(no fields)*';
+
+  const objSchema = z.object(fields);
+  let jsonSchema: {
+    properties?: Record<
+      string,
+      { type?: string | string[]; description?: string; format?: string }
+    >;
+    required?: string[];
+  };
+  try {
+    jsonSchema = z.toJSONSchema(objSchema, { target: 'draft-2020-12' }) as typeof jsonSchema;
+  } catch (e) {
+    return `*(schema introspection failed: ${e instanceof Error ? e.message : String(e)})*`;
+  }
+
+  const required = new Set(jsonSchema.required ?? []);
+  const props = jsonSchema.properties ?? {};
+
+  const rows: string[] = ['| Field | Type | Required | Description |', '|---|---|---|---|'];
+  for (const [name, prop] of Object.entries(props)) {
+    const type = Array.isArray(prop.type) ? prop.type.join(' \\| ') : (prop.type ?? 'unknown');
+    const req = required.has(name) ? 'yes' : 'no';
+    const description = (prop.description ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+    rows.push(`| \`${name}\` | ${type} | ${req} | ${description} |`);
+  }
+  return rows.join('\n');
+}
+
+export function renderToolMdx(tool: ToolMetadata): string {
+  const desc = parseDescription(tool.description);
+  const inputTable = renderSchemaTable(tool.inputSchema);
+  const outputTable = renderSchemaTable(tool.outputSchema);
+
+  const sourceRelative = relative(ROOT, tool.sourcePath).replace(/\\/g, '/');
+  const ghUrl = `https://github.com/cappylab/discord-mcp/blob/main/${sourceRelative}`;
+
+  const fmDesc = desc.purpose.replace(/['"]/g, '').replace(/\n/g, ' ').slice(0, 150).trim();
+
+  const a = tool.annotations;
+  const requiresConfirm = tool.preconditions.includes('confirm_required');
+
+  return `---
+title: ${tool.name}
+description: ${fmDesc}
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+# \`${tool.name}\`
+
+**Category**: ${tool.category}
+
+<Aside type="tip">
+This page is auto-generated from \`${sourceRelative}\`. Edit the source to update.
+</Aside>
+
+${escapeMdx(desc.purpose)}
+
+## When to use
+
+${escapeMdx(desc.whenToUse)}
+
+## When NOT to use
+
+${escapeMdx(desc.whenNotToUse)}
+
+## Input
+
+${inputTable}
+
+## Returns
+
+${escapeMdx(desc.returns)}
+
+### Output schema
+
+${outputTable}
+
+## Annotations
+
+| Property | Value |
+|---|---|
+| Read-only | ${a.readOnlyHint ? 'yes' : 'no'} |
+| Destructive | ${a.destructiveHint ? 'yes' : 'no'} |
+| Idempotent | ${a.idempotentHint ? 'yes' : 'no'} |
+| Open-world | ${a.openWorldHint ? 'yes' : 'no'} |
+| Confirmation required | ${requiresConfirm ? 'yes (`__confirm:true` required)' : 'no'} |
+
+## Source
+
+[\`${sourceRelative}\`](${ghUrl})
+`;
+}
+
+// ---------------------------------------------------------------------------
+// Orchestration (category indexes + main land in subsequent commits)
 // ---------------------------------------------------------------------------
 
 async function main() {
