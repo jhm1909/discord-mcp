@@ -31,3 +31,9 @@ docs/*
 # Agents
 .claude/
 .agents/
+
+# Site (Astro Starlight)
+site/dist
+site/.astro
+site/node_modules
+site/src/content/docs/tools/
