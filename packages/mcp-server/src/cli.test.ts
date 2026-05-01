@@ -111,24 +111,53 @@ describe('cli — serve (default sub-command)', () => {
   });
 });
 
-describe('cli — placeholder sub-commands', () => {
-  it('doctor exits with code 2 and prints not-yet-implemented', async () => {
-    await runCli(['doctor']);
-    expect(process.exitCode).toBe(2);
-    expect(stdoutOutput()).toContain('not yet implemented');
-    expect(stdoutOutput()).toContain('doctor');
+describe('cli — doctor sub-command (Plan 9 Phase B)', () => {
+  // Without DISCORD_TOKEN env, env-vars + token-format checks fail → exit 2.
+  // We deliberately rely on the test runner's real env (no token) to get a
+  // deterministic fail; if a developer has DISCORD_TOKEN exported in their
+  // shell, vitest inherits it and the result would be exit 0 or 1 here. We
+  // strip it explicitly inside the test to prevent that.
+  const savedDiscordToken = process.env.DISCORD_TOKEN;
+  beforeEach(() => {
+    delete process.env.DISCORD_TOKEN;
+  });
+  afterEach(() => {
+    if (savedDiscordToken !== undefined) {
+      process.env.DISCORD_TOKEN = savedDiscordToken;
+    } else {
+      delete process.env.DISCORD_TOKEN;
+    }
   });
 
-  it('doctor accepts --json without breaking option shape', async () => {
+  it('doctor exits with code 2 when token is missing', async () => {
+    await runCli(['doctor']);
+    expect(process.exitCode).toBe(2);
+    // Pretty output mentions the failing checks by id.
+    expect(stdoutOutput()).toContain('token-format');
+    expect(stdoutOutput()).toContain('env-vars');
+  });
+
+  it('doctor accepts --json and emits parseable JSON', async () => {
     await runCli(['doctor', '--json']);
     expect(process.exitCode).toBe(2);
+    const out = stdoutOutput();
+    const parsed = JSON.parse(out);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.exitCode).toBe(2);
+    expect(parsed.data?.checks).toBeDefined();
+    expect(Array.isArray(parsed.data.checks)).toBe(true);
   });
 
   it('doctor accepts --online without breaking option shape', async () => {
+    // Phase B: --online filters checks but no online checks exist yet, so
+    // running with --online still produces the same offline check set
+    // (offline checks have online: false; --online just lifts the filter).
     await runCli(['doctor', '--online']);
     expect(process.exitCode).toBe(2);
   });
+});
 
+describe('cli — placeholder sub-commands', () => {
   it('init exits with code 2 and prints not-yet-implemented', async () => {
     await runCli(['init']);
     expect(process.exitCode).toBe(2);
