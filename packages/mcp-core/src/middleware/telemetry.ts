@@ -8,6 +8,7 @@ import {
   trace,
 } from '@opentelemetry/api';
 import { tryGetCtx } from '../als/context.js';
+import { redactArgs } from '../audit/redact.js';
 import {
   ATTR_MCP_REQUEST_ID,
   ATTR_MCP_TOOL_CATEGORY,
@@ -96,6 +97,17 @@ export function telemetryMiddleware(): ToolMiddleware {
       const span = tracer.startSpan(`mcp.tool.${ctx.tool.name}`, {
         kind: SpanKind.SERVER,
         attributes: spanAttrs,
+      });
+
+      // Phase F.2: emit a span EVENT carrying the redacted args. Using
+      // an event (rather than a high-cardinality attribute on every
+      // span) keeps the trace storage cost bounded and clearly marks
+      // the payload as user-input. Redaction MUST go through
+      // redactArgs(args, toolName) — it applies the per-tool sensitive
+      // key map + global keys + length truncation. Span redaction
+      // happens at the middleware boundary; tools never see telemetry.
+      span.addEvent('mcp.tool.args', {
+        'mcp.args.redacted': JSON.stringify(redactArgs(ctx.args, ctx.tool.name)),
       });
 
       const start = performance.now();

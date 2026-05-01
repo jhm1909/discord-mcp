@@ -173,6 +173,31 @@ describe('telemetryMiddleware', () => {
     }
   });
 
+  it('emits an mcp.tool.args span event with redacted args (Plan 8 F.2)', async () => {
+    const mw = telemetryMiddleware();
+    // messages_send.content is in SENSITIVE_KEYS_BY_TOOL → must be
+    // replaced with the [REDACTED:Nch] marker before reaching the
+    // span attribute. Raw "secret data" must NOT appear anywhere.
+    const ctx = {
+      tool,
+      args: { channel_id: '111', content: 'secret data' },
+      meta: new Map(),
+    };
+    await mw.onCallTool!(ctx, async () => ({ isError: false, content: [] }));
+
+    const s = spanExporter.getFinishedSpans()[0]!;
+    const ev = s.events.find((e) => e.name === 'mcp.tool.args');
+    expect(ev, 'mcp.tool.args event missing').toBeDefined();
+    const redactedJson = ev?.attributes?.['mcp.args.redacted'] as string;
+    expect(redactedJson).toBeDefined();
+    // Raw secret must NOT appear in the JSON.
+    expect(redactedJson).not.toContain('secret data');
+    // The marker (length-aware) must be present.
+    expect(redactedJson).toContain('[REDACTED:11ch]');
+    // Non-sensitive arg passes through.
+    expect(redactedJson).toContain('"channel_id":"111"');
+  });
+
   it('does NOT include mcp.request_id as a metric label (cardinality guard)', async () => {
     // Even when the middleware is called from a request context that
     // would set request_id on the span, the metric labels must not
