@@ -39,8 +39,10 @@ export default async function setup(): Promise<void> {
     return;
   }
 
-  // eslint-disable-next-line no-console — vitest prints this once.
-  console.log(
+  // Use `console.warn` so biome's noConsole rule (which allows warn/error)
+  // doesn't flag this. It's printed once per `vitest run` and only when
+  // the dist artefacts were absent — i.e. fresh worktree / cold CI.
+  console.warn(
     '[vitest-global] dist/ artefacts missing — building @discord-mcp/cli (transitively rebuilds @discord-mcp/core)...',
   );
   // workspace root = ../../ relative to packages/mcp-server.
