@@ -1,9 +1,9 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { server as mswServer } from '@discord-mcp/server-mocks';
 import { REST } from '@discordjs/rest';
 import { http, passthrough } from 'msw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { server as mswServer } from '../../../../test/setup.js';
 import type { Config } from '../config.js';
 import { CircuitOpenError } from '../errors/server.js';
 import { buildPolicy } from './policy.js';

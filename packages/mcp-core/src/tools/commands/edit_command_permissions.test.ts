@@ -1,6 +1,6 @@
+import { server } from '@discord-mcp/server-mocks';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { server } from '../../../../../test/setup.js';
 import commandsEditCommandPermissions from './edit_command_permissions.js';
 import '../../container.js';
 

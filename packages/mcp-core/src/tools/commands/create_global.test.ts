@@ -1,8 +1,8 @@
+import { server } from '@discord-mcp/server-mocks';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { server } from '../../../../../test/setup.js';
 import commandsCreateGlobal from './create_global.js';
 import '../../container.js';
 
