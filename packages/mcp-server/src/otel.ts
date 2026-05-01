@@ -1,6 +1,7 @@
 import { buildResource, type Config, redactRoute } from '@discord-mcp/core';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { type IMetricReader, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -93,7 +94,7 @@ function isOtlpSelfTrace(url: string): boolean {
   return url.includes('/v1/traces') || url.includes('/v1/metrics') || url.includes('/v1/logs');
 }
 
-function buildInstrumentations(): UndiciInstrumentation[] {
+function buildInstrumentations(): (UndiciInstrumentation | PinoInstrumentation)[] {
   return [
     new UndiciInstrumentation({
       ignoreRequestHook: (req) => isOtlpSelfTrace(`${req.origin}${req.path}`),
@@ -104,6 +105,17 @@ function buildInstrumentations(): UndiciInstrumentation[] {
         if (req.origin.includes('discord.com/api')) {
           span.setAttribute('discord.route', `${req.method} ${redactRoute(req.path)}`);
         }
+      },
+    }),
+    // Pino correlation: when a span is active, every pino log line
+    // emitted under it gains trace_id/span_id fields, so traces and
+    // logs can be joined in Loki/Tempo/Honeycomb without app changes.
+    // Outside an active span the hook is not invoked, so log records
+    // remain untouched (verified by instrumentation-pino's own tests).
+    new PinoInstrumentation({
+      logHook: (span, record) => {
+        record['trace_id'] = span.spanContext().traceId;
+        record['span_id'] = span.spanContext().spanId;
       },
     }),
   ];
