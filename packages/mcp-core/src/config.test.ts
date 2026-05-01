@@ -296,4 +296,92 @@ describe('loadConfig', () => {
       ).toThrow();
     });
   });
+
+  describe('Circuit breaker + bulkhead fields (Plan 8 Phase D)', () => {
+    it('MCP_CIRCUIT_ENABLED defaults to true (default-on flag)', () => {
+      const c = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(c.MCP_CIRCUIT_ENABLED).toBe(true);
+    });
+
+    it('MCP_CIRCUIT_ENABLED only goes false on the literal string "false"', () => {
+      const off = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_CIRCUIT_ENABLED: 'false',
+      } as NodeJS.ProcessEnv);
+      expect(off.MCP_CIRCUIT_ENABLED).toBe(false);
+      for (const v of ['true', '1', 'yes', '0', 'no', '']) {
+        const on = loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_CIRCUIT_ENABLED: v,
+        } as NodeJS.ProcessEnv);
+        expect(on.MCP_CIRCUIT_ENABLED).toBe(true);
+      }
+    });
+
+    it('MCP_CIRCUIT_FAILURE_THRESHOLD defaults to 10 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_CIRCUIT_FAILURE_THRESHOLD).toBe(10);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_CIRCUIT_FAILURE_THRESHOLD: '5',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_CIRCUIT_FAILURE_THRESHOLD).toBe(5);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_CIRCUIT_FAILURE_THRESHOLD: '2',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_CIRCUIT_FAILURE_THRESHOLD: '101',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_CIRCUIT_HALF_OPEN_AFTER_MS defaults to 60000 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_CIRCUIT_HALF_OPEN_AFTER_MS).toBe(60000);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_CIRCUIT_HALF_OPEN_AFTER_MS: '30000',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_CIRCUIT_HALF_OPEN_AFTER_MS).toBe(30000);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_CIRCUIT_HALF_OPEN_AFTER_MS: '4999',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_CIRCUIT_HALF_OPEN_AFTER_MS: '600001',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_BULKHEAD_LIMIT defaults to 100 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_BULKHEAD_LIMIT).toBe(100);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_BULKHEAD_LIMIT: '50',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_BULKHEAD_LIMIT).toBe(50);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_BULKHEAD_LIMIT: '0',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_BULKHEAD_LIMIT: '1001',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+  });
 });

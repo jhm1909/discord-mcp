@@ -42,6 +42,10 @@ function cfg(partial: Partial<Config> = {}): Config {
     MCP_RETRY_JITTER: 'none',
     MCP_TIMEOUT_DEFAULT_MS: 10000,
     MCP_TIMEOUT_LONG_MS: 60000,
+    MCP_CIRCUIT_ENABLED: false,
+    MCP_CIRCUIT_FAILURE_THRESHOLD: 10,
+    MCP_CIRCUIT_HALF_OPEN_AFTER_MS: 60000,
+    MCP_BULKHEAD_LIMIT: 100,
     ...partial,
   } as Config;
 }

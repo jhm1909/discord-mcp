@@ -53,6 +53,20 @@ const ConfigSchema = z.object({
   MCP_RETRY_JITTER: z.enum(['none', 'full', 'decorrelated']).default('full'),
   MCP_TIMEOUT_DEFAULT_MS: z.coerce.number().int().min(1000).max(120000).default(30000),
   MCP_TIMEOUT_LONG_MS: z.coerce.number().int().min(1000).max(300000).default(60000),
+
+  // --- Resilience: circuit breaker + bulkhead (Plan 8 Phase D) ---
+  // Circuit is ON by default. Same `!== 'false'` semantics as MCP_RETRY_ENABLED:
+  // anything other than the literal string 'false' (incl. unset) is true.
+  MCP_CIRCUIT_ENABLED: z
+    .string()
+    .transform((v) => v !== 'false')
+    .default(true),
+  MCP_CIRCUIT_FAILURE_THRESHOLD: z.coerce.number().int().min(3).max(100).default(10),
+  MCP_CIRCUIT_HALF_OPEN_AFTER_MS: z.coerce.number().int().min(5000).max(600000).default(60000),
+  // Bulkhead: max in-flight Discord REST calls.  queueSize is hard-coded to 0
+  // in policy.ts (fast-reject, no head-of-line blocking).  Min sane value is
+  // 10 — see policy.ts JSDoc note on pipeline self-deadlock.
+  MCP_BULKHEAD_LIMIT: z.coerce.number().int().min(1).max(1000).default(100),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
