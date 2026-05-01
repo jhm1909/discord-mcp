@@ -11,8 +11,12 @@
  * "0 mapped, 8 unmapped, 0 manual review" against a real Hubdustry tree).
  * Plan 11 Phase B adds the PaSympa adapter — the first Discord-using
  * adapter with a real {@link NAME_MAP} covering ~91 tools across 14
- * modules. Future phases add quadslab, discord-ops, barryyip.
+ * modules. Plan 11 Phase C adds quadslab. Plan 11 Phase D adds
+ * discord-ops by bookedsolidtech (multi-guild routing, dry-run mode,
+ * tool profiles — see file-level "Architectural mismatches" in
+ * `discord-ops.ts`). Future phases add barryyip.
  */
+import { discordOpsAdapter } from './discord-ops.js';
 import { hubdustryGoMcpAdapter } from './hubdustry-go-mcp.js';
 import { pasympaAdapter } from './pasympa.js';
 import { quadslabAdapter } from './quadslab.js';
@@ -22,7 +26,8 @@ export const ALL_ADAPTERS: readonly MigrationSource[] = [
   hubdustryGoMcpAdapter,
   pasympaAdapter,
   quadslabAdapter,
-  // Plan 11 also adds: discordOpsAdapter, barryyipAdapter
+  discordOpsAdapter,
+  // Plan 11 also adds: barryyipAdapter
 ];
 
 export type {
