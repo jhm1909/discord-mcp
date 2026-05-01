@@ -15,12 +15,14 @@
  */
 import { hubdustryGoMcpAdapter } from './hubdustry-go-mcp.js';
 import { pasympaAdapter } from './pasympa.js';
+import { quadslabAdapter } from './quadslab.js';
 import type { MigrationSource } from './types.js';
 
 export const ALL_ADAPTERS: readonly MigrationSource[] = [
   hubdustryGoMcpAdapter,
   pasympaAdapter,
-  // Plan 11 also adds: quadslabAdapter, discordOpsAdapter, barryyipAdapter
+  quadslabAdapter,
+  // Plan 11 also adds: discordOpsAdapter, barryyipAdapter
 ];
 
 export type {
