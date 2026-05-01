@@ -1,0 +1,58 @@
+---
+title: First tool call
+description: Walk through what happens when Claude sends your first Discord message.
+---
+
+# First tool call
+
+After Claude Desktop is configured (see [Quickstart](/discord-mcp/start/quickstart/)),
+your first interaction usually looks like this:
+
+> **You:** "Post 'hello from Claude' in #general of my test guild."
+
+This single sentence triggers a precise sequence inside Claude.
+
+## What Claude does internally
+
+1. **Discovery — `tools/list`.** Claude sends a JSON-RPC `tools/list` request over stdio.
+   discord-mcp returns 192 tool definitions, each with a four-section description.
+2. **Selection.** Claude scans the tool catalog, looking for ones whose `Purpose`
+   line matches "post a message to a channel." It picks `messages_send`.
+3. **Argument extraction.** Claude reads `messages_send`'s input schema and fills the
+   required fields (`channel_id`, `content`) by either inferring from context or
+   asking you to confirm.
+4. **Invocation — `tools/call`.** Claude sends a `tools/call` JSON-RPC frame
+   with `name: "messages_send"` and the structured arguments.
+5. **Execution.** discord-mcp validates the args (zod), resolves the channel, applies
+   resilience policies (retry / circuit-breaker via Cockatiel), issues the REST call,
+   redacts the response per the privacy policy, and returns it.
+6. **Display.** Claude renders the success result — typically a confirmation with the
+   created message's ID and timestamp.
+
+## The four-section description format
+
+Every tool's description follows the same agent-optimized layout. Here is the contract
+for `messages_send` (abridged):
+
+```text
+Purpose: Send a new message to a Discord channel.
+When to use: User asks to post, send, share, or announce something in a channel.
+When NOT to use: When editing an existing message (use messages_edit) or replying
+  inside a thread without creating one (use threads_create + messages_send).
+Returns: { id, channel_id, content, author, timestamp, ... } — the created Message object.
+```
+
+The four-section structure is what lets Claude pick the right tool from 192
+candidates without hallucinating one that does not exist.
+
+## Why structured output matters
+
+The tool's return value is **always structured JSON**, not free-form text. Claude
+re-uses fields like `id` from the response in follow-up tool calls, e.g. to add a
+reaction (`reactions_add`) or pin the message (`messages_pin`). This is why
+discord-mcp ships every endpoint as a tool rather than an ad-hoc shell.
+
+## Next
+
+- [Client setup](/discord-mcp/start/client-setup/) — same flow but with Cursor, Claude Code, or generic clients.
+- [Tools](/discord-mcp/tools/) — full reference for all 192 tools (auto-generated).
