@@ -1,6 +1,6 @@
 {
   "name": "@discord-mcp/cli",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "type": "module",
   "mcpName": "io.github.jhm1909/discord-mcp",
