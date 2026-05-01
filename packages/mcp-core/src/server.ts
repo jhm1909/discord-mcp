@@ -27,10 +27,51 @@ import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
 import { ToolStore } from './stores/ToolStore.js';
+import AppEmojisCreate from './tools/app_emojis/create.js';
+import AppEmojisDelete from './tools/app_emojis/delete.js';
+import AppEmojisGet from './tools/app_emojis/get.js';
+import AppEmojisList from './tools/app_emojis/list.js';
+import AppEmojisModify from './tools/app_emojis/modify.js';
+import ApplicationGetActivityInstance from './tools/application/get_activity_instance.js';
+import ApplicationGetCurrent from './tools/application/get_current.js';
+import ApplicationGetRoleConnectionMetadata from './tools/application/get_role_connection_metadata.js';
+import ApplicationModifyCurrent from './tools/application/modify_current.js';
+import ApplicationModifyRoleConnectionMetadata from './tools/application/modify_role_connection_metadata.js';
 import AuditLogGet from './tools/audit_log/get.js';
+import AutomodCreateRule from './tools/automod/create_rule.js';
+import AutomodDeleteRule from './tools/automod/delete_rule.js';
+import AutomodGetRule from './tools/automod/get_rule.js';
+import AutomodListRules from './tools/automod/list_rules.js';
+import AutomodModifyRule from './tools/automod/modify_rule.js';
+import ChannelsCreateGuildChannel from './tools/channels/create_guild_channel.js';
+import ChannelsDelete from './tools/channels/delete.js';
+import ChannelsDeletePermissions from './tools/channels/delete_permissions.js';
+import ChannelsFollowAnnouncement from './tools/channels/follow_announcement.js';
+import ChannelsForumCreateThread from './tools/channels/forum_create_thread.js';
 import ChannelsGet from './tools/channels/get.js';
 import ChannelsList from './tools/channels/list.js';
+import ChannelsListActiveThreadsGuild from './tools/channels/list_active_threads_guild.js';
+import ChannelsListJoinedPrivateArchivedThreads from './tools/channels/list_joined_private_archived_threads.js';
+import ChannelsListPrivateArchivedThreads from './tools/channels/list_private_archived_threads.js';
+import ChannelsListPublicArchivedThreads from './tools/channels/list_public_archived_threads.js';
+import ChannelsModify from './tools/channels/modify.js';
+import ChannelsModifyPermissions from './tools/channels/modify_permissions.js';
+import ChannelsTriggerTyping from './tools/channels/trigger_typing.js';
+import CommandsBulkOverwriteGlobal from './tools/commands/bulk_overwrite_global.js';
+import CommandsBulkOverwriteGuild from './tools/commands/bulk_overwrite_guild.js';
+import CommandsCreateGlobal from './tools/commands/create_global.js';
+import CommandsCreateGuild from './tools/commands/create_guild.js';
+import CommandsDeleteGlobal from './tools/commands/delete_global.js';
+import CommandsDeleteGuild from './tools/commands/delete_guild.js';
+import CommandsEditCommandPermissions from './tools/commands/edit_command_permissions.js';
+import CommandsGetCommandPermissions from './tools/commands/get_command_permissions.js';
+import CommandsGetGlobal from './tools/commands/get_global.js';
+import CommandsGetGuild from './tools/commands/get_guild.js';
+import CommandsGetGuildCommandPermissions from './tools/commands/get_guild_command_permissions.js';
+import CommandsListGlobal from './tools/commands/list_global.js';
 import CommandsListGuild from './tools/commands/list_guild.js';
+import CommandsModifyGlobal from './tools/commands/modify_global.js';
+import CommandsModifyGuild from './tools/commands/modify_guild.js';
 import ComponentsV2BuildContainer from './tools/components-v2/build_container.js';
 import ComponentsV2BuildMediaGallery from './tools/components-v2/build_media_gallery.js';
 import ComponentsV2BuildSection from './tools/components-v2/build_section.js';
@@ -39,23 +80,145 @@ import ComponentsV2PreviewTool from './tools/components-v2/preview-tool.js';
 import ComponentsV2Send from './tools/components-v2/send.js';
 import ComponentsV2SendFromTemplate from './tools/components-v2/send-from-template.js';
 import ComponentsV2Validate from './tools/components-v2/validate.js';
+import EmojisCreate from './tools/emojis/create.js';
+import EmojisDelete from './tools/emojis/delete.js';
+import EmojisGet from './tools/emojis/get.js';
+import EmojisListGuild from './tools/emojis/list_guild.js';
+import EmojisModify from './tools/emojis/modify.js';
+import EventsCreate from './tools/events/create.js';
+import EventsDelete from './tools/events/delete.js';
+import EventsGet from './tools/events/get.js';
 import EventsList from './tools/events/list.js';
+import EventsListUsers from './tools/events/list_users.js';
+import EventsModify from './tools/events/modify.js';
+import GuildBeginPrune from './tools/guild/begin_prune.js';
+import GuildDeleteIntegration from './tools/guild/delete_integration.js';
 import GuildGet from './tools/guild/get.js';
+import GuildGetPruneCount from './tools/guild/get_prune_count.js';
+import GuildGetVanityUrl from './tools/guild/get_vanity_url.js';
+import GuildGetWelcomeScreen from './tools/guild/get_welcome_screen.js';
+import GuildGetWidget from './tools/guild/get_widget.js';
+import GuildGetWidgetImageUrl from './tools/guild/get_widget_image_url.js';
+import GuildGetWidgetSettings from './tools/guild/get_widget_settings.js';
+import GuildListIntegrations from './tools/guild/list_integrations.js';
+import GuildListVoiceRegions from './tools/guild/list_voice_regions.js';
+import GuildModify from './tools/guild/modify.js';
+import GuildModifyCurrentVoiceState from './tools/guild/modify_current_voice_state.js';
+import GuildModifyUserVoiceState from './tools/guild/modify_user_voice_state.js';
+import GuildModifyWelcomeScreen from './tools/guild/modify_welcome_screen.js';
+import GuildModifyWidget from './tools/guild/modify_widget.js';
 import IntelligenceClassifyMessages from './tools/intelligence/classify_messages.js';
 import IntelligenceDraftResponse from './tools/intelligence/draft_response.js';
 import IntelligenceExtractEntities from './tools/intelligence/extract_entities.js';
 import IntelligenceModerateContent from './tools/intelligence/moderate_content.js';
 import IntelligenceSummarizeChannel from './tools/intelligence/summarize_channel.js';
+import InteractionsCreateFollowup from './tools/interactions/create_followup.js';
+import InteractionsCreateResponse from './tools/interactions/create_response.js';
+import InteractionsDeleteFollowup from './tools/interactions/delete_followup.js';
+import InteractionsDeleteOriginalResponse from './tools/interactions/delete_original_response.js';
+import InteractionsEditFollowup from './tools/interactions/edit_followup.js';
+import InteractionsEditOriginalResponse from './tools/interactions/edit_original_response.js';
+import InteractionsGetFollowup from './tools/interactions/get_followup.js';
+import InteractionsGetOriginalResponse from './tools/interactions/get_original_response.js';
+import InvitesCreateChannel from './tools/invites/create_channel.js';
+import InvitesDelete from './tools/invites/delete.js';
+import InvitesGet from './tools/invites/get.js';
+import InvitesListChannel from './tools/invites/list_channel.js';
+import MembersAddRole from './tools/members/add_role.js';
+import MembersBan from './tools/members/ban.js';
+import MembersBulkBan from './tools/members/bulk_ban.js';
 import MembersGet from './tools/members/get.js';
+import MembersGetBan from './tools/members/get_ban.js';
+import MembersGetCurrentUser from './tools/members/get_current_user.js';
+import MembersKick from './tools/members/kick.js';
+import MembersList from './tools/members/list.js';
+import MembersListBans from './tools/members/list_bans.js';
+import MembersModify from './tools/members/modify.js';
+import MembersModifyCurrent from './tools/members/modify_current.js';
+import MembersRemoveRole from './tools/members/remove_role.js';
 import MembersSearch from './tools/members/search.js';
+import MembersUnban from './tools/members/unban.js';
+import MessagesBulkDelete from './tools/messages/bulk_delete.js';
+import MessagesCreateThread from './tools/messages/create_thread.js';
+import MessagesCrosspost from './tools/messages/crosspost.js';
 import MessagesDelete from './tools/messages/delete.js';
 import MessagesEdit from './tools/messages/edit.js';
+import MessagesGet from './tools/messages/get.js';
+import MessagesListPins from './tools/messages/list_pins.js';
+import MessagesPin from './tools/messages/pin.js';
 import MessagesRead from './tools/messages/read.js';
+import MessagesSearchRecent from './tools/messages/search_recent.js';
 import MessagesSend from './tools/messages/send.js';
+import MessagesUnpin from './tools/messages/unpin.js';
 import McpPipeline from './tools/meta/pipeline.js';
+import EntitlementsConsume from './tools/monetization/entitlements_consume.js';
+import EntitlementsCreateTest from './tools/monetization/entitlements_create_test.js';
+import EntitlementsDeleteTest from './tools/monetization/entitlements_delete_test.js';
+import EntitlementsGet from './tools/monetization/entitlements_get.js';
+import EntitlementsList from './tools/monetization/entitlements_list.js';
+import SkusList from './tools/monetization/skus_list.js';
+import SubscriptionsGet from './tools/monetization/subscriptions_get.js';
+import SubscriptionsList from './tools/monetization/subscriptions_list.js';
+import OnboardingGet from './tools/onboarding/get.js';
+import OnboardingModify from './tools/onboarding/modify.js';
+import PollsEnd from './tools/polls/end.js';
+import PollsGetVoters from './tools/polls/get_voters.js';
+import ReactionsCreate from './tools/reactions/create.js';
+import ReactionsDeleteAll from './tools/reactions/delete_all.js';
+import ReactionsDeleteOwn from './tools/reactions/delete_own.js';
+import ReactionsDeleteUser from './tools/reactions/delete_user.js';
+import ReactionsList from './tools/reactions/list.js';
+import RolesCreate from './tools/roles/create.js';
+import RolesDelete from './tools/roles/delete.js';
 import RolesList from './tools/roles/list.js';
+import RolesModify from './tools/roles/modify.js';
+import RolesModifyPositions from './tools/roles/modify_positions.js';
+import SoundboardCreateGuildSound from './tools/soundboard/create_guild_sound.js';
+import SoundboardDeleteGuildSound from './tools/soundboard/delete_guild_sound.js';
+import SoundboardGetGuildSound from './tools/soundboard/get_guild_sound.js';
+import SoundboardListDefaultSounds from './tools/soundboard/list_default_sounds.js';
+import SoundboardListGuildSounds from './tools/soundboard/list_guild_sounds.js';
+import SoundboardModifyGuildSound from './tools/soundboard/modify_guild_sound.js';
+import SoundboardSendSound from './tools/soundboard/send_sound.js';
+import StageInstancesCreate from './tools/stage_instances/create.js';
+import StageInstancesDelete from './tools/stage_instances/delete.js';
+import StageInstancesGet from './tools/stage_instances/get.js';
+import StageInstancesModify from './tools/stage_instances/modify.js';
+import StickersCreateGuildSticker from './tools/stickers/create_guild_sticker.js';
+import StickersDeleteGuildSticker from './tools/stickers/delete_guild_sticker.js';
+import StickersGet from './tools/stickers/get.js';
+import StickersGetGuildSticker from './tools/stickers/get_guild_sticker.js';
+import StickersListGuild from './tools/stickers/list_guild.js';
+import StickersListPacks from './tools/stickers/list_packs.js';
+import StickersModifyGuildSticker from './tools/stickers/modify_guild_sticker.js';
+import ThreadsAddMember from './tools/threads/add_member.js';
+import ThreadsGetMember from './tools/threads/get_member.js';
+import ThreadsJoin from './tools/threads/join.js';
+import ThreadsLeave from './tools/threads/leave.js';
+import ThreadsListMembers from './tools/threads/list_members.js';
+import ThreadsRemoveMember from './tools/threads/remove_member.js';
+import UsersCreateDm from './tools/users/create_dm.js';
+import UsersGet from './tools/users/get.js';
 import UsersGetCurrent from './tools/users/get_current.js';
+import UsersLeaveGuild from './tools/users/leave_guild.js';
+import UsersListCurrentUserGuilds from './tools/users/list_current_user_guilds.js';
+import UsersModifyCurrent from './tools/users/modify_current.js';
+import VoiceGetCurrentUserState from './tools/voice/get_current_user_state.js';
+import VoiceGetUserState from './tools/voice/get_user_state.js';
+import VoiceListRegions from './tools/voice/list_regions.js';
+import WebhooksCreate from './tools/webhooks/create.js';
+import WebhooksDelete from './tools/webhooks/delete.js';
+import WebhooksDeleteMessage from './tools/webhooks/delete_message.js';
+import WebhooksDeleteWithToken from './tools/webhooks/delete_with_token.js';
+import WebhooksEditMessage from './tools/webhooks/edit_message.js';
+import WebhooksExecute from './tools/webhooks/execute.js';
+import WebhooksGet from './tools/webhooks/get.js';
+import WebhooksGetMessage from './tools/webhooks/get_message.js';
+import WebhooksGetWithToken from './tools/webhooks/get_with_token.js';
 import WebhooksListChannel from './tools/webhooks/list_channel.js';
+import WebhooksListGuild from './tools/webhooks/list_guild.js';
+import WebhooksModify from './tools/webhooks/modify.js';
+import WebhooksModifyWithToken from './tools/webhooks/modify_with_token.js';
 
 export interface BuildServerDeps {
   rest: REST;
@@ -99,6 +262,126 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     piece: MessagesDelete as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
+    name: 'messages_get',
+    piece: MessagesGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_crosspost',
+    piece: MessagesCrosspost as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_bulk_delete',
+    piece: MessagesBulkDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_pin',
+    piece: MessagesPin as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_unpin',
+    piece: MessagesUnpin as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_list_pins',
+    piece: MessagesListPins as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_create_thread',
+    piece: MessagesCreateThread as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'messages_search_recent',
+    piece: MessagesSearchRecent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_create',
+    piece: ReactionsCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_delete_own',
+    piece: ReactionsDeleteOwn as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_delete_user',
+    piece: ReactionsDeleteUser as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_list',
+    piece: ReactionsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'reactions_delete_all',
+    piece: ReactionsDeleteAll as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_list_guild',
+    piece: EmojisListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_get',
+    piece: EmojisGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_create',
+    piece: EmojisCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_modify',
+    piece: EmojisModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'emojis_delete',
+    piece: EmojisDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_list',
+    piece: AppEmojisList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_get',
+    piece: AppEmojisGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_create',
+    piece: AppEmojisCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_modify',
+    piece: AppEmojisModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'app_emojis_delete',
+    piece: AppEmojisDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_get',
+    piece: StickersGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_list_packs',
+    piece: StickersListPacks as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_list_guild',
+    piece: StickersListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_get_guild_sticker',
+    piece: StickersGetGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_create_guild_sticker',
+    piece: StickersCreateGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_modify_guild_sticker',
+    piece: StickersModifyGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stickers_delete_guild_sticker',
+    piece: StickersDeleteGuildSticker as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
     name: 'channels_list',
     piece: ChannelsList as unknown as ConcreteTool,
   });
@@ -106,29 +389,399 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     name: 'channels_get',
     piece: ChannelsGet as unknown as ConcreteTool,
   });
+  await toolStore.loadPiece({
+    name: 'channels_create_guild_channel',
+    piece: ChannelsCreateGuildChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_modify',
+    piece: ChannelsModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_delete',
+    piece: ChannelsDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_modify_permissions',
+    piece: ChannelsModifyPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_delete_permissions',
+    piece: ChannelsDeletePermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_follow_announcement',
+    piece: ChannelsFollowAnnouncement as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_trigger_typing',
+    piece: ChannelsTriggerTyping as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_active_threads_guild',
+    piece: ChannelsListActiveThreadsGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_public_archived_threads',
+    piece: ChannelsListPublicArchivedThreads as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_private_archived_threads',
+    piece: ChannelsListPrivateArchivedThreads as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_list_joined_private_archived_threads',
+    piece: ChannelsListJoinedPrivateArchivedThreads as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'channels_forum_create_thread',
+    piece: ChannelsForumCreateThread as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_join',
+    piece: ThreadsJoin as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_leave',
+    piece: ThreadsLeave as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_add_member',
+    piece: ThreadsAddMember as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_remove_member',
+    piece: ThreadsRemoveMember as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_get_member',
+    piece: ThreadsGetMember as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'threads_list_members',
+    piece: ThreadsListMembers as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_get',
+    piece: InvitesGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_delete',
+    piece: InvitesDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_list_channel',
+    piece: InvitesListChannel as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'invites_create_channel',
+    piece: InvitesCreateChannel as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({ name: 'members_get', piece: MembersGet as unknown as ConcreteTool });
   await toolStore.loadPiece({
     name: 'members_search',
     piece: MembersSearch as unknown as ConcreteTool,
   });
+  await toolStore.loadPiece({
+    name: 'members_list',
+    piece: MembersList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_modify',
+    piece: MembersModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_modify_current',
+    piece: MembersModifyCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_add_role',
+    piece: MembersAddRole as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_remove_role',
+    piece: MembersRemoveRole as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_kick',
+    piece: MembersKick as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_ban',
+    piece: MembersBan as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_unban',
+    piece: MembersUnban as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_list_bans',
+    piece: MembersListBans as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_get_ban',
+    piece: MembersGetBan as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_bulk_ban',
+    piece: MembersBulkBan as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'members_get_current_user',
+    piece: MembersGetCurrentUser as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({ name: 'roles_list', piece: RolesList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'roles_create',
+    piece: RolesCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'roles_modify',
+    piece: RolesModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'roles_modify_positions',
+    piece: RolesModifyPositions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'roles_delete',
+    piece: RolesDelete as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({ name: 'guild_get', piece: GuildGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'guild_modify',
+    piece: GuildModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_list_voice_regions',
+    piece: GuildListVoiceRegions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_list_integrations',
+    piece: GuildListIntegrations as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_delete_integration',
+    piece: GuildDeleteIntegration as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_widget_settings',
+    piece: GuildGetWidgetSettings as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_widget',
+    piece: GuildModifyWidget as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_widget',
+    piece: GuildGetWidget as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_widget_image_url',
+    piece: GuildGetWidgetImageUrl as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_vanity_url',
+    piece: GuildGetVanityUrl as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_welcome_screen',
+    piece: GuildGetWelcomeScreen as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_welcome_screen',
+    piece: GuildModifyWelcomeScreen as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_get_prune_count',
+    piece: GuildGetPruneCount as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_begin_prune',
+    piece: GuildBeginPrune as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_user_voice_state',
+    piece: GuildModifyUserVoiceState as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'guild_modify_current_voice_state',
+    piece: GuildModifyCurrentVoiceState as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({
     name: 'audit_log_get',
     piece: AuditLogGet as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
+    name: 'automod_list_rules',
+    piece: AutomodListRules as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_get_rule',
+    piece: AutomodGetRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_create_rule',
+    piece: AutomodCreateRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_modify_rule',
+    piece: AutomodModifyRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'automod_delete_rule',
+    piece: AutomodDeleteRule as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
     name: 'webhooks_list_channel',
     piece: WebhooksListChannel as unknown as ConcreteTool,
   });
+  await toolStore.loadPiece({
+    name: 'webhooks_list_guild',
+    piece: WebhooksListGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_create',
+    piece: WebhooksCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_get',
+    piece: WebhooksGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_get_with_token',
+    piece: WebhooksGetWithToken as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_modify',
+    piece: WebhooksModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_modify_with_token',
+    piece: WebhooksModifyWithToken as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_delete',
+    piece: WebhooksDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_delete_with_token',
+    piece: WebhooksDeleteWithToken as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_execute',
+    piece: WebhooksExecute as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_get_message',
+    piece: WebhooksGetMessage as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_edit_message',
+    piece: WebhooksEditMessage as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'webhooks_delete_message',
+    piece: WebhooksDeleteMessage as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({ name: 'events_list', piece: EventsList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'events_create',
+    piece: EventsCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'events_get', piece: EventsGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'events_modify',
+    piece: EventsModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'events_delete',
+    piece: EventsDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'events_list_users',
+    piece: EventsListUsers as unknown as ConcreteTool,
+  });
   await toolStore.loadPiece({
     name: 'commands_list_guild',
     piece: CommandsListGuild as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
+    name: 'commands_list_global',
+    piece: CommandsListGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_create_global',
+    piece: CommandsCreateGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_global',
+    piece: CommandsGetGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_modify_global',
+    piece: CommandsModifyGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_delete_global',
+    piece: CommandsDeleteGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_bulk_overwrite_global',
+    piece: CommandsBulkOverwriteGlobal as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_create_guild',
+    piece: CommandsCreateGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_guild',
+    piece: CommandsGetGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_modify_guild',
+    piece: CommandsModifyGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_delete_guild',
+    piece: CommandsDeleteGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_bulk_overwrite_guild',
+    piece: CommandsBulkOverwriteGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_guild_command_permissions',
+    piece: CommandsGetGuildCommandPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_get_command_permissions',
+    piece: CommandsGetCommandPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'commands_edit_command_permissions',
+    piece: CommandsEditCommandPermissions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
     name: 'users_get_current',
     piece: UsersGetCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'users_get', piece: UsersGet as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'users_modify_current',
+    piece: UsersModifyCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_list_current_user_guilds',
+    piece: UsersListCurrentUserGuilds as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_leave_guild',
+    piece: UsersLeaveGuild as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'users_create_dm',
+    piece: UsersCreateDm as unknown as ConcreteTool,
   });
   await toolStore.loadPiece({
     name: 'components_v2_build_container',
@@ -185,6 +838,156 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   await toolStore.loadPiece({
     name: 'intelligence_extract_entities',
     piece: IntelligenceExtractEntities as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_create_response',
+    piece: InteractionsCreateResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_get_original_response',
+    piece: InteractionsGetOriginalResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_edit_original_response',
+    piece: InteractionsEditOriginalResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_delete_original_response',
+    piece: InteractionsDeleteOriginalResponse as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_create_followup',
+    piece: InteractionsCreateFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_get_followup',
+    piece: InteractionsGetFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_edit_followup',
+    piece: InteractionsEditFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'interactions_delete_followup',
+    piece: InteractionsDeleteFollowup as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_get_current',
+    piece: ApplicationGetCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_modify_current',
+    piece: ApplicationModifyCurrent as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_get_role_connection_metadata',
+    piece: ApplicationGetRoleConnectionMetadata as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_modify_role_connection_metadata',
+    piece: ApplicationModifyRoleConnectionMetadata as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'application_get_activity_instance',
+    piece: ApplicationGetActivityInstance as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_create',
+    piece: StageInstancesCreate as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_get',
+    piece: StageInstancesGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_modify',
+    piece: StageInstancesModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'stage_instances_delete',
+    piece: StageInstancesDelete as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_list_default_sounds',
+    piece: SoundboardListDefaultSounds as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_list_guild_sounds',
+    piece: SoundboardListGuildSounds as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_get_guild_sound',
+    piece: SoundboardGetGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_create_guild_sound',
+    piece: SoundboardCreateGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_modify_guild_sound',
+    piece: SoundboardModifyGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_delete_guild_sound',
+    piece: SoundboardDeleteGuildSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'soundboard_send_sound',
+    piece: SoundboardSendSound as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'polls_get_voters',
+    piece: PollsGetVoters as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'polls_end', piece: PollsEnd as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'voice_list_regions',
+    piece: VoiceListRegions as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'voice_get_current_user_state',
+    piece: VoiceGetCurrentUserState as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'voice_get_user_state',
+    piece: VoiceGetUserState as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'onboarding_get',
+    piece: OnboardingGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'onboarding_modify',
+    piece: OnboardingModify as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({ name: 'skus_list', piece: SkusList as unknown as ConcreteTool });
+  await toolStore.loadPiece({
+    name: 'subscriptions_list',
+    piece: SubscriptionsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'subscriptions_get',
+    piece: SubscriptionsGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_list',
+    piece: EntitlementsList as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_get',
+    piece: EntitlementsGet as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_consume',
+    piece: EntitlementsConsume as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_create_test',
+    piece: EntitlementsCreateTest as unknown as ConcreteTool,
+  });
+  await toolStore.loadPiece({
+    name: 'entitlements_delete_test',
+    piece: EntitlementsDeleteTest as unknown as ConcreteTool,
   });
   await toolStore.loadAll();
 
