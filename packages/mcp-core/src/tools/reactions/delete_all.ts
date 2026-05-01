@@ -8,8 +8,9 @@ import { ChannelId, MessageId } from '../_lib/snowflake.js';
 export default defineTool({
   name: 'reactions_delete_all',
   category: 'reactions',
+  preconditions: ['confirm_required'] as const,
   description: [
-    '**Purpose**: Clear reactions on a message. Without `emoji`: clears EVERY reaction. With `emoji`: clears just that emoji across all users.',
+    '**Purpose**: Clear reactions on a message. Without `emoji`: clears EVERY reaction. With `emoji`: clears just that emoji across all users. **DESTRUCTIVE — IRREVERSIBLE.**',
     '',
     '**When to use**:',
     '- Reset a poll; remove a corrupted reaction set.',
