@@ -21,6 +21,7 @@ export default defineConfig({
         { label: 'Recipes', autogenerate: { directory: 'recipes' } },
         { label: 'Operations', autogenerate: { directory: 'operations' } },
         { label: 'Architecture', autogenerate: { directory: 'architecture' } },
+        { label: 'Migrate', autogenerate: { directory: 'migrate' } },
         { label: 'Reference', autogenerate: { directory: 'reference' } },
       ],
     }),
