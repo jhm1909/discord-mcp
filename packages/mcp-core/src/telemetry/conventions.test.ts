@@ -29,4 +29,12 @@ describe('telemetry conventions', () => {
     expect(conventions.TELEMETRY_INSTRUMENTATION_NAME).toBe('@discord-mcp/core');
     expect(conventions.TELEMETRY_INSTRUMENTATION_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
+
+  it('exports Phase D resilience metric names', () => {
+    expect(conventions.METRIC_CIRCUIT_TRANSITIONS).toBe('mcp.circuit.transitions');
+    expect(conventions.METRIC_BULKHEAD_REJECTED).toBe('mcp.bulkhead.rejected.count');
+    expect(conventions.METRIC_DEADLETTER).toBe('mcp.deadletter.count');
+    expect(conventions.ATTR_CIRCUIT_TO_STATE).toBe('to_state');
+    expect(conventions.ATTR_ERROR_TYPE).toBe('error.type');
+  });
 });

@@ -27,6 +27,16 @@ export const METRIC_TOOL_DURATION = 'mcp.tool.duration_ms';
 export const METRIC_TOOL_CALLS = 'mcp.tool.calls';
 export const METRIC_TOOL_ERRORS = 'mcp.tool.errors';
 
+// --- Resilience metrics (Plan 8 Phase D) ---
+// Circuit breaker state transitions; label `to_state` ∈ {open, half-open, closed}.
+export const METRIC_CIRCUIT_TRANSITIONS = 'mcp.circuit.transitions';
+// Bulkhead rejections (over-limit, fast-rejected because queueSize=0).
+export const METRIC_BULKHEAD_REJECTED = 'mcp.bulkhead.rejected.count';
+// Dead-letter (terminal failures after retries exhausted); label `error.type`.
+export const METRIC_DEADLETTER = 'mcp.deadletter.count';
+export const ATTR_CIRCUIT_TO_STATE = 'to_state';
+export const ATTR_ERROR_TYPE = 'error.type';
+
 // --- Tracer / Meter identity (also used by middleware) ---
 export const TELEMETRY_INSTRUMENTATION_NAME = '@discord-mcp/core';
 export const TELEMETRY_INSTRUMENTATION_VERSION = '0.8.0';

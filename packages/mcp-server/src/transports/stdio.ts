@@ -32,8 +32,9 @@ export async function startStdio(): Promise<void> {
   );
 
   // Wrap the rate-limit-queue-aware REST in cockatiel's resilience policy
-  // (timeout + retry-on-DiscordRetryableError honoring 429 Retry-After).
-  const rest = wrapRestWithResilience(baseRest, buildPolicy(config));
+  // (timeout + retry-on-DiscordRetryableError + circuit breaker + bulkhead).
+  // Passing `logger` enables circuit/bulkhead/dead-letter hook logs.
+  const rest = wrapRestWithResilience(baseRest, buildPolicy(config, logger));
 
   const { server, registeredTools, notifyResource, subscriptions } = await buildServer({
     rest,
