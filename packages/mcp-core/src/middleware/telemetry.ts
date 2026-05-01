@@ -69,19 +69,33 @@ export function telemetryMiddleware(): ToolMiddleware {
       const requestId = tryGetCtx()?.requestId;
       const transport = tryGetCtx()?.transport ?? 'stdio';
 
-      const baseAttrs: Record<string, string | boolean> = {
+      // Span attributes: full set including (potentially per-call)
+      // request_id. High cardinality is fine on a span but NOT on
+      // metric labels.
+      const spanAttrs: Record<string, string | boolean> = {
         [ATTR_MCP_TOOL_NAME]: ctx.tool.name,
         [ATTR_MCP_TOOL_CATEGORY]: ctx.tool.category,
         [ATTR_MCP_TOOL_IDEMPOTENT]: ctx.tool.idempotent,
         [ATTR_MCP_TRANSPORT]: transport,
       };
       if (requestId !== undefined) {
-        baseAttrs[ATTR_MCP_REQUEST_ID] = requestId;
+        spanAttrs[ATTR_MCP_REQUEST_ID] = requestId;
       }
+
+      // Metric labels: bounded-cardinality only. tool.name (~192),
+      // tool.category (~25), tool.idempotent (2), transport (1-3),
+      // status (3). No request_id — that would explode the series
+      // count and make the histograms useless.
+      const metricLabels: Record<string, string | boolean> = {
+        [ATTR_MCP_TOOL_NAME]: ctx.tool.name,
+        [ATTR_MCP_TOOL_CATEGORY]: ctx.tool.category,
+        [ATTR_MCP_TOOL_IDEMPOTENT]: ctx.tool.idempotent,
+        [ATTR_MCP_TRANSPORT]: transport,
+      };
 
       const span = tracer.startSpan(`mcp.tool.${ctx.tool.name}`, {
         kind: SpanKind.SERVER,
-        attributes: baseAttrs,
+        attributes: spanAttrs,
       });
 
       const start = performance.now();
@@ -94,12 +108,12 @@ export function telemetryMiddleware(): ToolMiddleware {
         const isToolError = (result as ToolResultLike | null)?.isError === true;
         const status = isToolError ? 'tool_error' : 'ok';
 
-        duration.record(elapsed, { ...baseAttrs, [ATTR_MCP_TOOL_STATUS]: status });
-        calls.add(1, { ...baseAttrs, [ATTR_MCP_TOOL_STATUS]: status });
+        duration.record(elapsed, { ...metricLabels, [ATTR_MCP_TOOL_STATUS]: status });
+        calls.add(1, { ...metricLabels, [ATTR_MCP_TOOL_STATUS]: status });
 
         if (isToolError) {
           span.setStatus({ code: SpanStatusCode.ERROR, message: 'tool returned isError' });
-          errors.add(1, { ...baseAttrs, [ATTR_MCP_TOOL_STATUS]: status });
+          errors.add(1, { ...metricLabels, [ATTR_MCP_TOOL_STATUS]: status });
         } else {
           span.setStatus({ code: SpanStatusCode.OK });
         }
@@ -108,9 +122,9 @@ export function telemetryMiddleware(): ToolMiddleware {
       } catch (e) {
         const elapsed = performance.now() - start;
         const status = 'error';
-        duration.record(elapsed, { ...baseAttrs, [ATTR_MCP_TOOL_STATUS]: status });
-        calls.add(1, { ...baseAttrs, [ATTR_MCP_TOOL_STATUS]: status });
-        errors.add(1, { ...baseAttrs, [ATTR_MCP_TOOL_STATUS]: status });
+        duration.record(elapsed, { ...metricLabels, [ATTR_MCP_TOOL_STATUS]: status });
+        calls.add(1, { ...metricLabels, [ATTR_MCP_TOOL_STATUS]: status });
+        errors.add(1, { ...metricLabels, [ATTR_MCP_TOOL_STATUS]: status });
 
         if (e instanceof Error) {
           span.recordException(e);

@@ -152,4 +152,45 @@ describe('telemetryMiddleware', () => {
     expect(errsByStatus.get('error')).toBe(1);
     expect(errsByStatus.get('ok')).toBeUndefined();
   });
+
+  it('includes mcp.tool.category as a label on histogram + counters (Plan 8 B.4)', async () => {
+    const mw = telemetryMiddleware();
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: false, content: [] }));
+
+    await metricReader.forceFlush();
+    const collected = metricExporter.getMetrics();
+    const all = collected.flatMap((rm) => rm.scopeMetrics.flatMap((sm) => sm.metrics));
+
+    // Every metric series for our single call should carry the
+    // category label exactly once.
+    for (const name of ['mcp.tool.duration_ms', 'mcp.tool.calls']) {
+      const m = all.find((x) => x.descriptor.name === name);
+      expect(m, `missing metric ${name}`).toBeDefined();
+      const point = m?.dataPoints[0];
+      expect(point, `${name} has no data points`).toBeDefined();
+      expect(point?.attributes['mcp.tool.name']).toBe('messages_send');
+      expect(point?.attributes['mcp.tool.category']).toBe('messages');
+    }
+  });
+
+  it('does NOT include mcp.request_id as a metric label (cardinality guard)', async () => {
+    // Even when the middleware is called from a request context that
+    // would set request_id on the span, the metric labels must not
+    // include it. (Here we have no als context active, so the absence
+    // is trivial; the contract still has to hold for future als
+    // wiring.)
+    const mw = telemetryMiddleware();
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: false, content: [] }));
+
+    await metricReader.forceFlush();
+    const collected = metricExporter.getMetrics();
+    const all = collected.flatMap((rm) => rm.scopeMetrics.flatMap((sm) => sm.metrics));
+
+    for (const name of ['mcp.tool.duration_ms', 'mcp.tool.calls']) {
+      const m = all.find((x) => x.descriptor.name === name);
+      const point = m?.dataPoints[0];
+      expect(point?.attributes).toBeDefined();
+      expect(point?.attributes['mcp.request_id']).toBeUndefined();
+    }
+  });
 });
