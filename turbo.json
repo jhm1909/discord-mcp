@@ -20,7 +20,11 @@
     "site#build": {
       "dependsOn": ["@discord-mcp/core#build"],
       "outputs": ["dist/**", ".astro/**"],
-      "inputs": ["src/**", "astro.config.ts", "package.json", "tsconfig.json"]
+      "inputs": ["src/**", "scripts/**", "astro.config.ts", "package.json", "tsconfig.json"]
+    },
+    "site#test": {
+      "outputs": [],
+      "inputs": ["scripts/**", "vitest.config.ts", "package.json"]
     }
   }
 }
