@@ -60,6 +60,7 @@ export { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 export { ConfirmRequired } from './preconditions/ConfirmRequired.js';
 // REST resilience (Plan 8 Phase C)
 export { classifyDiscordError, DiscordRetryableError } from './rest/errors.js';
+export { buildPolicy } from './rest/policy.js';
 export { type BuildServerDeps, type BuildServerResult, buildServer } from './server.js';
 export { PreconditionStore } from './stores/PreconditionStore.js';
 // Stores
