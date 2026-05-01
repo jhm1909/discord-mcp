@@ -14,6 +14,37 @@ the merge commit of the plan's PR into `main`.
 For PR-level history, see the [GitHub releases](https://github.com/cappylab/discord-mcp/releases)
 page. Tag dates and SHAs below come from `git for-each-ref refs/tags/v0.*`.
 
+## v0.12.0 — Test infra hardening + v1.0.0 readiness polish
+
+Released **2026-05-01**. Tag: [`v0.12.0`](https://github.com/cappylab/discord-mcp/releases/tag/v0.12.0).
+
+Plan 12 is the polish lap before v1.0.0. No new tools, no new runtime
+behavior — the test rig, build pipeline, and release surface all got
+sharpened so v1.0.0 has a clean foundation. This is the **final plan** of
+the discord-mcp roadmap (Plans 0-12).
+
+- `@discord-mcp/server-mocks` workspace package — eliminates 165
+  relative-path imports across the test tree; consumers now `import from
+  '@discord-mcp/server-mocks'`.
+- `ResourceStore` extracted from `server.ts` (matches `ToolStore` /
+  `PreconditionStore` pattern).
+- Integration test reliability: 0 unconditional skips, `doctor.integration`
+  stdout race fixed.
+- vitest `globalSetup` auto-builds `mcp-core` if `dist/` is missing — no
+  more separate `pnpm build` step before `pnpm test`.
+- tsdown `external` migrated to `deps.neverBundle` (deprecation cleared).
+- GitHub Actions Node 24 opt-in matrix.
+- 10 biome `info`-level `useLiteralKeys` lints cleared.
+- 4 vitest bench files for hot paths (`messages_send`, `mcp_pipeline`,
+  gateway debounce, REST policy chain).
+- Security audit pass — fixed P1 (`reactions_delete_all` missing
+  confirmation gate); P2 deferred to Plan 13.
+- Docs link audit — 1 broken link fixed; version coherence verified.
+- npm publish dry-run verified for `@discord-mcp/core` and
+  `@discord-mcp/cli` — `prepack` ships root README + LICENSE in both
+  tarballs; mcp-core flipped to `private:false` with public publishConfig.
+- v1.0.0 readiness checklist shipped at `docs/v1.0.0-readiness.md`.
+
 ## v0.11.0 — Migration adapters
 
 Released **2026-05-01**. Tag: [`v0.11.0`](https://github.com/cappylab/discord-mcp/releases/tag/v0.11.0).

@@ -1,8 +1,28 @@
 {
   "name": "@discord-mcp/core",
-  "version": "0.11.0",
-  "private": true,
+  "version": "0.12.0",
+  "private": false,
   "type": "module",
+  "description": "Production-grade Discord MCP server core — 192 tools, OTel-instrumented, cockatiel-resilient.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "discord",
+    "ai",
+    "claude",
+    "cursor"
+  ],
+  "license": "MIT",
+  "homepage": "https://cappylab.github.io/discord-mcp/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cappylab/discord-mcp.git",
+    "directory": "packages/mcp-core"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -12,14 +32,19 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "bench": "vitest bench --run",
+    "typecheck": "tsc --noEmit",
+    "prepack": "node -e \"require('node:fs').copyFileSync('../../README.md','README.md');require('node:fs').copyFileSync('../../LICENSE','LICENSE');\"",
+    "postpack": "node -e \"try{require('node:fs').unlinkSync('README.md');require('node:fs').unlinkSync('LICENSE');}catch{}\""
   },
   "engines": {
     "node": ">=20.11"
@@ -45,6 +70,7 @@
     "discord.js": "^14.16.3"
   },
   "devDependencies": {
+    "@discord-mcp/server-mocks": "workspace:*",
     "@mswjs/interceptors": "^0.41.3",
     "@opentelemetry/context-async-hooks": "^2.0.0",
     "@types/node": "^22.0.0",

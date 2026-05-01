@@ -11,6 +11,10 @@
       "outputs": ["coverage/**"],
       "inputs": ["src/**", "test/**", "vitest.config.ts"]
     },
+    "bench": {
+      "outputs": [],
+      "inputs": ["src/**", "vitest.config.ts"]
+    },
     "typecheck": {
       "dependsOn": ["^build"],
       "outputs": [],

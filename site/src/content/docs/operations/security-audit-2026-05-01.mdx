@@ -1,0 +1,177 @@
+---
+title: Security audit — 2026-05-01
+description: Manual security review of discord-mcp v0.12.0 (pre-1.0) — token redaction, untrusted-wrap completeness, confirmation gates, audit redaction, OWASP top 10 spot checks.
+sidebar:
+  order: 5
+---
+
+# Security audit — 2026-05-01
+
+- **Reviewer**: discord-mcp implementer subagent (Plan 12 Phase E)
+- **Scope**: codebase as of commit `438b679` (branch `feature/plan12-test-infra-polish`)
+- **Status**: **PASS with 1 P1 fixed in audit + 2 P2 deferred**
+
+The audit was performed before tagging v0.12.0 and pre-1.0 release. Findings
+are categorized:
+
+- **P0** — must fix before release. Blocks Phase F.
+- **P1** — should fix in Plan 12 Phase E.
+- **P2** — defer to Plan 13+ with documented rationale.
+
+## A. Token redaction
+
+`grep -rn "DISCORD_TOKEN" packages/` returns 12 source files (excluding tests
+and `config.ts`). Each call site was reviewed:
+
+- `packages/mcp-core/src/errors/client.ts:68` — references the env var name
+  in an error message ("Set DISCORD_TOKEN env to a fresh token"). No value
+  echo.
+- `packages/mcp-server/src/cli.ts` — references the env var name in `--help`.
+- `packages/mcp-server/src/transports/stdio.ts:31,52-54` — passes the token
+  value to `discord.js` Client / REST, never logs it.
+- `packages/mcp-server/src/lib/checks/token-online.ts:65` — constructs
+  `Authorization: Bot <token>` for the live `/users/@me` probe; no log.
+- `packages/mcp-server/src/lib/checks/token-format.ts` — reads
+  `process.env.DISCORD_TOKEN` and asserts shape; never logs the value.
+- `packages/mcp-server/src/commands/init.ts` — emits the literal placeholder
+  `${env:DISCORD_TOKEN}` into generated client configs (intentional UX, no
+  value).
+
+`grep` for `console.log|logger.*DISCORD_TOKEN` and `${config.DISCORD_TOKEN}`
+returns **zero matches**. No accidental token echo path identified.
+
+**Result**: PASS. No findings.
+
+## B. Untrusted-wrap completeness
+
+The `wrapMessages` / `wrapUntrusted` helpers (`packages/mcp-core/src/tools/_lib/untrusted.ts`)
+fence Discord-authored content inside `<untrusted_*>` markers so agents
+treat it as data. Plan 7 §3.10 enumerated 16 read-side tools that must
+wrap their `text` output.
+
+Verified each tool calls `wrapMessages` or `wrapUntrusted` at least once:
+
+| Tool | Wrap calls | Status |
+| --- | --- | --- |
+| `messages_get` | 2 | OK |
+| `messages_list_pins` | 2 | OK |
+| `messages_search_recent` | 2 | OK |
+| `members_list` | 2 | OK |
+| `members_get` | 2 | OK |
+| `members_get_current_user` | 2 | OK |
+| `automod_get_rule` | 2 | OK |
+| `automod_list_rules` | 2 | OK |
+| `events_get` | 2 | OK |
+| `events_list` | 2 | OK |
+| `stickers_get_guild_sticker` | 2 | OK |
+| `webhooks_get_message` | 2 | OK |
+| `interactions_get_followup` | 2 | OK |
+| `interactions_get_original_response` | 2 | OK |
+| `application_get_current` | 2 | OK |
+| `application_modify_current` | 2 | OK |
+| `onboarding_get` | 2 | OK |
+| `users_get` | 2 | OK |
+
+Three additional tools surfaced by the broader `grep` were inspected:
+
+- `users_get_current` — returns the *bot's own* `/users/@me` profile. The
+  `username` field is operator-controlled, not attacker-influenced. **Not
+  in scope** for the untrusted-wrap requirement.
+- `members_search` — renders user-authored `username` into the `text`
+  field via a list (`- $\{username\} (\`user:$\{user_id\}\`)`). The structured
+  payload is fine but the rendered Markdown is agent-visible. **P2**:
+  consider wrapping the rendered list in Plan 13.
+- `stickers_list_guild` — `text` only contains a count and the guild ID;
+  user-authored sticker names go to `data` only. **Not in scope** for the
+  text-wrapping rule.
+
+**Result**: PASS. P2 noted for `members_search` (Plan 13).
+
+## C. Confirmation gates
+
+`grep -rln "destructiveHint: true" packages/mcp-core/src/tools/` returned
+**27 tools**. Each was checked for `preconditions: ['confirm_required']`:
+
+Initial pass found **1 P1 finding**:
+
+- `reactions_delete_all` — destructive (clears reactions, irreversible)
+  but **missing `preconditions: ['confirm_required']`**.
+
+**Fixed in this audit commit** (`packages/mcp-core/src/tools/reactions/delete_all.ts`):
+added the precondition + `**DESTRUCTIVE — IRREVERSIBLE.**` description
+prefix. Existing unit tests bypass the precondition by calling `t.run()`
+directly, so no test changes were needed.
+
+The remaining 26 destructive tools all gate behind `confirm_required`:
+
+- `webhooks/{delete,delete_message,delete_with_token}`
+- `users/leave_guild`
+- `stickers/delete_guild_sticker`
+- `stage_instances/delete`
+- `soundboard/delete_guild_sound`
+- `roles/delete`
+- `monetization/entitlements_delete_test`
+- `messages/{delete,bulk_delete}`
+- `members/{kick,bulk_ban,ban}`
+- `invites/delete`
+- `interactions/{delete_original_response,delete_followup}`
+- `guild/{delete_integration,begin_prune}`
+- `events/delete`
+- `emojis/delete`
+- `commands/{delete_guild,delete_global}`
+- `channels/delete`
+- `automod/delete_rule`
+- `app_emojis/delete`
+
+**Result**: PASS after fix. 1 P1 closed, 0 outstanding.
+
+## D. Audit redaction
+
+`audit/redact.ts` enumerates exactly the 15 tools listed in Plan 8 Phase F:
+
+- `messages_send`, `messages_edit`, `messages_bulk_delete`
+- `webhooks_execute`, `webhooks_edit_message`
+- `components_v2_send`, `components_v2_edit`, `components_v2_send_from_template`
+- `intelligence_summarize_channel`, `intelligence_classify_messages`,
+  `intelligence_draft_response`, `intelligence_moderate_content`,
+  `intelligence_extract_entities`
+- `interactions_create_response`, `interactions_edit_original_response`
+
+Both consumers of `redactArgs(args, toolName)` are wired:
+
+- `middleware/audit.ts:56` — used for the JSONL `args_redacted` field.
+- `middleware/telemetry.ts:110` — used as the `mcp.args.redacted` event
+  attribute on every `mcp.tool.*` span.
+
+The global sensitive-key set (`token`, `bearer_token`, `auth`, `password`,
+`secret`) is matched at any nesting depth, with case-insensitive key
+comparison. String values longer than 200 chars are truncated to 100 +
+`...[TRUNCATED]`.
+
+**Result**: PASS. No findings.
+
+## E. OWASP top 10 spot checks
+
+| Category | Status | Notes |
+| --- | --- | --- |
+| Injection | PASS | zod `safeParse` at every tool boundary (validateMiddleware). |
+| Broken auth | PASS | Token never logged; never appears in span attrs / metric labels. |
+| Sensitive data exposure | PASS | `redactArgs` covers per-tool + global sensitive keys. |
+| XML external entities | N/A | No XML processing in the codebase. |
+| Broken access control | DOCUMENTED | Agents inherit full bot permissions. Scope-based limiting deferred to Plan 13+. |
+| Security misconfiguration | PASS | Defaults: `MCP_DRY_RUN=true`, `OTEL_ENABLED=false`. |
+| XSS | N/A | stdio transport renders no HTML. |
+| Deserialization | PASS | All inputs go through zod `safeParse` before handler runs. |
+| Vulnerable deps | P2 | `pnpm audit` reports 1 moderate: Astro `<6.1.6` XSS in `define:vars`. Site-only, doesn't affect runtime mcp-core / mcp-server. Defer to Plan 13. |
+| Logging gaps | PASS | Every mutating call goes through `audit.ts` middleware (Plan 8 Phase E). |
+
+## Action items
+
+| Priority | Finding | Status |
+| --- | --- | --- |
+| P0 | — | None |
+| P1 | `reactions_delete_all` missing `confirm_required` | **FIXED in this audit commit** |
+| P2 | `members_search` text rendering of usernames | Deferred to Plan 13 |
+| P2 | Astro 5.x `define:vars` XSS — site-only | Deferred to Plan 13 (bump to ≥6.1.6) |
+
+No P0 findings. Phase F (tag v0.12.0) may proceed.

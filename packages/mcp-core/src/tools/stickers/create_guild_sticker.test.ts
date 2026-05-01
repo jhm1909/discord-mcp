@@ -1,8 +1,8 @@
+import { server } from '@discord-mcp/server-mocks';
 import { REST } from '@discordjs/rest';
 import { container } from '@sapphire/pieces';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { server } from '../../../../../test/setup.js';
 import stickersCreateGuildSticker from './create_guild_sticker.js';
 import '../../container.js';
 

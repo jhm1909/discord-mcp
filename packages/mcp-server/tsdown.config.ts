@@ -8,5 +8,7 @@ export default defineConfig({
   dts: false,
   sourcemap: true,
   clean: true,
-  external: ['@discord-mcp/core', '@modelcontextprotocol/sdk', '@discordjs/rest'],
+  deps: {
+    neverBundle: ['@discord-mcp/core', '@modelcontextprotocol/sdk', '@discordjs/rest'],
+  },
 });

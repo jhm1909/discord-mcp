@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "noEmit": true,
+    "composite": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

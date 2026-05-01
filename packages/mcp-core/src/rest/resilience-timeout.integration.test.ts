@@ -1,10 +1,10 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { server as mswServer } from '@discord-mcp/server-mocks';
 import { REST } from '@discordjs/rest';
 import { TaskCancelledError } from 'cockatiel';
 import { http, passthrough } from 'msw';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { server as mswServer } from '../../../../test/setup.js';
 import type { Config } from '../config.js';
 import { buildPolicy } from './policy.js';
 import { wrapRestWithResilience } from './resilient.js';

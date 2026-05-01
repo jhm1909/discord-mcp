@@ -17,7 +17,7 @@ afterEach(() => {
 
 // 60-char token body — comfortably above the 50-char floor and shaped
 // like a real Discord bot token (alnum + dot + dash + underscore).
-const VALID_BODY = 'a'.repeat(24) + '.' + 'b'.repeat(6) + '.' + 'c'.repeat(28);
+const VALID_BODY = `${'a'.repeat(24)}.${'b'.repeat(6)}.${'c'.repeat(28)}`;
 
 describe('tokenFormatCheck', () => {
   it('has the correct id, description, and online flag', () => {
@@ -50,7 +50,7 @@ describe('tokenFormatCheck', () => {
   });
 
   it('returns fail when token contains illegal characters', async () => {
-    process.env.DISCORD_TOKEN = 'Bot ' + '!'.repeat(60);
+    process.env.DISCORD_TOKEN = `Bot ${'!'.repeat(60)}`;
     const r = await tokenFormatCheck.run(null);
     expect(r.status).toBe('fail');
   });
@@ -65,15 +65,15 @@ describe('tokenFormatCheck', () => {
   });
 
   it('returns ok when token has "Bot " prefix and valid shape', async () => {
-    process.env.DISCORD_TOKEN = 'Bot ' + VALID_BODY;
+    process.env.DISCORD_TOKEN = `Bot ${VALID_BODY}`;
     const r = await tokenFormatCheck.run(null);
     expect(r.status).toBe('ok');
     expect(r.details?.hasBotPrefix).toBe(true);
-    expect(r.details?.length).toBe(('Bot ' + VALID_BODY).length);
+    expect(r.details?.length).toBe(`Bot ${VALID_BODY}`.length);
   });
 
   it('NEVER includes the actual token value in details', async () => {
-    process.env.DISCORD_TOKEN = 'Bot ' + VALID_BODY;
+    process.env.DISCORD_TOKEN = `Bot ${VALID_BODY}`;
     const r = await tokenFormatCheck.run(null);
     const dump = JSON.stringify(r);
     expect(dump).not.toContain(VALID_BODY);

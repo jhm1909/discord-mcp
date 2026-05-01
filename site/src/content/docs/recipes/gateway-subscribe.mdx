@@ -160,7 +160,7 @@ emission, so the agent's notification stream stays sane.
 | Cline, Continue, Windsurf | no |
 
 Clients that don't advertise the capability should stick with the REST tools
-(`voice_get_state`, `audit_log_list`, etc.) and a polling loop.
+(`voice_get_user_state`, `audit_log_get`, etc.) and a polling loop.
 
 ## See also
 
@@ -168,7 +168,7 @@ Clients that don't advertise the capability should stick with the REST tools
   install `discord.js` and pass `--gateway`.
 - [Architecture: gateway resources](/discord-mcp/architecture/gateway/) — event
   handlers, debounce, and the subscription registry.
-- [`audit_log_list`](/discord-mcp/tools/audit_log/list/) — REST equivalent for
+- [`audit_log_get`](/discord-mcp/tools/audit_log/get/) — REST equivalent for
   clients without subscription support.
 - [Recipe: pipeline](/discord-mcp/recipes/pipeline-multistep/) — for agents
   that need to react to a notification with a chain of tool calls.

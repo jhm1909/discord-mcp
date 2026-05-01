@@ -5,7 +5,7 @@ import { envVarsCheck } from './env-vars.js';
 const originalToken = process.env.DISCORD_TOKEN;
 const originalAuditSink = process.env.MCP_AUDIT_SINK;
 
-const VALID_TOKEN = 'Bot ' + 'a'.repeat(60);
+const VALID_TOKEN = `Bot ${'a'.repeat(60)}`;
 
 beforeEach(() => {
   delete process.env.DISCORD_TOKEN;

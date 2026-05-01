@@ -7,12 +7,13 @@
  * 3. `doctor --json` (without DISCORD_TOKEN) exits non-zero with parseable
  *    JSON that flags the missing token.
  *
- * Requires `pnpm build` to have run; the test self-skips when `dist/cli.js`
- * is absent so incremental dev runs don't fail. CI runs `pnpm build` before
- * `pnpm test`, so the smoke gate fires there.
+ * Plan 12 Phase C.4: the original `describe.skipIf(!cliBuilt)` gate has
+ * been removed. The vitest globalSetup hook in vitest.global-setup.ts
+ * guarantees `dist/cli.js` exists before any test in this package runs,
+ * so the gate is no longer required. Tests now run unconditionally on
+ * fresh worktrees, in CI, and during local dev.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -20,7 +21,6 @@ import packageJson from '../package.json' with { type: 'json' };
 
 const here = dirname(fileURLToPath(import.meta.url));
 const cliPath = join(here, '..', 'dist', 'cli.js');
-const cliBuilt = existsSync(cliPath);
 
 /** Run the built CLI and capture both stdout and exit code. */
 function runCli(
@@ -54,7 +54,7 @@ function runCli(
   }
 }
 
-describe.skipIf(!cliBuilt)('cli binary smoke (post-build)', () => {
+describe('cli binary smoke (post-build)', () => {
   it('--version prints package version', () => {
     const { stdout, stderr, status } = runCli(['--version']);
     const combined = stdout + stderr;
@@ -78,11 +78,5 @@ describe.skipIf(!cliBuilt)('cli binary smoke (post-build)', () => {
     const parsed = JSON.parse(stdout) as { ok: boolean; exitCode: number };
     expect(parsed.ok).toBe(false);
     expect(parsed.exitCode).toBe(2);
-  });
-});
-
-describe.skipIf(cliBuilt)('cli binary smoke (skipped — no build)', () => {
-  it('skipped because dist/cli.js is missing; run `pnpm build` first', () => {
-    expect(cliBuilt).toBe(false);
   });
 });

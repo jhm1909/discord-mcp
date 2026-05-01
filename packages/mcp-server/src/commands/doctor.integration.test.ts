@@ -117,6 +117,31 @@ function stdoutOutput(): string {
   return stdoutWrites.join('');
 }
 
+/**
+ * Drain pattern (Plan 12 Phase C.2): await doctorAction, then yield to the
+ * event loop via setImmediate so any pending microtasks (fetch resolution,
+ * AbortController teardown) have flushed before we read stdoutWrites. Under
+ * parallel CPU pressure (multiple worker threads), `await doctorAction()`
+ * could resolve before the final `process.stdout.write` was observed by the
+ * spy, leading to JSON.parse on a partial buffer. setImmediate yields to
+ * the I/O phase, guaranteeing all sync writes have landed.
+ */
+async function runDoctorAndCapture(
+  doctorAction: (opts: { json: boolean; online?: boolean }) => Promise<void>,
+  opts: { json: boolean; online?: boolean },
+): Promise<string> {
+  await doctorAction(opts);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const out = stdoutOutput();
+  if (out.length === 0) {
+    throw new Error(
+      'doctorAction produced no stdout — spy missed all writes (race?). ' +
+        `stdoutWrites.length=${stdoutWrites.length}`,
+    );
+  }
+  return out;
+}
+
 describe('doctorAction online integration (Plan 9 Phase C)', () => {
   it('runs all 7 checks against a live loopback server and reports JSON', async () => {
     // NOTE: token-online.ts caches DISCORD_API_BASE at module-eval time. We
@@ -126,9 +151,7 @@ describe('doctorAction online integration (Plan 9 Phase C)', () => {
     vi.resetModules();
     const { doctorAction } = await import('./doctor.js');
 
-    await doctorAction({ json: true, online: true });
-
-    const out = stdoutOutput();
+    const out = await runDoctorAndCapture(doctorAction, { json: true, online: true });
     const parsed = JSON.parse(out) as {
       ok: boolean;
       exitCode: number;
@@ -136,7 +159,7 @@ describe('doctorAction online integration (Plan 9 Phase C)', () => {
       data: { checks: Array<{ id: string; status: string; details?: Record<string, unknown> }> };
     };
 
-    // 7 checks, in order.
+    // 7 checks, in order. Removed unused `out` reference — captured above.
     const ids = parsed.data.checks.map((c) => c.id);
     expect(ids).toEqual([
       'node-version',
@@ -196,9 +219,9 @@ describe('doctorAction online integration (Plan 9 Phase C)', () => {
 
       vi.resetModules();
       const { doctorAction } = await import('./doctor.js');
-      await doctorAction({ json: true, online: true });
+      const out = await runDoctorAndCapture(doctorAction, { json: true, online: true });
 
-      const parsed = JSON.parse(stdoutOutput()) as {
+      const parsed = JSON.parse(out) as {
         data: { checks: Array<{ id: string; status: string }> };
       };
       const tokenOnline = parsed.data.checks.find((c) => c.id === 'token-online');
