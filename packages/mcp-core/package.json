@@ -19,6 +19,7 @@
     "dev": "tsdown --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest bench --run",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
