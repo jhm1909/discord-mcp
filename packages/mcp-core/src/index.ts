@@ -64,6 +64,7 @@ export { PreconditionStore } from './stores/PreconditionStore.js';
 export { ToolStore } from './stores/ToolStore.js';
 // Telemetry (Plan 8 Phase A)
 export * as TelemetryConventions from './telemetry/conventions.js';
+export { redactRoute } from './telemetry/redact.js';
 export { buildResource } from './telemetry/resource.js';
 // Tool helpers
 export { defineTool, type ToolDefinition } from './tools/_lib/defineTool.js';

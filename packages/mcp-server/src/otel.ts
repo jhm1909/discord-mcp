@@ -1,6 +1,7 @@
-import { buildResource, type Config } from '@discord-mcp/core';
+import { buildResource, type Config, redactRoute } from '@discord-mcp/core';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { type IMetricReader, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import {
@@ -80,6 +81,35 @@ function buildMetricReader(config: Config): IMetricReader | null {
 }
 
 /**
+ * Returns true when the URL points at an OTLP collector path that the
+ * SDK itself emits to. Tracing those would create an infinite loop:
+ * each export request would itself produce a span, which the next
+ * batch flushes, which produces a span, etc.
+ *
+ * Match is substring-based to cover both /v1/traces and any collector
+ * proxy variants (e.g. with prefix paths).
+ */
+function isOtlpSelfTrace(url: string): boolean {
+  return url.includes('/v1/traces') || url.includes('/v1/metrics') || url.includes('/v1/logs');
+}
+
+function buildInstrumentations(): UndiciInstrumentation[] {
+  return [
+    new UndiciInstrumentation({
+      ignoreRequestHook: (req) => isOtlpSelfTrace(`${req.origin}${req.path}`),
+      requestHook: (span, req) => {
+        // Tag Discord REST calls with a normalized route so dashboards
+        // can group by `discord.route` without spinning up a per-id
+        // metric series. `req.origin` is a string per undici types.
+        if (req.origin.includes('discord.com/api')) {
+          span.setAttribute('discord.route', `${req.method} ${redactRoute(req.path)}`);
+        }
+      },
+    }),
+  ];
+}
+
+/**
  * Boots the OpenTelemetry NodeSDK if `OTEL_ENABLED=true`, returns null
  * otherwise. The handle's `shutdown()` flushes spans and metrics with a
  * 5s timeout; callers (stdio transport) wire it to SIGTERM/SIGINT.
@@ -96,9 +126,15 @@ export function startOtel(config: Config): OtelHandle | null {
   // If neither console nor OTLP is configured we still register the SDK
   // so the global tracer/meter providers exist (the middleware will use
   // them as no-op recorders). This keeps tool spans coherent in dev.
+  //
+  // Phase B: Undici + Pino auto-instrumentation are always enabled when
+  // OTEL_ENABLED=true. UndiciInstrumentation captures every fetch/REST
+  // call (including @discordjs/rest) as a CLIENT span; PinoInstrumentation
+  // injects trace_id/span_id into log records inside an active span.
   const sdk = new NodeSDK({
     resource: buildResource(config),
     sampler: buildSampler(config),
+    instrumentations: buildInstrumentations(),
     ...(traceExporter !== null && { traceExporter }),
     ...(metricReader !== null && { metricReaders: [metricReader] }),
   });

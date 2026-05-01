@@ -49,6 +49,7 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.216.0",
     "@opentelemetry/resources": "^2.0.0",
     "@opentelemetry/sdk-metrics": "^2.0.0",
+    "@opentelemetry/instrumentation-undici": "^0.26.0",
     "@opentelemetry/sdk-node": "^0.216.0",
     "@opentelemetry/sdk-trace-base": "^2.0.0",
     "commander": "^12.1.0"
