@@ -73,6 +73,9 @@ importers:
       '@mswjs/interceptors':
         specifier: ^0.41.3
         version: 0.41.6
+      '@opentelemetry/context-async-hooks':
+        specifier: ^2.0.0
+        version: 2.7.1(@opentelemetry/api@1.9.1)
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.17
