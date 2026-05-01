@@ -1,0 +1,191 @@
+---
+title: Changelog
+description: discord-mcp release history. One section per tag from v0.0.0 onward, with highlights and links to the release commit.
+sidebar:
+  order: 4
+---
+
+# Changelog
+
+discord-mcp follows the **plan-as-release-train** model: each plan number
+maps to one minor release. v0.X.0 corresponds to Plan X. Tags are cut from
+the merge commit of the plan's PR into `main`.
+
+For PR-level history, see the [GitHub releases](https://github.com/cappylab/discord-mcp/releases)
+page. Tag dates and SHAs below come from `git for-each-ref refs/tags/v0.*`.
+
+## v0.10.0 — Documentation site
+
+_Tag pending in Phase F._
+
+Plan 10 ships a hand-written + auto-generated documentation site (Astro
+Starlight, deployed to GitHub Pages) covering all 192 tools, six recipes,
+operations runbooks, architecture deep-dives, and the reference surface
+you're reading now.
+
+- 192 auto-generated tool reference pages with JSON Schema tables.
+- 6 hand-written cookbook recipes (moderation, components V2, pipeline,
+  intelligence, webhooks, gateway).
+- Operations runbooks for telemetry, resilience, audit, client capabilities.
+- Architecture deep-dives for components V2, pipeline, gateway, error handling,
+  confirmation, sampling, rate-limits.
+- This reference section: CLI, config, API, changelog.
+
+## v0.9.0 — CLI sub-commands
+
+Released **2026-05-01**. Tag commit:
+[`038c1138`](https://github.com/cappylab/discord-mcp/commit/038c1138).
+
+Plan 9 split the single binary into four sub-commands routed by commander
+and shipped a structured `emitResult` envelope shared across all of them.
+
+- `discord-mcp serve` — the existing stdio transport, still default sub-command.
+- `discord-mcp doctor [--json] [--online]` — config + connectivity diagnostics
+  with offline / online check registries.
+- `discord-mcp init [--client] [--token] [--gateway] [--output]` — generate
+  Claude Desktop / Claude Code / Cursor / Generic client config snippets.
+- `discord-mcp migrate --from <adapter>` — Hubdustry-Go-MCP migration
+  scaffolding with a pluggable adapter registry.
+- Distribution polish: `.gitattributes`, README quickstart, npm pack
+  verification, post-build CLI smoke tests.
+
+## v0.8.0 — Production hardening
+
+Released **2026-05-01**. Tag commit:
+[`b034bebf`](https://github.com/cappylab/discord-mcp/commit/b034bebf).
+
+Plan 8 added the production-grade observability and resilience surface that
+makes discord-mcp safe to run in front of a real Discord guild.
+
+- OpenTelemetry traces + the six built-in metrics (`mcp.requests`,
+  `mcp.errors`, `mcp.duration`, `mcp.retries`, `mcp.circuit_state`,
+  `mcp.bulkhead_inflight`). 9 `OTEL_*` env vars.
+- Cockatiel composite policy: retry (with jitter strategies), per-call
+  timeout, circuit breaker, bulkhead. 11 `MCP_RETRY_/TIMEOUT_/CIRCUIT_/BULKHEAD_*`
+  env vars.
+- Mutating-only audit log with four sinks (stderr, file, otlp-stub, none),
+  PII redaction policy, JSONL schema. 3 `MCP_AUDIT_*` env vars.
+- Integration tests covering the full cockatiel chain end-to-end.
+
+## v0.7.0 — Bulk REST surface (192 tools)
+
+Released **2026-04-29**. Tag commit:
+[`947269d7`](https://github.com/cappylab/discord-mcp/commit/947269d7).
+
+Plan 7 brought the tool count from 29 to **192** by mechanically covering
+every Discord REST endpoint that maps cleanly onto a single MCP tool.
+
+- New categories: webhooks, application commands, interactions,
+  scheduled events, automod, audit log, monetization, soundboard, polls,
+  voice, onboarding, stage instances.
+- Per-category integration tests against `@discordjs/rest` route fixtures.
+- Pagination helpers (`encodeCursor` / `decodeCursor`) for list endpoints.
+- Branded snowflake types extended to all ID classes.
+
+## v0.6.0 — Gateway resource subscriptions
+
+Released **2026-04-28**. Tag commit:
+[`4dbac6ec`](https://github.com/cappylab/discord-mcp/commit/4dbac6ec).
+
+Plan 6 (USP) made discord-mcp the first MCP server to surface live Gateway
+events as MCP resources via the `subscribe` capability.
+
+- `createGatewayClient` lazy-imports `discord.js` so cold start without
+  `--gateway` stays minimal (`serve` doesn't pay the import cost).
+- 5 Gateway event handlers wired to `MessageCreate`, `MessageUpdate`,
+  `MessageDelete`, `MessageReactionAdd`, `MessageReactionRemove`.
+- `SubscriptionRegistry` tracks active resource URIs and fires
+  `notifyResource(uri)` when relevant events arrive.
+- `--gateway` CLI flag on `serve` toggles the whole subsystem.
+
+## v0.5.0 — Intelligence sampling
+
+Released **2026-04-28**. Tag commit:
+[`dcd49aa1`](https://github.com/cappylab/discord-mcp/commit/dcd49aa1).
+
+Plan 5 (USP) introduced the five intelligence tools that delegate reasoning
+back to the agent via MCP sampling.
+
+- `intelligence_summarize_channel` — summarize recent messages.
+- `intelligence_classify_messages` — multi-label classification.
+- `intelligence_draft_response` — context-aware reply drafts.
+- `intelligence_moderate_content` — policy-aware moderation.
+- `intelligence_extract_entities` — structured entity extraction.
+- All five honor client `sampling` capability — degrade gracefully when
+  the client doesn't advertise it.
+
+## v0.4.0 — Pipeline executor
+
+Released **2026-04-28**. Tag commit:
+[`07745aa0`](https://github.com/cappylab/discord-mcp/commit/07745aa0).
+
+Plan 4 (USP) shipped `mcp_pipeline` — a single tool that lets the agent
+queue a sequence of dependent tool calls with interpolation and conditional
+execution.
+
+- `executePipeline` runtime: serial step execution with
+  `${steps.<id>.<path>}` interpolation and `if`/`unless` predicates.
+- Step result shape (`StepResult` with `ok`/`skipped`/`failed`).
+- 19 unit tests covering interpolation, conditionals, nested paths,
+  error propagation.
+
+## v0.3.0 — Components V2
+
+Released **2026-04-28**. Tag commit:
+[`b7f976e6`](https://github.com/cappylab/discord-mcp/commit/b7f976e6).
+
+Plan 3 made Components V2 a first-class category.
+
+- 8 tools: `components_v2_build_container`, `_build_section`,
+  `_build_media_gallery`, `_validate`, `_preview`, `_send`, `_edit`,
+  `_send_from_template`.
+- 5 templates exposed via the `components-v2://` resource scheme.
+- Schema resource (`components-v2://schema`) for agents to discover the
+  V2 component shape.
+- Validate-then-send workflow with a structured preview before commit.
+
+## v0.2.0 — Hot-path tools
+
+Released **2026-04-28**. Tag commit:
+[`227dd28a`](https://github.com/cappylab/discord-mcp/commit/227dd28a).
+
+Plan 2 grew the surface from 1 tool to 15 by covering the high-frequency
+day-one operations Discord agents typically need.
+
+- Messages: `_send`, `_read`, `_edit`, `_delete`, `_get`, `_pin`, `_unpin`.
+- Reactions: `_create`, `_delete_own`, `_list`.
+- Channels / Members / Guild basics.
+- Sapphire `loadPiece` auto-discovery so adding a tool is one import + one
+  registration line.
+
+## v0.1.0 — Errors + middleware
+
+Released **2026-04-28**. Tag commit:
+[`acec9440`](https://github.com/cappylab/discord-mcp/commit/acec9440).
+
+Plan 1 established the error hierarchy, middleware composition framework,
+and capability router that every subsequent plan builds on.
+
+- `DiscordError` hierarchy with `code` / `retriable` / `category` /
+  `recoveryHint` contract.
+- `compose(...middlewares, handler)` framework.
+- `validateMiddleware`, `preconditionMiddleware`, baseline error formatter.
+- Capability router (`CapabilityRouter`) for client-feature gating.
+- Untrusted-content wrapping helpers (`wrapUntrusted` / `wrapMessages`).
+
+## v0.0.0 — Project skeleton
+
+Released **2026-04-28**. Tag commit:
+[`3ab74826`](https://github.com/cappylab/discord-mcp/commit/3ab74826).
+
+Plan 0 stood up the monorepo and shipped the smallest viable tool surface.
+
+- pnpm + Turbo + tsdown workspace layout.
+- `@discord-mcp/core` and `@discord-mcp/cli` packages.
+- Single tool: `messages_send`.
+- Biome, vitest, tsc, baseline CI.
+
+## See also
+
+- [GitHub releases](https://github.com/cappylab/discord-mcp/releases) — full release notes per tag.
+- [Architecture → Overview](/discord-mcp/architecture/overview/) — how the pieces from each plan fit together today.
