@@ -12,10 +12,11 @@
  * will add Discord-using adapters (PaSympa, quadslab, discord-ops,
  * barryyip).
  */
+import { hubdustryGoMcpAdapter } from './hubdustry-go-mcp.js';
 import type { MigrationSource } from './types.js';
 
 export const ALL_ADAPTERS: readonly MigrationSource[] = [
-  // E.2 adds the Hubdustry adapter as the first reference implementation.
+  hubdustryGoMcpAdapter,
   // Plan 11 adds: paSympaAdapter, quadslabAdapter, discordOpsAdapter, barryyipAdapter
 ];
 
