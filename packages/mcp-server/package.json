@@ -39,7 +39,9 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "node -e \"require('node:fs').copyFileSync('../../README.md','README.md');require('node:fs').copyFileSync('../../LICENSE','LICENSE');\"",
+    "postpack": "node -e \"try{require('node:fs').unlinkSync('README.md');require('node:fs').unlinkSync('LICENSE');}catch{}\""
   },
   "dependencies": {
     "@discord-mcp/core": "workspace:*",
