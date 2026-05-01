@@ -1,0 +1,251 @@
+---
+title: CLI
+description: discord-mcp CLI sub-command reference. Flags, exit codes, and example invocations for serve, doctor, init, and migrate.
+sidebar:
+  order: 1
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+# CLI reference
+
+The `discord-mcp` binary is the single entry point. Plan 9 split it into four
+sub-commands routed by [commander](https://www.npmjs.com/package/commander):
+
+```bash
+discord-mcp <command> [options]
+```
+
+`serve` is the default sub-command — running `discord-mcp` with no command
+boots the stdio MCP server, equivalent to `discord-mcp serve`. The other
+three (`doctor`, `init`, `migrate`) are operator tools.
+
+Source: [`packages/mcp-server/src/cli.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-server/src/cli.ts).
+
+## Global flags
+
+| Flag         | Description                              |
+| ------------ | ---------------------------------------- |
+| `--version`  | Print the package version and exit.      |
+| `--help`     | Print the help summary for the command.  |
+
+`--help` works at every level — `discord-mcp --help`, `discord-mcp doctor --help`,
+etc. Each sub-command has its own option list described below.
+
+## `serve`
+
+```bash
+discord-mcp serve [--gateway]
+discord-mcp [--gateway]            # default sub-command
+```
+
+Start the stdio MCP transport. Reads configuration from `process.env`
+(see [Reference → Environment variables](/discord-mcp/reference/config/)),
+wires the audit sink, and blocks until the parent agent disconnects.
+
+| Flag         | Type    | Default | Description                                                                                                              |
+| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `--gateway`  | boolean | `false` | Enable Discord Gateway resource subscriptions. Lazy-imports `discord.js` so cold-start without this flag stays minimal.  |
+
+### Examples
+
+```bash
+# Bare invocation — equivalent to `discord-mcp serve` (commander default).
+discord-mcp
+
+# Explicit serve.
+discord-mcp serve
+
+# With Gateway subscriptions enabled.
+discord-mcp serve --gateway
+
+# Bare form with the same flag (forwarded to serve through commander's
+# default-subcommand passthrough).
+discord-mcp --gateway
+```
+
+### Exit codes
+
+| Code | Meaning                                                                                                          |
+| ---- | ---------------------------------------------------------------------------------------------------------------- |
+| `0`  | Process never returns under normal stdio operation. The transport runs until the parent agent disconnects.       |
+| `1`  | Boot failure — typically invalid config (missing `DISCORD_TOKEN`, unparseable env). Error message goes to stderr. |
+
+<Aside type="note">
+`serve` is the one sub-command that calls `process.exit(1)` directly on
+failure. stdio cannot drain naturally on a boot error (the transport never
+connected, so there is nothing to flush). Every other sub-command sets
+`process.exitCode` and returns so Node drains stdout/stderr first.
+</Aside>
+
+### See also
+
+- [Get started → Quickstart](/discord-mcp/start/quickstart/) — install and run.
+- [Architecture → Overview](/discord-mcp/architecture/overview/) — what `serve` actually wires up.
+
+## `doctor`
+
+```bash
+discord-mcp doctor [--json] [--online]
+```
+
+Diagnose configuration, token, and connectivity issues. Runs a registry of
+checks (token format, env-var parse, audit sink, OTel config, etc.) and
+aggregates results into a single structured report.
+
+| Flag        | Type    | Default | Description                                                                                                                                    |
+| ----------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--json`    | boolean | `false` | Emit machine-readable JSON instead of pretty TTY output. Use this in CI.                                                                       |
+| `--online`  | boolean | `false` | Run online checks against Discord (requires a working `DISCORD_TOKEN`). Without this flag only offline checks run, so doctor stays cheap.      |
+
+### Examples
+
+```bash
+# Quick offline health check (no network calls).
+discord-mcp doctor
+
+# Same but JSON for CI.
+discord-mcp doctor --json
+
+# Verify the token is accepted by Discord.
+DISCORD_TOKEN=Bot.xxx discord-mcp doctor --online
+
+# Full online + JSON report — typical pre-deploy gate.
+discord-mcp doctor --online --json | jq .
+```
+
+### Exit codes
+
+| Code | Meaning                                                                |
+| ---- | ---------------------------------------------------------------------- |
+| `0`  | All checks ok.                                                         |
+| `1`  | At least one check returned `warn`, no fails.                          |
+| `2`  | At least one check returned `fail` (e.g. invalid token, missing env).  |
+
+The exit-code policy is uniform across `doctor`, `init`, and `migrate`:
+`0` = success, `1` = success-with-work-left, `2` = couldn't run.
+
+### See also
+
+- [Operations → Audit](/discord-mcp/operations/audit/) — what audit-sink check covers.
+- [Operations → Telemetry](/discord-mcp/operations/telemetry/) — what otel-config check covers.
+
+## `init`
+
+```bash
+discord-mcp init [--client <id>] [--token <token>] [--gateway]
+                 [--output <path>] [--force] [--json]
+```
+
+Generate an MCP client config snippet for a supported client. Either prints
+to stdout or writes to `--output <path>`.
+
+| Flag             | Type    | Default                                              | Description                                                                                                                                                                                                          |
+| ---------------- | ------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--client <id>`  | string  | prompt if TTY, else `generic`                        | Target client id. One of `claude-desktop`, `claude-code`, `cursor`, `generic`.                                                                                                                                       |
+| `--token <token>`| string  | `${env:DISCORD_TOKEN}` placeholder                   | Discord bot token. **Warning**: writes the value into the snippet unredacted. Omit to leave the env-var interpolation placeholder so users don't accidentally commit a real secret.                                  |
+| `--gateway`      | boolean | `false`                                              | Append `--gateway` to the generated snippet so the server enables Gateway subscriptions on boot.                                                                                                                     |
+| `--output <path>`| string  | (stdout)                                             | Write the snippet to a file instead of stdout.                                                                                                                                                                        |
+| `--force`        | boolean | `false`                                              | Overwrite the `--output` path if it already exists. Required to overwrite.                                                                                                                                            |
+| `--json`         | boolean | `false`                                              | Emit machine-readable JSON instead of pretty output. The snippet body is delivered under `data.content`.                                                                                                              |
+
+### Examples
+
+```bash
+# Interactive — prompts for client + token + gateway when stdin is a TTY.
+discord-mcp init
+
+# Non-interactive: print a Claude Desktop snippet with the token placeholder.
+discord-mcp init --client claude-desktop
+
+# Bake a real token into the snippet (NOT recommended for committed files).
+discord-mcp init --client cursor --token "Bot.xxx.yyy.zzz"
+
+# Write directly to Claude Desktop's config (force overwrite).
+discord-mcp init --client claude-desktop \
+  --output ~/Library/Application\ Support/Claude/claude_desktop_config.json \
+  --force
+
+# JSON for tooling.
+discord-mcp init --client generic --json | jq .data.content
+```
+
+### Exit codes
+
+| Code | Meaning                                                                              |
+| ---- | ------------------------------------------------------------------------------------ |
+| `0`  | Snippet generated (and written, if `--output` was used).                             |
+| `2`  | Couldn't run — unknown `--client`, `--output` path exists without `--force`.         |
+
+### See also
+
+- [Get started → Client setup](/discord-mcp/start/client-setup/) — manual client wiring guides.
+- [Operations → Clients](/discord-mcp/operations/clients/) — capability matrix per client.
+
+## `migrate`
+
+```bash
+discord-mcp migrate [--from <adapter>] [--source <path>] [--json]
+```
+
+Migrate from another Discord MCP setup. Plan 9 Phase E ships one adapter
+(`hubdustry-go-mcp`) and the framework is extensible — new adapters land
+in subsequent plans.
+
+Run without `--from` to list available adapters and exit.
+
+| Flag             | Type    | Default | Description                                                                                                       |
+| ---------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
+| `--from <id>`    | string  | (none)  | Source adapter id. Run without this flag to list registered adapters.                                              |
+| `--source <path>`| string  | `cwd`   | Path to the source repo to migrate from. Defaults to the current working directory.                               |
+| `--json`         | boolean | `false` | Emit machine-readable JSON instead of pretty output.                                                              |
+
+### Examples
+
+```bash
+# List available adapters (exits 2 — no --from given).
+discord-mcp migrate
+
+# Migrate from a Hubdustry Go MCP repo at the current directory.
+discord-mcp migrate --from hubdustry-go-mcp
+
+# Migrate from a sibling directory.
+discord-mcp migrate --from hubdustry-go-mcp --source ../hubdustry-go-mcp
+
+# JSON output for tooling — capture the full migration report.
+discord-mcp migrate --from hubdustry-go-mcp --json > migrate-report.json
+```
+
+### Exit codes
+
+| Code | Meaning                                                                                                                            |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | Adapter ran AND every source tool was mapped cleanly (no unmapped, no manual review).                                              |
+| `1`  | Adapter ran but produced unmapped tools or items needing manual review. Successful run with work left — hand-edit the output.      |
+| `2`  | Couldn't run — missing/unknown `--from`, source not detected at `--source`, IO failure.                                            |
+
+### See also
+
+- [Architecture → Overview](/discord-mcp/architecture/overview/) — how the tool registry maps onto MCP.
+
+## Output formats
+
+`doctor`, `init`, and `migrate` all share the same `emitResult(...)` envelope.
+In pretty mode you see a TTY-friendly summary. In `--json` mode you get a
+single line of structured JSON with this shape:
+
+```json
+{
+  "ok": true,
+  "exitCode": 0,
+  "summary": "<one-line summary>",
+  "details": ["<line>", "..."],
+  "warnings": [],
+  "errors": [],
+  "data": { /* command-specific payload */ }
+}
+```
+
+This is the contract pipelines should consume. `data` is per-command
+(doctor's `data.checks` array, init's `data.content`, migrate's `data.result`)
+and stable across versions within a major.
