@@ -24,6 +24,11 @@ vi.mock('node:fs', async () => {
 
 const { doctorAction } = await import('./doctor.js');
 
+// Default fetch mock: any --online test that exercises the online checks
+// without explicitly stubbing fetch will see a network warn — fine for
+// the ID-set assertions that don't care about per-check status.
+const DEFAULT_FETCH_MOCK = () => vi.fn().mockResolvedValue(new Response('', { status: 500 }));
+
 const VALID_TOKEN = `Bot ${'a'.repeat(60)}`;
 
 const originalToken = process.env.DISCORD_TOKEN;
@@ -49,6 +54,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   accessSyncImpl = () => undefined;
   if (originalToken !== undefined) {
     process.env.DISCORD_TOKEN = originalToken;
@@ -92,27 +98,49 @@ function hasAnsi(s: string): boolean {
   return s.includes(CSI_BYTE);
 }
 
-describe('doctorAction — offline check selection', () => {
-  it('runs only offline checks when --online is absent', async () => {
+describe('doctorAction — online check selection', () => {
+  it('runs only the 5 offline checks when --online is absent', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
+    const fetchMock = DEFAULT_FETCH_MOCK();
+    vi.stubGlobal('fetch', fetchMock);
     await doctorAction({ json: true });
     const parsed = JSON.parse(stdoutOutput()) as {
       data?: { checks?: Array<{ id: string }> };
     };
     const ids = parsed.data?.checks?.map((c) => c.id) ?? [];
-    // The 5 offline checks ship in Phase B. Phase C will add online ones.
     expect(ids).toEqual(['node-version', 'token-format', 'env-vars', 'audit-sink', 'client-caps']);
+    // CRITICAL: --online not passed → online checks must NOT call fetch.
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('runs the same set when --online is true (no online checks in Phase B)', async () => {
+  it('runs all 7 checks (5 offline + 2 online) when --online is true', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
+    // OTEL_ENABLED defaults to false → otel-reachable skips its fetch.
+    // token-online still calls fetch — return a 200 so the test reports ok.
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: '1', username: 'bot', bot: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
     await doctorAction({ json: true, online: true });
     const parsed = JSON.parse(stdoutOutput()) as {
       data?: { checks?: Array<{ id: string }> };
     };
     const ids = parsed.data?.checks?.map((c) => c.id) ?? [];
-    // Phase B has zero online-tagged checks, so the set is identical.
-    expect(ids).toEqual(['node-version', 'token-format', 'env-vars', 'audit-sink', 'client-caps']);
+    expect(ids).toEqual([
+      'node-version',
+      'token-format',
+      'env-vars',
+      'audit-sink',
+      'client-caps',
+      'token-online',
+      'otel-reachable',
+    ]);
+    // token-online hit the network exactly once. otel-reachable did NOT
+    // because OTEL_ENABLED=false → skips request.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -208,10 +236,19 @@ describe('doctorAction — output formatting', () => {
     expect(parsed.summary).toMatch(/\d+ checks:/);
   });
 
-  it('summary string follows the "N checks: F fail, W warn, O ok" format', async () => {
+  it('summary string follows the "N checks: F fail, W warn, O ok" format (offline-only)', async () => {
     process.env.DISCORD_TOKEN = VALID_TOKEN;
     await doctorAction({ json: true });
     const parsed = JSON.parse(stdoutOutput());
+    // 5 offline checks when --online is absent.
     expect(parsed.summary).toMatch(/^5 checks: \d+ fail, \d+ warn, \d+ ok$/);
+  });
+
+  it('summary reports 7 checks when --online is true', async () => {
+    process.env.DISCORD_TOKEN = VALID_TOKEN;
+    vi.stubGlobal('fetch', DEFAULT_FETCH_MOCK());
+    await doctorAction({ json: true, online: true });
+    const parsed = JSON.parse(stdoutOutput());
+    expect(parsed.summary).toMatch(/^7 checks: \d+ fail, \d+ warn, \d+ ok$/);
   });
 });

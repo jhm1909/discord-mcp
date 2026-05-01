@@ -5,23 +5,28 @@
  * in {@link ALL_CHECKS}. The doctor command iterates the array, filters by
  * the `--online` flag, and aggregates {@link CheckResult}s.
  *
- * Phase B ships 5 offline checks (`online: false`):
+ * Phase B shipped 5 offline checks (`online: false`):
  *   - node-version
  *   - token-format
  *   - env-vars
  *   - audit-sink
  *   - client-caps
  *
- * Phase C will append `tokenOnlineCheck` and `otelReachableCheck`
- * (`online: true`). The array is intentionally simple `[a, b, c]` so
- * future phases just push more entries.
+ * Phase C appends 2 online checks (`online: true`, gated by --online):
+ *   - token-online
+ *   - otel-reachable
+ *
+ * The array is intentionally simple `[a, b, c]` so future phases just
+ * push more entries.
  */
 import type { Config } from '@discord-mcp/core';
 import { auditSinkCheck } from './audit-sink.js';
 import { clientCapsCheck } from './client-caps.js';
 import { envVarsCheck } from './env-vars.js';
 import { nodeVersionCheck } from './node-version.js';
+import { otelReachableCheck } from './otel-reachable.js';
 import { tokenFormatCheck } from './token-format.js';
+import { tokenOnlineCheck } from './token-online.js';
 
 /**
  * A single doctor check.
@@ -69,4 +74,6 @@ export const ALL_CHECKS: readonly DoctorCheck[] = [
   envVarsCheck,
   auditSinkCheck,
   clientCapsCheck,
+  tokenOnlineCheck,
+  otelReachableCheck,
 ];
