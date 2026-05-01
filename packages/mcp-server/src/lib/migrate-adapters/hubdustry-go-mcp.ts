@@ -88,6 +88,7 @@ function readDirGoFiles(dir: string): string[] {
 export const hubdustryGoMcpAdapter: MigrationSource = {
   id: 'hubdustry-go-mcp',
   description: 'Hubdustry Go MCP server (apps/mcp) — non-Discord tools, reference adapter',
+  languages: ['go'],
 
   async detect(rootPath: string): Promise<boolean> {
     const candidates = [join(rootPath, 'main.go'), join(rootPath, 'apps', 'mcp', 'main.go')];
