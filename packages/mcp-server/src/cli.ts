@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import packageJson from '../package.json' with { type: 'json' };
 import { startStdio } from './transports/stdio.js';
 
 const program = new Command('discord-mcp')
   .description('Discord MCP server — stdio transport for AI agents')
-  .version('0.0.0')
+  .version(packageJson.version)
   .option('--gateway', 'Enable Discord Gateway resource subscriptions (lazy-imports discord.js)')
   .action(async (options: { gateway?: boolean }) => {
     if (options.gateway === true) {
