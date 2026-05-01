@@ -114,8 +114,8 @@ function buildInstrumentations(): (UndiciInstrumentation | PinoInstrumentation)[
     // remain untouched (verified by instrumentation-pino's own tests).
     new PinoInstrumentation({
       logHook: (span, record) => {
-        record['trace_id'] = span.spanContext().traceId;
-        record['span_id'] = span.spanContext().spanId;
+        record.trace_id = span.spanContext().traceId;
+        record.span_id = span.spanContext().spanId;
       },
     }),
   ];

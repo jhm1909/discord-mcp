@@ -136,7 +136,7 @@ describe('telemetryMiddleware', () => {
     expect(calls).toBeDefined();
     const callPoints = calls?.dataPoints ?? [];
     const callsByStatus = new Map(
-      callPoints.map((p) => [p.attributes['status'] as string, p.value as number]),
+      callPoints.map((p) => [p.attributes.status as string, p.value as number]),
     );
     expect(callsByStatus.get('ok')).toBe(1);
     expect(callsByStatus.get('tool_error')).toBe(1);
@@ -146,7 +146,7 @@ describe('telemetryMiddleware', () => {
     expect(errs).toBeDefined();
     const errPoints = errs?.dataPoints ?? [];
     const errsByStatus = new Map(
-      errPoints.map((p) => [p.attributes['status'] as string, p.value as number]),
+      errPoints.map((p) => [p.attributes.status as string, p.value as number]),
     );
     expect(errsByStatus.get('tool_error')).toBe(1);
     expect(errsByStatus.get('error')).toBe(1);
