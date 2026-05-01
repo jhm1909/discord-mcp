@@ -27,8 +27,8 @@ import { validateMiddleware } from './middleware/validate.js';
 import type { Tool } from './pieces/Tool.js';
 import { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 import { ConfirmRequired } from './preconditions/ConfirmRequired.js';
-import { listV2Resources, readV2Resource } from './resources/components-v2.js';
 import { PreconditionStore } from './stores/PreconditionStore.js';
+import { ResourceStore } from './stores/ResourceStore.js';
 import { ToolStore } from './stores/ToolStore.js';
 import AppEmojisCreate from './tools/app_emojis/create.js';
 import AppEmojisDelete from './tools/app_emojis/delete.js';
@@ -250,6 +250,7 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   // --- Stores ---
   const toolStore = new ToolStore();
   const preconditionStore = new PreconditionStore();
+  const resourceStore = new ResourceStore();
 
   // defineTool returns `typeof Tool` (abstract) — cast to concrete for Sapphire's loadPiece API.
   type ConcreteTool = new (...args: ConstructorParameters<typeof Tool>) => Tool;
@@ -1168,12 +1169,12 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   });
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
-    const resources = await listV2Resources();
+    const resources = await resourceStore.list();
     return { resources: resources.map((r) => ({ ...r })) };
   });
 
   server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
-    const content = await readV2Resource(req.params.uri);
+    const content = await resourceStore.read(req.params.uri);
     if (content === null) {
       throw new Error(`Resource not found: ${req.params.uri}`);
     }
