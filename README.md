@@ -2,13 +2,24 @@
 
 Production-grade Model Context Protocol server exposing the full Discord REST API to AI agents.
 
-**Status**: v0.10.0 · 192 tools · OTel-instrumented · Cockatiel-resilient · Audit-logged
+**Status**: v0.11.0 · 192 tools · OTel-instrumented · Cockatiel-resilient · Audit-logged
 
 ## Documentation
 
 **[discord-mcp docs](https://cappylab.github.io/discord-mcp/)** — quickstart, tool reference (auto-generated for all 192 tools), recipes, architecture deep-dives, operations guides.
 
 See [design spec](docs/superpowers/specs/2026-04-28-discord-mcp-design.md) for architecture.
+
+## Migrating from another Discord MCP
+
+discord-mcp ships migration adapters for the most-established community Discord MCP servers:
+
+- **PaSympa** (`@pasympa/discord-mcp`) — ~91 tools, TypeScript, Zod-based
+- **quadslab** (`@quadslab.io/discord-mcp`) — ~138 tools, MCP Resources support
+- **discord-ops** (`bookedsolidtech/discord-ops`) — multi-guild routing, dry-run mode
+- **Hubdustry** (reference adapter, non-Discord)
+
+Run `discord-mcp migrate --list` to see all adapters, or `discord-mcp migrate --from <id> --source <path>` to get a tool-by-tool mapping report. Full guides at [cappylab.github.io/discord-mcp/migrate](https://cappylab.github.io/discord-mcp/migrate/).
 
 ## Quick start
 
@@ -69,7 +80,7 @@ Migrate from another Discord/MCP setup. Exits 0 (all mapped), 1 (some unmapped),
 - `--source <path>` — Path to source repo (default: cwd)
 - `--json` — JSON output
 
-**Available adapters**: `hubdustry-go-mcp` (reference impl). More in Plan 11.
+**Available adapters**: `hubdustry-go-mcp` (reference), `pasympa`, `quadslab`, `discord-ops`. Run `discord-mcp migrate --list` for the live registry.
 
 ## Tool surface
 
