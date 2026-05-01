@@ -67,6 +67,21 @@ const ConfigSchema = z.object({
   // in policy.ts (fast-reject, no head-of-line blocking).  Min sane value is
   // 10 — see policy.ts JSDoc note on pipeline self-deadlock.
   MCP_BULKHEAD_LIMIT: z.coerce.number().int().min(1).max(1000).default(100),
+
+  // --- Audit logging (Plan 8 Phase E) ---
+  // Audit is ON by default. Same `!== 'false'` semantics as the other
+  // default-on flags: anything other than the literal string 'false'
+  // (including unset → undefined) is true.
+  MCP_AUDIT_ENABLED: z
+    .string()
+    .transform((v) => v !== 'false')
+    .default(true),
+  // Sink selector — see audit/sink.ts. `none` is identical to setting
+  // MCP_AUDIT_ENABLED=false but reserved for explicit opt-out via sink config.
+  MCP_AUDIT_SINK: z.enum(['stderr', 'file', 'otlp', 'none']).default('stderr'),
+  // Path used by FileAuditSink. Optional — sink falls back to a default
+  // (./discord-mcp-audit.jsonl) at runtime when undefined.
+  MCP_AUDIT_FILE: z.string().optional(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

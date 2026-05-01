@@ -384,4 +384,54 @@ describe('loadConfig', () => {
       ).toThrow();
     });
   });
+
+  describe('Audit fields (Plan 8 Phase E)', () => {
+    it('MCP_AUDIT_ENABLED defaults to true (default-on flag)', () => {
+      const c = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(c.MCP_AUDIT_ENABLED).toBe(true);
+    });
+
+    it('MCP_AUDIT_ENABLED only goes false on the literal string "false"', () => {
+      const off = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_AUDIT_ENABLED: 'false',
+      } as NodeJS.ProcessEnv);
+      expect(off.MCP_AUDIT_ENABLED).toBe(false);
+      for (const v of ['true', '1', 'yes', '0', 'no', '']) {
+        const on = loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_AUDIT_ENABLED: v,
+        } as NodeJS.ProcessEnv);
+        expect(on.MCP_AUDIT_ENABLED).toBe(true);
+      }
+    });
+
+    it('MCP_AUDIT_SINK defaults to "stderr" and accepts the enum', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_AUDIT_SINK).toBe('stderr');
+      for (const v of ['stderr', 'file', 'otlp', 'none'] as const) {
+        const c = loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_AUDIT_SINK: v,
+        } as NodeJS.ProcessEnv);
+        expect(c.MCP_AUDIT_SINK).toBe(v);
+      }
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_AUDIT_SINK: 'bogus',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_AUDIT_FILE is optional and accepts a path override', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_AUDIT_FILE).toBeUndefined();
+      const c = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_AUDIT_FILE: '/var/log/discord-mcp/audit.jsonl',
+      } as NodeJS.ProcessEnv);
+      expect(c.MCP_AUDIT_FILE).toBe('/var/log/discord-mcp/audit.jsonl');
+    });
+  });
 });
