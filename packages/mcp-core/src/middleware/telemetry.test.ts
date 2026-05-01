@@ -1,0 +1,155 @@
+import { metrics, trace } from '@opentelemetry/api';
+import {
+  AggregationTemporality,
+  DataPointType,
+  InMemoryMetricExporter,
+  MeterProvider,
+  PeriodicExportingMetricReader,
+} from '@opentelemetry/sdk-metrics';
+import {
+  BasicTracerProvider,
+  InMemorySpanExporter,
+  type ReadableSpan,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { MiddlewareContext } from './compose.js';
+import { telemetryMiddleware } from './telemetry.js';
+
+const tool = {
+  name: 'messages_send',
+  category: 'messages',
+  idempotent: false,
+};
+
+function makeCtx(): MiddlewareContext<unknown> {
+  return {
+    tool,
+    args: { channel_id: '111', content: 'hi' },
+    meta: new Map(),
+  };
+}
+
+describe('telemetryMiddleware', () => {
+  let spanExporter: InMemorySpanExporter;
+  let metricExporter: InMemoryMetricExporter;
+  let tracerProvider: BasicTracerProvider;
+  let meterProvider: MeterProvider;
+  let metricReader: PeriodicExportingMetricReader;
+
+  beforeEach(() => {
+    spanExporter = new InMemorySpanExporter();
+    tracerProvider = new BasicTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(spanExporter)],
+    });
+    trace.setGlobalTracerProvider(tracerProvider);
+
+    metricExporter = new InMemoryMetricExporter(AggregationTemporality.CUMULATIVE);
+    metricReader = new PeriodicExportingMetricReader({
+      exporter: metricExporter,
+      // Long enough to never auto-fire during the test; we force-collect.
+      exportIntervalMillis: 60_000,
+    });
+    meterProvider = new MeterProvider({ readers: [metricReader] });
+    metrics.setGlobalMeterProvider(meterProvider);
+  });
+
+  afterEach(async () => {
+    trace.disable();
+    metrics.disable();
+    await tracerProvider.shutdown();
+    await meterProvider.shutdown();
+  });
+
+  it('creates a span with mcp.tool.<name> and the expected attributes', async () => {
+    const mw = telemetryMiddleware();
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: false, content: [] }));
+
+    const spans = spanExporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    const s = spans[0] as ReadableSpan;
+    expect(s.name).toBe('mcp.tool.messages_send');
+    expect(s.attributes['mcp.tool.name']).toBe('messages_send');
+    expect(s.attributes['mcp.tool.category']).toBe('messages');
+    expect(s.attributes['mcp.tool.idempotent']).toBe(false);
+    expect(s.attributes['mcp.transport']).toBe('stdio');
+  });
+
+  it('ends the span with status=OK when next() resolves with isError=false', async () => {
+    const mw = telemetryMiddleware();
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: false, content: [] }));
+
+    const s = spanExporter.getFinishedSpans()[0]!;
+    expect(s.status.code).toBe(1); // SpanStatusCode.OK
+  });
+
+  it('ends the span with status=ERROR and recordException when next() throws', async () => {
+    const mw = telemetryMiddleware();
+    const boom = new Error('boom');
+    await expect(
+      mw.onCallTool!(makeCtx(), async () => {
+        throw boom;
+      }),
+    ).rejects.toBe(boom);
+
+    const s = spanExporter.getFinishedSpans()[0]!;
+    expect(s.status.code).toBe(2); // SpanStatusCode.ERROR
+    expect(s.status.message).toBe('boom');
+    expect(s.events.some((ev) => ev.name === 'exception')).toBe(true);
+  });
+
+  it('ends the span with status=ERROR when result.isError is true', async () => {
+    const mw = telemetryMiddleware();
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: true, content: [] }));
+
+    const s = spanExporter.getFinishedSpans()[0]!;
+    expect(s.status.code).toBe(2);
+    expect(s.status.message).toBe('tool returned isError');
+  });
+
+  it('records duration histogram + calls/errors counters', async () => {
+    const mw = telemetryMiddleware();
+    // success
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: false, content: [] }));
+    // tool_error
+    await mw.onCallTool!(makeCtx(), async () => ({ isError: true, content: [] }));
+    // thrown error
+    await expect(
+      mw.onCallTool!(makeCtx(), async () => {
+        throw new Error('oops');
+      }),
+    ).rejects.toBeInstanceOf(Error);
+
+    // Force the periodic reader to flush.
+    await metricReader.forceFlush();
+
+    const collected = metricExporter.getMetrics();
+    expect(collected.length).toBeGreaterThan(0);
+    const all = collected.flatMap((rm) => rm.scopeMetrics.flatMap((sm) => sm.metrics));
+
+    const duration = all.find((m) => m.descriptor.name === 'mcp.tool.duration_ms');
+    expect(duration).toBeDefined();
+    expect(duration?.dataPointType).toBe(DataPointType.HISTOGRAM);
+    expect(duration?.dataPoints.length).toBe(3); // 3 status labels: ok, tool_error, error
+
+    const calls = all.find((m) => m.descriptor.name === 'mcp.tool.calls');
+    expect(calls).toBeDefined();
+    const callPoints = calls?.dataPoints ?? [];
+    const callsByStatus = new Map(
+      callPoints.map((p) => [p.attributes['status'] as string, p.value as number]),
+    );
+    expect(callsByStatus.get('ok')).toBe(1);
+    expect(callsByStatus.get('tool_error')).toBe(1);
+    expect(callsByStatus.get('error')).toBe(1);
+
+    const errs = all.find((m) => m.descriptor.name === 'mcp.tool.errors');
+    expect(errs).toBeDefined();
+    const errPoints = errs?.dataPoints ?? [];
+    const errsByStatus = new Map(
+      errPoints.map((p) => [p.attributes['status'] as string, p.value as number]),
+    );
+    expect(errsByStatus.get('tool_error')).toBe(1);
+    expect(errsByStatus.get('error')).toBe(1);
+    expect(errsByStatus.get('ok')).toBeUndefined();
+  });
+});

@@ -40,6 +40,7 @@ export {
   type ToolMiddleware,
 } from './middleware/compose.js';
 export { preconditionMiddleware } from './middleware/precondition.js';
+export { telemetryMiddleware } from './middleware/telemetry.js';
 export { validateMiddleware } from './middleware/validate.js';
 export { Precondition } from './pieces/Precondition.js';
 // Pieces
