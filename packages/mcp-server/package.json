@@ -6,7 +6,8 @@
   "mcpName": "io.github.jhm1909/discord-mcp",
   "description": "Discord MCP server — stdio transport CLI",
   "bin": {
-    "discord-mcp": "./dist/cli.js"
+    "discord-mcp": "./dist/cli.js",
+    "discord-mcp-server": "./dist/cli.js"
   },
   "main": "./dist/cli.js",
   "files": [
