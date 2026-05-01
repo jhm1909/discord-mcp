@@ -1,0 +1,25 @@
+{
+  "name": "site",
+  "version": "0.10.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "generate-tools": "tsx scripts/generate-tool-docs.ts",
+    "predev": "pnpm generate-tools",
+    "prebuild": "pnpm generate-tools",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "@astrojs/starlight": "^0.37.0",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@discord-mcp/core": "workspace:*",
+    "tsx": "^4.19.0",
+    "vitest": "^3.2.0"
+  }
+}

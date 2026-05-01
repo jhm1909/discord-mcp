@@ -16,6 +16,15 @@
       "outputs": [],
       "inputs": ["src/**", "tsconfig.json"]
     },
-    "dev": { "cache": false, "persistent": true }
+    "dev": { "cache": false, "persistent": true },
+    "site#build": {
+      "dependsOn": ["@discord-mcp/core#build"],
+      "outputs": ["dist/**", ".astro/**"],
+      "inputs": ["src/**", "scripts/**", "astro.config.ts", "package.json", "tsconfig.json"]
+    },
+    "site#test": {
+      "outputs": [],
+      "inputs": ["scripts/**", "vitest.config.ts", "package.json"]
+    }
   }
 }

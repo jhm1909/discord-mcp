@@ -2,7 +2,11 @@
 
 Production-grade Model Context Protocol server exposing the full Discord REST API to AI agents.
 
-**Status**: v0.9.0 · 192 tools · OTel-instrumented · Cockatiel-resilient · Audit-logged
+**Status**: v0.10.0 · 192 tools · OTel-instrumented · Cockatiel-resilient · Audit-logged
+
+## Documentation
+
+**[discord-mcp docs](https://cappylab.github.io/discord-mcp/)** — quickstart, tool reference (auto-generated for all 192 tools), recipes, architecture deep-dives, operations guides.
 
 See [design spec](docs/superpowers/specs/2026-04-28-discord-mcp-design.md) for architecture.
 
@@ -126,7 +130,18 @@ npx -y @modelcontextprotocol/inspector node packages/mcp-server/dist/cli.js
 
 Open the Inspector UI at <http://localhost:5173>, click `tools/list`, and you should see all 192 tools.
 
-## Documentation
+## More documentation
+
+Full docs published at <https://cappylab.github.io/discord-mcp/>:
+
+- [Quickstart](https://cappylab.github.io/discord-mcp/start/) — install, configure, first tool call
+- [Tool reference](https://cappylab.github.io/discord-mcp/tools/) — auto-generated for all 192 tools
+- [Recipes](https://cappylab.github.io/discord-mcp/recipes/) — common agent flows
+- [Architecture](https://cappylab.github.io/discord-mcp/architecture/) — pipeline, gateway, error handling, components-v2
+- [Operations](https://cappylab.github.io/discord-mcp/operations/) — telemetry, resilience, audit, client capability matrix
+- [Reference](https://cappylab.github.io/discord-mcp/reference/) — CLI, env vars, public API, changelog
+
+In-repo legacy docs (preserved for compat):
 
 - [Operations: telemetry](docs/operations/telemetry.md) — OTel setup
 - [Operations: resilience](docs/operations/resilience.md) — Tuning retry/timeout/circuit

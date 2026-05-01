@@ -1,0 +1,129 @@
+---
+title: Overview
+description: How the discord-mcp server is built — Sapphire pieces, middleware chain, REST adapter, audit, telemetry. The big picture before the deep-dive pages.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+# Architecture overview
+
+discord-mcp is a layered server: a Sapphire-style **piece registry** owns the
+192 tools, a Koa-style **middleware chain** wraps every call with cross-cutting
+concerns, a **resilient REST adapter** sits between the tools and Discord's
+HTTP API, and an **audit + telemetry** layer observes the whole thing. This
+page is the map; the rest of the Architecture section is the detail.
+
+## The call path
+
+```mermaid
+graph TD
+  Client[MCP client] --> Transport[InMemoryTransport / stdio]
+  Transport --> Server[McpServer]
+  Server --> MW[Middleware chain]
+  MW --> Tool[Tool piece]
+  Tool --> REST[Resilient REST adapter]
+  REST --> Discord[Discord REST API]
+  Tool -. optional .-> Sampling[Client LLM via sampling]
+  Server -. optional .-> Gateway[Gateway client]
+  Gateway --> DiscordWS[Discord Gateway WebSocket]
+```
+
+What each box does:
+
+- **MCP client** — Claude Desktop, Claude Code, Cursor, or any spec-compliant
+  client. Sends JSON-RPC `tools/call` over stdio.
+- **Transport** — `stdio` in production; `InMemoryTransport` in tests. Owns
+  the JSON-RPC framing; never sees tool arguments.
+- **McpServer** — the bridge between MCP protocol and the piece registry.
+  Hosts middleware, tool, precondition, and resource stores.
+- **Middleware chain** — four layers (telemetry, validate, precondition,
+  audit) that wrap every call. See
+  [Middleware chain](/discord-mcp/architecture/middleware-chain/).
+- **Tool piece** — one of the 192 tool implementations. Calls Discord via the
+  REST adapter or (rarely) calls the client back via sampling.
+- **REST adapter** — wraps `@discordjs/rest` in Cockatiel resilience policies.
+  See [Operations → Resilience](/discord-mcp/operations/resilience/) and
+  [Architecture → Rate limits](/discord-mcp/architecture/rate-limits/).
+- **Gateway client** (optional) — `discord.js` lazy-loaded when the
+  `--gateway` flag is set. Enables 5 subscribable resource URIs. See
+  [Architecture → Gateway](/discord-mcp/architecture/gateway/).
+
+## The piece model (Sapphire-inspired)
+
+discord-mcp borrows the Sapphire framework's "piece + store" model:
+
+- **Pieces** are the unit of registration: a `Tool`, a `Precondition`, a
+  `Resource`. Each piece extends a base class and is auto-discovered from a
+  directory tree at boot.
+- **Stores** hold pieces of one type and expose lookup by name. The server
+  has `ToolStore`, `PreconditionStore`, `ResourceStore`, `MiddlewareStore`,
+  `GatewayHandlerStore`, and `SamplingStore`.
+- **Container** is the global registry that ties stores together. Pieces can
+  reach sibling pieces via the container without import cycles.
+
+This is conventional in Sapphire bots; we adopted it because it gives us
+auto-discovery (drop a file in `tools/` and it's registered) without
+hand-maintained import lists.
+
+Source:
+[`packages/mcp-core/src/server.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/server.ts),
+[`pieces/Tool.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/pieces/Tool.ts),
+[`stores/ToolStore.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/stores/ToolStore.ts).
+
+## What's where in the repo
+
+```
+packages/
+  mcp-core/                # All tool definitions, middleware, resilience policy
+    src/
+      tools/               # 192 tools across ~20 categories
+      middleware/          # 4 middleware layers + compose
+      preconditions/       # ConfirmRequired, CategoryEnabled
+      pieces/              # Base classes for Tool, Precondition, Resource
+      stores/              # Auto-discovery containers
+      rest/                # Cockatiel-wrapped @discordjs/rest
+      gateway/             # discord.js gateway client (optional)
+      pipeline/            # mcp_pipeline executor + interpolation
+      errors/              # Error hierarchy + formatErrorForUser
+      audit/               # Audit middleware + sinks + redaction
+      telemetry/           # OTel SDK boot + custom metrics
+  mcp-server/              # Thin CLI + stdio transport wiring
+    src/
+      transports/          # stdio, future http
+      otel.ts              # OTel SDK lifecycle
+```
+
+`mcp-core` has no transport assumptions — it's a library that anything could
+host. `mcp-server` is the thin shell that wires it to stdio + OTel + signal
+handling.
+
+## Why this shape
+
+<Aside type="note">
+The architecture is over-engineered for a single bot. The justification is
+**MCP is an agent contract**, not a chat bot. The middleware chain captures
+the cross-cutting concerns that any production agent host needs (validation,
+auth, audit, observability) without forcing each tool to re-implement them.
+Adding a 193rd tool means writing one zod schema + one async handler;
+everything else is inherited from the chain.
+</Aside>
+
+The pieces below split the inheritance into explainable units:
+
+- [Middleware chain](/discord-mcp/architecture/middleware-chain/) — the four
+  layers and why their order matters.
+- [Components V2](/discord-mcp/architecture/components-v2/) — the rich layout
+  primitives and their schema validator.
+- [Pipeline](/discord-mcp/architecture/pipeline/) — atomic multi-tool calls.
+- [Sampling](/discord-mcp/architecture/sampling/) — the zero-API-key
+  intelligence path.
+- [Rate limits](/discord-mcp/architecture/rate-limits/) — Discord's quota
+  model, our retry/bulkhead response.
+- [Gateway](/discord-mcp/architecture/gateway/) — optional WebSocket
+  subscriptions.
+- [Error handling](/discord-mcp/architecture/error-handling/) — error
+  hierarchy, recovery hints, Cockatiel mapping.
+- [Confirmation](/discord-mcp/architecture/confirmation/) — the
+  `__confirm:true` + `MCP_DRY_RUN=false` contract.

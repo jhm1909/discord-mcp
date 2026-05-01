@@ -1,0 +1,45 @@
+---
+title: discord-mcp
+description: Production-grade Discord MCP server for AI agents
+template: splash
+hero:
+  tagline: 192 Discord REST tools. OTel-instrumented. Cockatiel-resilient. Audit-logged.
+  actions:
+    - text: Quickstart
+      link: /discord-mcp/start/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: GitHub
+      link: https://github.com/cappylab/discord-mcp
+      icon: external
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Why discord-mcp
+
+<CardGrid>
+  <Card title="Comprehensive" icon="puzzle">
+    192 tools covering every non-deprecated Discord REST endpoint.
+  </Card>
+  <Card title="Production-grade" icon="rocket">
+    OpenTelemetry, Cockatiel resilience, audit logging, privacy redaction.
+  </Card>
+  <Card title="Agent-optimized" icon="seti:smarty">
+    Every tool has Purpose / When to use / When NOT to use / Returns sections.
+  </Card>
+  <Card title="Components V2" icon="seti:image">
+    First-class support for Discord's V2 layouts (containers, sections, media galleries).
+  </Card>
+</CardGrid>
+
+## Quickstart in 3 commands
+
+```bash
+npm install -g @discord-mcp/cli
+discord-mcp init --client claude-desktop --token "Bot YOUR.TOKEN"
+discord-mcp doctor --online
+```
+
+[Continue to full quickstart →](/discord-mcp/start/quickstart/)

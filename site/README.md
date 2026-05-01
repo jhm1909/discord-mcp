@@ -1,0 +1,73 @@
+# site — discord-mcp documentation
+
+Astro Starlight site published at <https://cappylab.github.io/discord-mcp/>.
+
+## Local development
+
+```bash
+pnpm --filter site dev
+```
+
+Opens at `http://localhost:4321/discord-mcp/`. The `predev` hook auto-runs
+`generate-tools` so the `/tools/*` reference reflects current code.
+
+## Build
+
+```bash
+pnpm --filter site build
+```
+
+Output goes to `site/dist/`. Pagefind search index is built in
+`site/dist/pagefind/` automatically (Starlight 0.37 default).
+
+```bash
+pnpm --filter site preview
+```
+
+Serves `dist/` locally on port 4321 — useful to verify Pagefind search
+before deploying.
+
+## Regenerate tool reference
+
+```bash
+pnpm --filter site generate-tools
+```
+
+Reads `__toolMetadata` static from `@discord-mcp/core` exports and emits
+one MDX per tool plus 28 category index pages plus a top-level index
+into `site/src/content/docs/tools/`. Runs automatically before `dev` and
+`build`.
+
+## Structure
+
+- `astro.config.ts` — Starlight config (sidebar, base path)
+- `src/content/docs/` — all MDX content
+  - `start/` — quickstart pages (4)
+  - `tools/` — auto-generated tool reference (192 tools + 28 categories + 1 index)
+  - `recipes/` — cookbook recipes (6)
+  - `operations/` — operator guides (4)
+  - `architecture/` — deep-dives (9)
+  - `reference/` — CLI, config, API, changelog (5)
+- `scripts/generate-tool-docs.ts` — tool MDX generator
+
+## GitHub Pages setup (operators)
+
+After merging Plan 10:
+
+1. Repo Settings → Pages → Source: **GitHub Actions**
+2. Push to `main` triggers `.github/workflows/docs.yml`
+3. First successful deploy publishes to <https://cappylab.github.io/discord-mcp/>
+
+The workflow only runs on push to `main`. PR-mode CI builds the site
+as a smoke test (no deploy).
+
+## Custom domain (optional)
+
+To use a custom domain, drop a `CNAME` file into `site/public/`:
+
+```
+docs.your-domain.com
+```
+
+Then configure DNS (CNAME record pointing to `cappylab.github.io`) and
+update repo Settings → Pages → Custom domain.

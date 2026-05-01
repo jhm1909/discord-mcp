@@ -1,0 +1,57 @@
+---
+title: Installation
+description: Install discord-mcp via npm, pnpm, or yarn — including the optional gateway runtime.
+---
+
+# Installation
+
+discord-mcp ships as a single npm package (`@discord-mcp/cli`) that bundles the server.
+
+## Requirements
+
+- **Node.js 20.11 or newer.** The server uses native `fetch`, the `node:test` runner in
+  CI, and the AsyncLocalStorage shape stabilized in 20.11.
+- A Discord bot token with the appropriate scopes for the tools you call.
+
+Check your Node version with `node --version`. If you're below 20.11, upgrade via
+[fnm](https://github.com/Schniz/fnm), [nvm](https://github.com/nvm-sh/nvm),
+[volta](https://volta.sh/), or your OS package manager.
+
+## Install with npm
+
+```bash
+npm install -g @discord-mcp/cli
+```
+
+## Install with pnpm
+
+```bash
+pnpm add -g @discord-mcp/cli
+```
+
+## Install with yarn
+
+```bash
+yarn global add @discord-mcp/cli
+```
+
+After install, `discord-mcp --version` should print the package version and `discord-mcp --help`
+should list four subcommands: `init`, `doctor`, `start`, `version`.
+
+## Optional: Gateway mode
+
+The default transport is REST-only — every tool call hits the Discord HTTP API.
+For real-time events (message creation, presence updates, voice state changes),
+discord-mcp can subscribe to the **Gateway** WebSocket via `discord.js`.
+
+`discord.js` is declared as an `optionalDependency` so REST users do not pay for it.
+To enable Gateway:
+
+```bash
+npm install -g discord.js
+discord-mcp start --gateway
+```
+
+When `--gateway` is set, the server lazy-imports `discord.js`, opens a Gateway connection,
+and exposes resource subscriptions (`presences`, `voice_states`, `messages` live feeds).
+See [Architecture → Gateway](/discord-mcp/architecture/) for the full integration model.

@@ -1,0 +1,176 @@
+---
+title: Confirmation
+description: The __confirm:true + MCP_DRY_RUN=false contract that gates every destructive tool. Why double-underscore, why safe-by-default, the recovery hint shape.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+# Confirmation
+
+discord-mcp's confirmation contract is the **load-bearing safety primitive**:
+no destructive tool fires unless **both** of these hold at the same time:
+
+1. The operator launched the server with `MCP_DRY_RUN=false`.
+2. The agent passed `__confirm:true` in the tool's arguments.
+
+If either is missing, the tool throws a `DRY_RUN_PREVIEW` error carrying the
+redacted arguments instead of executing. The agent (or human) sees what
+*would* have happened, then decides whether to commit.
+
+Source: [`packages/mcp-core/src/preconditions/ConfirmRequired.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/preconditions/ConfirmRequired.ts).
+
+## Why two halves
+
+A single switch (e.g. just `__confirm:true`) would let a runaway agent
+execute destructive tools by guessing the magic argument. A single env
+var (e.g. just `MCP_DRY_RUN=false`) would mean any tool call goes through
+the moment the operator flips the flag — no per-call review.
+
+Splitting it gives you the two-key launch model:
+
+- **`MCP_DRY_RUN`** is the **operator's switch**. They flip it once at boot
+  to opt the deployment into "real execution mode."
+- **`__confirm:true`** is the **agent's per-call assertion**. It says "I,
+  the caller, accept that this specific call is destructive."
+
+Both must be set. Either alone fails closed.
+
+## The flow
+
+```
+Agent → tool call (without __confirm)
+         ↓
+       Preconditions middleware runs ConfirmRequired
+         ↓
+       Throws DryRunPreview { tool, preview: <args minus __confirm> }
+         ↓
+Agent ← { isError: true, code: DRY_RUN_PREVIEW, recovery_hint: "..." }
+
+Agent (re-issues with __confirm:true)
+         ↓
+  Operator has MCP_DRY_RUN=false set ?
+   ├─ no → DryRunPreview again (the env-var half failed)
+   └─ yes → ConfirmRequired returns; handler runs; Discord call fires
+```
+
+The middleware never inspects what the tool *does*; it only checks the two
+halves and either passes through or raises. This means **the same gate
+applies uniformly** to every destructive tool, with no per-tool override
+risk.
+
+## Why double-underscore
+
+`__confirm` is **not part of any tool's zod schema**. It's pulled from
+the raw arg payload **before** the validate middleware runs:
+
+- If it were in the schema, you'd document it on every destructive tool's
+  page (cluttering 60+ tool pages with a cross-cutting concern).
+- If it were a single-underscore key (`_confirm`), it would clash with
+  legitimate tool args (e.g. some Discord fields use leading underscores).
+- If it were a positional flag, you couldn't pass it through clients that
+  serialize args as JSON only.
+
+Double-underscore signals "this is a meta-level argument, not part of the
+business payload." The same convention is used elsewhere in the MCP
+ecosystem for transport-level metadata.
+
+The extraction happens in `ConfirmRequired.run` *after* validate runs in
+the chain, but reads `args.__confirm` directly because zod stripped
+unknown keys by default. Specifically: the precondition reads the raw
+JSON-RPC `arguments` field via the chain's untyped accessor, not the
+validated typed args. This is the **one** place we accept pre-validation
+state — and it's narrowly scoped to one boolean.
+
+<Aside type="caution">
+Tools that have `__confirm` in their visible schema would let an agent
+"pass schema validation" without ever providing the gate. The hidden-key
+design is intentional: the gate is at the precondition layer, not the
+schema layer.
+</Aside>
+
+## DRY_RUN default: safe by default
+
+`MCP_DRY_RUN` defaults to `true` (safe). The operator must **explicitly**
+set it to `false` (i.e. `MCP_DRY_RUN=false`) to enable real execution.
+This is "fail closed" — a misconfigured deployment never accidentally
+mutates Discord state.
+
+The literal-string check matters: `MCP_DRY_RUN=0`, `MCP_DRY_RUN=no`, and
+`MCP_DRY_RUN=disabled` are all treated as truthy (= dry-run still active).
+Only the literal string `false` flips the switch off. This is deliberate
+to prevent typos (`MCP_DRY_RUN=fasle`) from silently enabling production
+mode.
+
+```ts
+// From ConfirmRequired.ts
+const dryRunActive = this.env.MCP_DRY_RUN !== 'false';
+```
+
+## The recovery hint
+
+When `DryRunPreview` fires, its `recovery_hint` is the exact string the
+agent needs to act on:
+
+> Set MCP_DRY_RUN=false AND pass `__confirm:true` (or use elicitation flow)
+> to actually execute
+
+Note the **AND** — it's load-bearing, telling the agent both halves are
+required. Without it, an agent might re-issue the call with `__confirm`
+alone and get the same error, then loop forever.
+
+The "or use elicitation flow" tail is for clients that support MCP
+elicitation: the server can prompt the human mid-tool, then re-issue
+with confirmation server-side. Clients without elicitation fall back to
+the explicit `__confirm` path. See
+[Operations → Client capability matrix](/discord-mcp/operations/clients/)
+for which clients have elicitation today.
+
+## Which tools require it
+
+Every tool with `idempotent: false` runs `ConfirmRequired` as a
+precondition. That's roughly **70 tools** across these categories:
+
+- `messages_*` (send, edit, delete, bulk_delete, react, …)
+- `members_*` (ban, kick, timeout, role_add, role_remove, …)
+- `channels_*` (create, delete, update, archive, …)
+- `webhooks_*` (create, execute, delete, …)
+- `events_*` (create, update, cancel, …)
+- `components_v2_*` (send, edit, send_from_template — the build/validate/preview helpers are idempotent)
+- `roles_*`, `threads_*`, `pins_*`, `voice_*` mutating subsets
+
+Read-only tools (`*_read`, `*_get`, `*_list`, `*_search`, …) skip the
+precondition entirely. The `idempotent: true` flag on the tool definition
+is the single source of truth — `ConfirmRequired` is only attached to
+tools where it's `false`.
+
+## Bypass for tests
+
+Unit tests that exercise destructive tools must satisfy both halves:
+
+```ts
+process.env.MCP_DRY_RUN = 'false';
+await tool.run({ args: { ...real_args, __confirm: true }, ... });
+```
+
+We do NOT provide a "skip confirmation in test mode" toggle. Tests that
+need to assert the precondition's behavior should test it directly; tests
+that need to assert downstream tool logic should set both halves
+explicitly. This keeps the production code path identical between tests
+and production.
+
+## Source map
+
+| Concern | File |
+| ------- | ---- |
+| Precondition implementation | [`preconditions/ConfirmRequired.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/preconditions/ConfirmRequired.ts) |
+| Error class + recovery hint | [`errors/client.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/errors/client.ts#L102-L113) |
+| Middleware that runs preconditions | [`middleware/precondition.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/middleware/precondition.ts) |
+
+## Related
+
+- [Architecture → Error handling](/discord-mcp/architecture/error-handling/) — `DRY_RUN_PREVIEW` is the most-thrown error in the hierarchy.
+- [Architecture → Middleware chain](/discord-mcp/architecture/middleware-chain/) — where preconditions sit in the chain.
+- [Operations → Client capability matrix](/discord-mcp/operations/clients/) — elicitation support varies by client; the `__confirm` fallback is universal.
+- [`moderation-bulk-ban` recipe](/discord-mcp/recipes/moderation-bulk-ban/) — worked example using the `__confirm:true` flow on a high-impact tool.

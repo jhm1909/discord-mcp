@@ -1,0 +1,360 @@
+---
+title: "@discord-mcp/core API"
+description: Public TypeScript exports from @discord-mcp/core. defineTool, buildServer, loadConfig, wrapRestWithResilience, error classes, branded snowflake types.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+# `@discord-mcp/core` API
+
+`@discord-mcp/core` is the embeddable engine. The `discord-mcp` binary is one
+consumer; you can build others — custom transports, alternative CLIs,
+extensions that ship their own tools — on top of the same exports.
+
+This page covers the supported public surface. Anything not listed here
+(everything under `_lib/`, internal middleware glue) is treated as private
+and may change between minor versions.
+
+Source: [`packages/mcp-core/src/index.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/index.ts).
+
+## Tool authoring
+
+### `defineTool`
+
+```ts
+function defineTool<I extends Record<string, z.ZodTypeAny>, O>(
+  def: ToolDefinition<I, O>,
+): typeof Tool;
+```
+
+Define a new MCP tool. Returns a Sapphire `Piece` subclass that the server
+can register via `ToolStore.loadPiece({ name, piece })`.
+
+Plan 10 Phase B added `__toolMetadata` — a static field on every returned
+class. Build-time tooling (the docs-site generator) reads it without
+instantiating the tool.
+
+| Parameter        | Type                                                                            | Description                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `def.name`       | `string` (snake_case, max 64)                                                   | Tool identifier exposed via `ListTools`. Validated at definition time.                            |
+| `def.description`| `string`                                                                        | Single-line description shown to the agent.                                                        |
+| `def.category`   | `string` (default `"misc"`)                                                     | Logical category (`messages`, `channels`, `intelligence`...). Used by `CategoryEnabled`.         |
+| `def.preconditions` | `readonly string[]` (default `[]`)                                          | IDs of preconditions to run before the handler (e.g. `confirm_required`).                         |
+| `def.scopes`     | `readonly string[]` (default `[]`)                                              | Required MCP scopes (informational v1).                                                            |
+| `def.inputSchema`| `Record<string, z.ZodTypeAny>`                                                  | Zod object shape — validated by `validateMiddleware` before the handler runs.                    |
+| `def.outputSchema`| `Record<string, z.ZodTypeAny>` (optional)                                      | Optional output schema for tools that emit structured content.                                    |
+| `def.annotations`| `ToolAnnotations`                                                               | MCP tool annotations (`destructive`, `idempotent`, `openWorld`, etc.).                            |
+| `def.idempotent` | `boolean` (default `false`)                                                     | Whether the tool is safe to retry. Used by retry middleware.                                       |
+| `def.handler`    | `(args, ctx: ToolRunContext) => Promise<O>`                                     | The actual implementation. Receives parsed args + a context with `signal`, `invoke`, sampling.   |
+
+**Returns**: `typeof Tool` — a concrete subclass attaching `__toolMetadata` for build-time introspection.
+
+**Example**:
+
+```ts
+import { defineTool } from '@discord-mcp/core';
+import { z } from 'zod';
+import { ChannelId } from '@discord-mcp/core';
+
+export default defineTool({
+  name: 'channel_describe',
+  description: 'Read a channel and return a one-line summary.',
+  category: 'channels',
+  inputSchema: {
+    channel_id: ChannelId,
+  },
+  annotations: { destructive: false, idempotent: true, openWorld: false },
+  idempotent: true,
+  async handler({ channel_id }, ctx) {
+    const ch = await ctx.invoke('channels_get', { channel_id }, ctx.signal);
+    return { summary: `#${(ch as { name: string }).name}` };
+  },
+});
+```
+
+Source: [`packages/mcp-core/src/tools/_lib/defineTool.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/_lib/defineTool.ts).
+
+## Server construction
+
+### `buildServer`
+
+```ts
+function buildServer(deps: BuildServerDeps): Promise<BuildServerResult>;
+
+interface BuildServerDeps {
+  rest: REST;       // @discordjs/rest instance, ideally already wrapped with resilience
+  logger: Logger;   // pino logger
+  config: Config;   // result of loadConfig(...)
+}
+
+interface BuildServerResult {
+  server: Server;                        // @modelcontextprotocol/sdk Server
+  registeredTools: string[];             // 192 tool names
+  registeredPreconditions: string[];     // ['category_enabled', 'confirm_required']
+  notifyResource: (uri: string) => Promise<void>;
+  subscriptions: SubscriptionRegistry;
+  auditSink: AuditSink;                  // surfaced for graceful shutdown
+}
+```
+
+Construct the MCP `Server` with all 192 tools, the middleware chain
+(`telemetry → validate → precondition → audit`), the Components V2 resource
+handlers, and the subscription registry already wired.
+
+| Parameter      | Type                  | Description                                                                                            |
+| -------------- | --------------------- | ------------------------------------------------------------------------------------------------------ |
+| `deps.rest`    | `REST` from `@discordjs/rest` | The Discord REST client. Wrap with `wrapRestWithResilience(...)` first if you want retry/circuit/bulkhead. |
+| `deps.logger`  | `Logger` from `pino`  | The base logger. Used by the audit middleware and surfaced to tool handlers.                           |
+| `deps.config`  | `Config`              | The parsed env-var contract. Drives audit sink selection, otel config, etc.                            |
+
+**Returns** a `BuildServerResult`. The `server` is unstarted — connect a
+transport (stdio, HTTP) yourself. The `auditSink` is surfaced so the
+transport can flush/close it on `SIGTERM`.
+
+**Example**:
+
+```ts
+import { REST } from '@discordjs/rest';
+import { buildServer, loadConfig, wrapRestWithResilience, buildPolicy } from '@discord-mcp/core';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import pino from 'pino';
+
+const config = loadConfig(process.env);
+const logger = pino({ level: config.LOG_LEVEL });
+const baseRest = new REST().setToken(config.DISCORD_TOKEN);
+const policy = buildPolicy(config);
+const rest = wrapRestWithResilience(baseRest, policy, {
+  circuitHalfOpenAfterMs: config.MCP_CIRCUIT_HALF_OPEN_AFTER_MS,
+});
+
+const { server, auditSink } = await buildServer({ rest, logger, config });
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
+
+process.on('SIGTERM', async () => {
+  await auditSink.close?.();
+  process.exit(0);
+});
+```
+
+Source: [`packages/mcp-core/src/server.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/server.ts).
+
+## Configuration
+
+### `loadConfig`
+
+```ts
+function loadConfig(env?: NodeJS.ProcessEnv): Config;
+type Config = z.infer<typeof ConfigSchema>;
+```
+
+Parse and validate environment variables into a `Config` object. The schema
+defines defaults, ranges, and types for every supported variable — see
+[Reference → Environment variables](/discord-mcp/reference/config/) for the
+full list.
+
+| Parameter | Type                  | Default        | Description                                                                                          |
+| --------- | --------------------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| `env`     | `NodeJS.ProcessEnv`   | `process.env`  | Environment to parse. Override for testing or for embedding in a process where env is built dynamically. |
+
+**Returns** a fully-resolved `Config` with every field present (defaults
+filled in). On invalid input, throws an `Error` with a multi-line summary of
+every Zod issue (`  - PATH: message` per line).
+
+<Aside type="note">
+The error thrown is a plain `Error` with the formatted issue list, not a
+raw `ZodError`. If you need the structured Zod issues, do your own
+`ConfigSchema.safeParse(env)` — but the schema isn't currently exported.
+</Aside>
+
+**Example**:
+
+```ts
+import { loadConfig } from '@discord-mcp/core';
+
+try {
+  const config = loadConfig();
+  console.log(`booting with retry=${config.MCP_RETRY_ENABLED}, bulkhead=${config.MCP_BULKHEAD_LIMIT}`);
+} catch (e) {
+  process.stderr.write(`config invalid:\n${(e as Error).message}\n`);
+  process.exit(1);
+}
+```
+
+Source: [`packages/mcp-core/src/config.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/config.ts).
+
+## Resilience
+
+### `wrapRestWithResilience`
+
+```ts
+function wrapRestWithResilience(
+  rest: REST,
+  policy: IPolicy,
+  classifierOrOpts?: ClassifierFn | WrapResilienceOptions,
+): REST;
+```
+
+Wrap a `@discordjs/rest` `REST` instance so every verb call (`get`, `post`,
+`patch`, `put`, `delete`) passes through a [cockatiel](https://www.npmjs.com/package/cockatiel)
+policy. On retryable errors, the classifier converts them to a
+`DiscordRetryableError` so cockatiel's `handleType` matches; non-retryable
+errors propagate unchanged.
+
+Mutates and returns the same `REST` instance. The wrapper preserves
+`this`-binding to the original methods, so the rate-limit queue manager
+inside `@discordjs/rest` still works.
+
+| Parameter             | Type                                          | Description                                                                                          |
+| --------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `rest`                | `REST`                                        | The discord.js REST instance to wrap. Mutated in place.                                              |
+| `policy`              | `IPolicy` (cockatiel)                         | The composite policy (typically built via `buildPolicy(config)`).                                    |
+| `classifierOrOpts`    | `ClassifierFn \| WrapResilienceOptions`       | Optional. Pass a bare classifier function for backward compat, or an options object with `circuitHalfOpenAfterMs`. |
+
+**Returns** the same `REST` instance, with each verb wrapped. Cockatiel's
+`BrokenCircuitError` and `BulkheadRejectedError` are re-thrown as
+`CircuitOpenError` / `BulkheadFullError` (with structured `recoveryHint`)
+for `formatErrorForUser` to consume.
+
+**Example**:
+
+```ts
+import { REST } from '@discordjs/rest';
+import { wrapRestWithResilience, buildPolicy, loadConfig, classifyDiscordError } from '@discord-mcp/core';
+
+const config = loadConfig();
+const rest = new REST().setToken(config.DISCORD_TOKEN);
+const policy = buildPolicy(config);
+
+wrapRestWithResilience(rest, policy, {
+  classifier: classifyDiscordError,
+  circuitHalfOpenAfterMs: config.MCP_CIRCUIT_HALF_OPEN_AFTER_MS,
+});
+```
+
+Source: [`packages/mcp-core/src/rest/resilient.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/rest/resilient.ts).
+
+## Errors
+
+### Error classes
+
+All discord-mcp errors extend `DiscordError` (or `Error` for
+resilience-related ones) with a stable `code` field, a `retriable` flag, a
+`category` of `'client' | 'server'`, and a human-readable `recoveryHint`.
+
+| Class                         | Code                  | Retriable | Source                                                                                         |
+| ----------------------------- | --------------------- | --------- | ---------------------------------------------------------------------------------------------- |
+| `DiscordRetryableError`       | (internal marker)     | yes       | [`rest/errors.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/rest/errors.ts) |
+| `CircuitOpenError`            | `CIRCUIT_OPEN`        | yes       | [`errors/server.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/errors/server.ts) |
+| `BulkheadFullError`           | `BULKHEAD_FULL`       | yes       | [`errors/server.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/errors/server.ts) |
+| `DiscordPermissionError`      | `DISCORD_PERMISSION`  | no        | `errors/index.ts`                                                                              |
+| `DiscordRateLimitError`       | `DISCORD_RATE_LIMIT`  | yes       | `errors/index.ts`                                                                              |
+| `DiscordNotFoundError`        | `DISCORD_NOT_FOUND`   | no        | `errors/index.ts`                                                                              |
+| `DiscordAuthError`            | `DISCORD_AUTH`        | no        | `errors/index.ts`                                                                              |
+| `DiscordCloudflareBlocked`    | `DISCORD_CF_BANNED`   | yes       | `errors/index.ts`                                                                              |
+| `DiscordServerError`          | `DISCORD_SERVER`      | yes       | `errors/index.ts`                                                                              |
+| `ValidationError`             | `VALIDATION`          | no        | `errors/index.ts`                                                                              |
+| `ScopeRejectedError`          | `SCOPE_REJECTED`      | no        | `errors/index.ts`                                                                              |
+| `GuildNotAllowedError`        | `GUILD_NOT_ALLOWED`   | no        | `errors/index.ts`                                                                              |
+| `DryRunPreview`               | `DRY_RUN_PREVIEW`     | no        | `errors/index.ts`                                                                              |
+| `CancelledError`              | `CANCELLED`           | no        | `errors/index.ts`                                                                              |
+| `InternalError`               | `INTERNAL_ERROR`      | yes       | `errors/index.ts`                                                                              |
+
+### `formatErrorForUser`
+
+```ts
+function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToolResult;
+
+interface FormatErrorContext {
+  readonly toolName: string;
+  readonly transport: 'stdio' | 'http';
+  readonly sentryEventId?: string;
+}
+```
+
+Convert any thrown error into a structured `CallToolResult` with
+`isError: true`, a Markdown-formatted `text` block, and a `structuredContent`
+record containing `code`, `retriable`, `category`, and (where applicable)
+`retry_after_ms`.
+
+This is what the server's tool dispatcher calls in its `try/catch` — handler
+implementations don't need to call it themselves. Surfaced for custom
+transports that want the same error UX.
+
+**Example**:
+
+```ts
+import { formatErrorForUser, DiscordPermissionError } from '@discord-mcp/core';
+
+const err = new DiscordPermissionError({
+  resource: 'channels/123',
+  missing: ['SEND_MESSAGES'],
+  have: ['VIEW_CHANNEL'],
+  recoveryHint: 'grant SEND_MESSAGES to the bot',
+});
+
+const result = formatErrorForUser(err, { toolName: 'messages_send', transport: 'stdio' });
+// → { isError: true, content: [{ type: 'text', text: '**Permission Denied** ...' }], structuredContent: { code: 'DISCORD_PERMISSION', retriable: false, ... } }
+```
+
+Source: [`packages/mcp-core/src/errors/format.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/errors/format.ts).
+
+## Branded snowflake types
+
+Discord IDs are 17–20 digit decimal strings. discord-mcp uses
+[`z.brand`](https://zod.dev/?id=brand) to give the type system distinct
+nominal types per ID class — passing a `UserId` where `ChannelId` is expected
+is a compile-time error.
+
+| Schema             | Brand                  | Description                                          |
+| ------------------ | ---------------------- | ---------------------------------------------------- |
+| `Snowflake`        | _(unbranded)_          | Base regex-validated snowflake (17–20 digits).       |
+| `ChannelId`        | `'ChannelId'`          | Discord channel ID.                                  |
+| `GuildId`          | `'GuildId'`            | Discord guild (server) ID.                           |
+| `MessageId`        | `'MessageId'`          | Discord message ID.                                  |
+| `UserId`           | `'UserId'`             | Discord user ID.                                     |
+| `RoleId`           | `'RoleId'`             | Discord role ID.                                     |
+| `ApplicationId`    | `'ApplicationId'`      | Discord application ID.                              |
+| `WebhookId`        | `'WebhookId'`          | Discord webhook ID.                                  |
+| `EmojiId`          | `'EmojiId'`            | Discord custom emoji ID.                             |
+| `StickerId`        | `'StickerId'`          | Discord sticker ID.                                  |
+| `ScheduledEventId` | `'ScheduledEventId'`   | Discord scheduled event ID.                          |
+| `EntitlementId`    | `'EntitlementId'`      | Discord entitlement ID.                              |
+| `SkuId`            | `'SkuId'`              | Discord SKU ID.                                      |
+| `SubscriptionId`   | `'SubscriptionId'`     | Discord subscription ID.                             |
+| `IntegrationId`    | `'IntegrationId'`      | Discord integration ID.                              |
+| `AutoModRuleId`    | `'AutoModRuleId'`      | Discord AutoMod rule ID.                             |
+| `StageInstanceId`  | `'StageInstanceId'`    | Discord stage instance ID.                           |
+| `SoundboardSoundId`| `'SoundboardSoundId'`  | Discord soundboard sound ID.                         |
+| `InteractionId`    | `'InteractionId'`      | Discord interaction ID.                              |
+
+Two non-snowflake schemas live in the same module for ergonomic imports:
+
+| Schema         | Description                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| `InviteCode`   | Short base62-style invite code (1–32 chars). NOT a snowflake.                                |
+| `WebhookToken` | Long opaque webhook secret (60–100 chars). Treated as a credential — never log.              |
+
+**Example**:
+
+```ts
+import { ChannelId, MessageId, type ChannelId as ChannelIdT } from '@discord-mcp/core';
+
+function loadMessage(channel: ChannelIdT, message: string) {
+  // message is a plain string here — would fail validation if it's not a snowflake.
+  const validated = MessageId.parse(message);
+  // ✓ validated is `MessageId`, not assignable to ChannelId.
+}
+```
+
+Source: [`packages/mcp-core/src/tools/_lib/snowflake.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/_lib/snowflake.ts).
+
+## See also
+
+- [Architecture → Overview](/discord-mcp/architecture/overview/) — how `buildServer` fits the overall picture.
+- [Architecture → Middleware chain](/discord-mcp/architecture/middleware-chain/) — what the four middlewares do.
+- [Architecture → Error handling](/discord-mcp/architecture/error-handling/) — the error class hierarchy and recovery hints.
+- [Reference → Environment variables](/discord-mcp/reference/config/) — the full `Config` shape `loadConfig` produces.

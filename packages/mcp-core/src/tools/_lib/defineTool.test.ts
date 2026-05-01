@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { defineTool } from './defineTool.js';
+import { defineTool, type ToolMetadataStatic } from './defineTool.js';
 
 describe('defineTool', () => {
   it('produces a Tool subclass with correct name + schema', async () => {
@@ -46,6 +46,56 @@ describe('defineTool', () => {
         handler: async () => ({}),
       }),
     ).toThrow(/snake_case/);
+  });
+
+  it('attaches __toolMetadata for build-time introspection', () => {
+    const Tool = defineTool({
+      name: 'meta_introspect',
+      description: 'Introspect me',
+      category: 'meta',
+      preconditions: ['category_enabled'] as const,
+      inputSchema: { foo: z.string().describe('Foo field') },
+      outputSchema: { bar: z.number() },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      idempotent: true,
+      handler: async () => ({ bar: 1 }),
+    });
+
+    const meta = (Tool as unknown as { __toolMetadata?: ToolMetadataStatic }).__toolMetadata;
+    expect(meta).toBeDefined();
+    expect(meta?.name).toBe('meta_introspect');
+    expect(meta?.category).toBe('meta');
+    expect(meta?.description).toBe('Introspect me');
+    expect(meta?.idempotent).toBe(true);
+    expect(meta?.preconditions).toEqual(['category_enabled']);
+    expect(meta?.inputSchema.foo).toBeDefined();
+    expect(meta?.outputSchema?.bar).toBeDefined();
+    expect(meta?.annotations.readOnlyHint).toBe(true);
+    expect(meta?.annotations.destructiveHint).toBe(false);
+  });
+
+  it('__toolMetadata defaults idempotent=false and preconditions=[]', () => {
+    const Tool = defineTool({
+      name: 'meta_defaults',
+      description: 'd',
+      inputSchema: {},
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+      handler: async () => ({}),
+    });
+    const meta = (Tool as unknown as { __toolMetadata?: ToolMetadataStatic }).__toolMetadata;
+    expect(meta?.category).toBe('misc');
+    expect(meta?.idempotent).toBe(false);
+    expect(meta?.preconditions).toEqual([]);
   });
 
   it('passes category, preconditions, and scopes from config to subclass', async () => {

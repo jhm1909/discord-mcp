@@ -1,0 +1,53 @@
+---
+title: Reference
+description: Reference docs for the discord-mcp CLI, environment-variable contract, embedded TypeScript API, and version-by-version changelog.
+sidebar:
+  order: 0
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+# Reference
+
+This section is the **API surface reference** for discord-mcp. The
+[Tools](/discord-mcp/tools/) section already lists every MCP tool with its full
+schema. The pages here cover everything else an operator or developer needs:
+the CLI sub-commands and their flags, the environment variables that drive
+runtime behavior, the public TypeScript exports from `@discord-mcp/core`, and a
+chronological changelog from v0.0.0 onward.
+
+Reference pages are deliberately terse — they're the "I just want the table"
+form of each surface. For background and decision rationale, see
+[Architecture](/discord-mcp/architecture/) (how things are built) or
+[Operations](/discord-mcp/operations/) (how to run them in production). For
+walkthroughs, see [Recipes](/discord-mcp/recipes/).
+
+<CardGrid>
+  <LinkCard
+    title="CLI"
+    description="discord-mcp serve | doctor | init | migrate. All flags, exit codes, and example invocations."
+    href="/discord-mcp/reference/cli/"
+  />
+  <LinkCard
+    title="Environment variables"
+    description="23+ env vars driving the server: token, logging, telemetry, retry/timeout, circuit/bulkhead, audit. Defaults and ranges sourced from the Zod schema."
+    href="/discord-mcp/reference/config/"
+  />
+  <LinkCard
+    title="@discord-mcp/core API"
+    description="Public TypeScript exports for embedding the server in custom transports or extending it with custom tools. defineTool, buildServer, error classes, branded types."
+    href="/discord-mcp/reference/api-core/"
+  />
+  <LinkCard
+    title="Changelog"
+    description="One section per release v0.0.0 → v0.10.0. Highlights, dates, links to merge commits."
+    href="/discord-mcp/reference/changelog/"
+  />
+</CardGrid>
+
+## Looking for something else?
+
+- A specific MCP tool's schema or example → [Tools](/discord-mcp/tools/).
+- How to wire a client (Claude Desktop, Cursor, etc.) → [Get started → Client setup](/discord-mcp/start/client-setup/).
+- Production hardening tradeoffs → [Operations](/discord-mcp/operations/).
+- Internal architecture deep-dives → [Architecture](/discord-mcp/architecture/).

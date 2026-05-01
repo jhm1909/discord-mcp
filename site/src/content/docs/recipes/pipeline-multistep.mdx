@@ -1,0 +1,182 @@
+---
+title: Pipeline — chain three calls atomically
+description: Use mcp_pipeline to compose announce, schedule, and grant-role into one server-side request.
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Pipeline: chain three calls atomically
+
+When a workflow is a **strict sequence** — each step depends on the previous
+one's output — issuing N independent `tools/call` requests wastes round-trips
+and exposes intermediate state. The `mcp_pipeline` meta-tool batches them into
+one request, with `{{step_id.path}}` interpolation between steps.
+
+## Use case
+
+A community manager says: **"Announce the office-hours session in
+\#announcements, create a scheduled event for it, then give the host the
+'event-host' role."**
+
+Three calls. Each depends on the previous. Pipeline-shaped.
+
+<Aside type="note">
+Pipelines are bounded: **max 20 steps per pipeline**, and they **cannot recurse**
+(an `mcp_pipeline` step inside a pipeline returns `PIPELINE_RECURSION` and
+aborts). For long-running batch ops where each unit must fail independently,
+use the dedicated bulk tool for that resource instead.
+</Aside>
+
+## Tool flow
+
+<Steps>
+
+1. **Build the pipeline payload.**
+
+   Each step has `id` (for interpolation), `tool` (the tool name), and `args`.
+   Strings inside `args` may contain `{{step_id.path}}` placeholders. Below the
+   announcement step's `message_id` flows into the event's description, and the
+   announcement's author flows into the role-grant call.
+
+   ```json
+   {
+     "name": "mcp_pipeline",
+     "arguments": {
+       "steps": [
+         {
+           "id": "announce",
+           "tool": "messages_send",
+           "args": {
+             "channel_id": "222233334444555566",
+             "content": "Office hours start in 30 minutes! React with :wave: to attend."
+           }
+         },
+         {
+           "id": "event",
+           "tool": "events_create",
+           "args": {
+             "guild_id": "111122223333444455",
+             "name": "Office hours — May 1",
+             "scheduled_start_time": "2026-05-01T17:00:00Z",
+             "scheduled_end_time": "2026-05-01T18:00:00Z",
+             "entity_type": 3,
+             "privacy_level": 2,
+             "entity_metadata": { "location": "https://discord.com/channels/111122223333444455/222233334444555566/{{announce.message_id}}" },
+             "description": "Linked to announcement {{announce.message_id}}"
+           }
+         },
+         {
+           "id": "grant",
+           "tool": "members_add_role",
+           "args": {
+             "guild_id": "111122223333444455",
+             "user_id": "777788889999000011",
+             "role_id": "555566667777888899"
+           }
+         }
+       ]
+     }
+   }
+   ```
+
+2. **Read the response.**
+
+   The pipeline returns `steps[]` with per-step status, `variables` (the
+   interpolation namespace at completion), `total_duration_ms`, and `aborted`.
+
+   <Tabs>
+     <TabItem label="Output (success)">
+       ```json
+       {
+         "steps": [
+           {
+             "id": "announce",
+             "tool": "messages_send",
+             "status": "success",
+             "result": { "message_id": "888899990000111122", "channel_id": "222233334444555566" },
+             "duration_ms": 142
+           },
+           {
+             "id": "event",
+             "tool": "events_create",
+             "status": "success",
+             "result": { "event_id": "333344445555666677", "name": "Office hours — May 1" },
+             "duration_ms": 218
+           },
+           {
+             "id": "grant",
+             "tool": "members_add_role",
+             "status": "success",
+             "duration_ms": 96
+           }
+         ],
+         "variables": {
+           "announce": { "message_id": "888899990000111122", "channel_id": "222233334444555566" },
+           "event": { "event_id": "333344445555666677", "name": "Office hours — May 1" }
+         },
+         "total_duration_ms": 456,
+         "aborted": false
+       }
+       ```
+     </TabItem>
+     <TabItem label="Output (early abort)">
+       ```json
+       {
+         "steps": [
+           { "id": "announce", "tool": "messages_send", "status": "success", "duration_ms": 142 },
+           {
+             "id": "event",
+             "tool": "events_create",
+             "status": "error",
+             "error": { "code": "DISCORD_403", "message": "Missing MANAGE_EVENTS", "retriable": false },
+             "duration_ms": 88
+           },
+           { "id": "grant", "tool": "members_add_role", "status": "skipped", "duration_ms": 0 }
+         ],
+         "variables": { "announce": { "message_id": "888899990000111122" } },
+         "total_duration_ms": 230,
+         "aborted": true
+       }
+       ```
+     </TabItem>
+   </Tabs>
+
+</Steps>
+
+## Error handling
+
+- **Default abort-on-error.** When a step returns an error, subsequent steps are
+  marked `skipped` and `aborted: true`. The agent sees exactly which step
+  blew up and what the partial state is.
+- **Continue past errors.** Set `continue_on_error: true` on a step to keep
+  going. Use sparingly — it implies later steps must tolerate missing
+  interpolation values.
+- **Recursion guard.** A step whose `tool` is `mcp_pipeline` is rejected up
+  front with the error code `PIPELINE_RECURSION`. The pipeline aborts before
+  running any step.
+- **Limit.** Pipelines cap at 20 steps. For larger workloads, split into
+  multiple pipelines or use the dedicated bulk tool for that resource.
+
+## Why pipeline beats N separate calls
+
+| Concern | N separate `tools/call` | One `mcp_pipeline` |
+|---|---|---|
+| Round-trips | N | 1 |
+| Atomic abort | client must re-implement | server-side, free |
+| Intermediate state | client juggles | exposed via `variables` |
+| Logging | N audit-log entries, no parent | one parent + N children |
+
+## See also
+
+- [`mcp_pipeline`](/discord-mcp/tools/meta/mcp_pipeline/) — full step schema
+  including `save_as` and `if`.
+- [`messages_send`](/discord-mcp/tools/messages/send/),
+  [`events_create`](/discord-mcp/tools/events/create/),
+  [`members_add_role`](/discord-mcp/tools/members/add_role/) — the three
+  building blocks used in this recipe.
+- [Recipe: bulk ban a raid](/discord-mcp/recipes/moderation-bulk-ban/) —
+  alternative pattern for parallelizable identical operations.
+- [Architecture: pipeline executor](/discord-mcp/architecture/pipeline/) — how
+  interpolation, abort, and variables work internally.

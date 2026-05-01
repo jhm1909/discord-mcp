@@ -19,6 +19,25 @@ export interface ToolDefinition<I extends Record<string, z.ZodTypeAny>, O> {
   handler: (args: { [K in keyof I]: z.infer<I[K]> }, ctx: ToolRunContext) => Promise<O>;
 }
 
+/**
+ * Static metadata attached to every class returned by `defineTool` for
+ * build-time introspection (e.g. the docs-site generator). Read this via
+ * `(ToolClass as { __toolMetadata?: ToolMetadataStatic }).__toolMetadata`.
+ *
+ * Sapphire piece loading reads instance fields (set by the constructor),
+ * not statics — so this is purely additive and does not affect runtime.
+ */
+export interface ToolMetadataStatic {
+  name: string;
+  category: string;
+  description: string;
+  inputSchema: Record<string, z.ZodTypeAny>;
+  outputSchema: Record<string, z.ZodTypeAny> | undefined;
+  annotations: ToolAnnotations;
+  idempotent: boolean;
+  preconditions: readonly string[];
+}
+
 export function defineTool<I extends Record<string, z.ZodTypeAny>, O>(
   def: ToolDefinition<I, O>,
 ): typeof Tool {
@@ -54,6 +73,22 @@ export function defineTool<I extends Record<string, z.ZodTypeAny>, O>(
   // Sapphire reads `name` from constructor.options at registration time —
   // we set the static name as a hint only.
   Object.defineProperty(GeneratedTool, 'name', { value: def.name });
+
+  // Build-time introspection hook (read by site/scripts/generate-tool-docs.ts).
+  // Sapphire only consults instance fields, so attaching a static is safe.
+  Object.assign(GeneratedTool, {
+    __toolMetadata: {
+      name: def.name,
+      category: def.category ?? 'misc',
+      description: def.description,
+      inputSchema: def.inputSchema,
+      outputSchema: def.outputSchema,
+      annotations: def.annotations,
+      idempotent: def.idempotent ?? false,
+      preconditions: def.preconditions ?? [],
+    } satisfies ToolMetadataStatic,
+  });
+
   // Cast to `typeof Tool` — GeneratedTool is concrete but defineTool returns the
   // abstract base type so callers can instantiate via the concrete subclass.
   return GeneratedTool as unknown as typeof Tool;

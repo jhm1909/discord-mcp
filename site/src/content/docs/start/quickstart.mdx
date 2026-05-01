@@ -1,0 +1,81 @@
+---
+title: Quickstart
+description: Get discord-mcp running with Claude Desktop in 5 minutes.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+# Quickstart
+
+This guide walks you from zero to "Claude posts in your Discord" in roughly five minutes.
+You will need:
+
+- **Node.js 20.11+** (run `node --version` to check)
+- A **Discord bot token** with the scopes you intend to use
+- **Claude Desktop** installed (other clients are covered in [Client setup](/discord-mcp/start/client-setup/))
+
+<Steps>
+
+1. **Install the CLI globally.**
+
+   ```bash
+   npm install -g @discord-mcp/cli
+   ```
+
+   This puts a `discord-mcp` binary on your `$PATH`. Use `pnpm add -g` or `yarn global add` if
+   you prefer; see [Installation](/discord-mcp/start/installation/) for details.
+
+2. **Generate your client config.**
+
+   ```bash
+   discord-mcp init --client claude-desktop --token "Bot YOUR.TOKEN.HERE"
+   ```
+
+   The `init` subcommand writes a snippet into Claude Desktop's
+   `claude_desktop_config.json`, registering `discord-mcp` as an MCP server with stdio
+   transport. The token is stored in the `mcpServers.discord-mcp.env.DISCORD_TOKEN` field.
+
+   Your token must include the `Bot` prefix. Tokens without it are rejected at startup.
+
+3. **Verify the install with `doctor`.**
+
+   ```bash
+   discord-mcp doctor --online
+   ```
+
+   `doctor` checks Node version, token format, network reachability, and (with `--online`)
+   issues a `GET /users/@me` against Discord. A clean exit code zero means you're ready.
+
+4. **Restart Claude Desktop.**
+
+   Fully quit the app (the menu-bar icon, not just the window) and reopen it. On launch,
+   Claude reads `claude_desktop_config.json` and spawns the `discord-mcp` server as a
+   subprocess. You should see "discord-mcp" in the MCP server list under Settings →
+   Developer (or via the slashed-tools indicator in the chat input).
+
+5. **Ask Claude to post a message.**
+
+   In a Claude conversation, try:
+
+   > "Send 'hello from Claude' to channel #general in my discord-mcp test guild."
+
+   Claude will call `tools/list` to discover the 192 available tools, pick `messages_send`,
+   confirm with you, then invoke the tool. The response includes the created message's ID
+   and timestamp.
+
+</Steps>
+
+## What just happened
+
+- `discord-mcp init` registered the server with Claude Desktop.
+- On launch, Claude spawned `discord-mcp` over **stdio** (no port, no daemon).
+- The first `tools/list` returned 192 tool definitions, each with a four-section
+  description (`Purpose / When to use / When NOT to use / Returns`).
+- Claude picked `messages_send` based on your prompt and invoked it via JSON-RPC.
+
+## Next steps
+
+- [First tool call](/discord-mcp/start/first-tool-call/) — anatomy of a single tool invocation.
+- [Client setup](/discord-mcp/start/client-setup/) — wire up Claude Code, Cursor, or generic clients.
+- [Installation](/discord-mcp/start/installation/) — pnpm/yarn/Node version notes and the
+  optional `--gateway` flag for real-time event subscriptions.

@@ -1,0 +1,143 @@
+---
+title: Components V2
+description: The V2 component model — Container, Section, MediaGallery, ActionRow. Schema validator, preview, templates, and the flags = 32768 contract.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+# Components V2
+
+Discord's Components V2 is the rich-layout primitive set introduced after
+buttons + select menus stopped being enough for non-trivial bot UI.
+discord-mcp wraps it in **8 tools**, a **schema validator**, a **client-side
+preview renderer**, and **5 templates** for common shapes. This page
+explains how those pieces fit.
+
+## The component types
+
+V2 layouts are built from four primitives:
+
+| Type | Purpose | Children |
+| ---- | ------- | -------- |
+| `Container` | Outermost frame — accent color, padding, optional thumbnail. | Sections, MediaGalleries, ActionRows. |
+| `Section` | A text block with optional accessory (button, thumbnail). | Text components only. |
+| `MediaGallery` | A grid of 1–10 attachments (images, videos). | Media items only. |
+| `ActionRow` | Up to 5 interactive components (button, select). | Button or SelectMenu. |
+
+Nesting rules are enforced by the validator — see below.
+
+## The 8 tools
+
+| Tool | Idempotent | What it does |
+| ---- | ---------- | ------------ |
+| `components_v2_build_container` | yes | Build a Container scaffold. |
+| `components_v2_build_section` | yes | Build a Section scaffold with optional accessory. |
+| `components_v2_build_media_gallery` | yes | Build a MediaGallery from URLs. |
+| `components_v2_build_action_row` | yes | Build an ActionRow with up to 5 components. |
+| `components_v2_validate` | yes | Run the schema validator against a built tree. |
+| `components_v2_preview` | yes | Render a client-side text preview of the tree. |
+| `components_v2_send` | no | Send a message with a V2 component tree. |
+| `components_v2_send_from_template` | no | Send from one of 5 pre-built templates. |
+
+The `build_*` tools are pure construction helpers — they don't hit Discord;
+they just produce well-shaped JSON the agent can stitch together. `validate`
+and `preview` are also Discord-free. Only `send` and
+`send_from_template` make REST calls.
+
+See [`components-v2-announcement` recipe](/discord-mcp/recipes/components-v2-announcement/)
+for an end-to-end example.
+
+## The validator
+
+Source: [`tools/components-v2/_lib/validator.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/validator.ts)
+
+Enforces Discord's V2 constraints **before** sending, so the agent sees a
+clear `VALIDATION_FAILED` error rather than Discord's terse 400 response:
+
+- **Max 10 components total** in a single message tree.
+- **Container ⊂ Section / MediaGallery / ActionRow** — Containers cannot
+  contain Containers.
+- **ActionRow ⊂ Button / SelectMenu** — only interactive children allowed.
+- **MediaGallery items**: 1–10 entries, each with a URL.
+- **Required fields**: every Container needs at least one child; every
+  Section needs at least one text component.
+
+Failure shape: `ValidationError` with an `issues` array, each entry pointing
+to the JSON path where the violation occurred (e.g.
+`components[0].children[3]` for a deeply-nested issue).
+
+## The schema
+
+Source: [`tools/components-v2/_lib/schema.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/schema.ts)
+
+A single zod tree describes the entire V2 model. Build tools use it to
+generate their inputs; the validator uses it to validate composed trees.
+This means a V2 tree that compiles via `build_*` is guaranteed to pass
+`validate` — the only way to fail validation is hand-rolling a malformed
+tree and skipping the build helpers.
+
+## The preview
+
+Source: [`tools/components-v2/_lib/preview.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/preview.ts)
+
+Renders a text-only approximation of how the tree will look when Discord
+displays it: container borders as box-drawing characters, sections as
+indented blocks, action rows as `[Button] [Select▼]` stubs. Useful for the
+agent to **sanity-check the layout** before spending a `send` call.
+
+The preview is also what `components_v2_send_from_template` returns under
+`_meta.preview` so the calling agent can show it to the human before
+committing to send.
+
+## The templates
+
+discord-mcp ships **5 pre-built templates** as MCP resources, addressable
+under `discord://components-v2/templates/{name}`:
+
+| Template | Use case |
+| -------- | -------- |
+| `announcement` | Hero text + accent color + media + CTA button. |
+| `vote` | Question + 2–5 voting buttons in an ActionRow. |
+| `welcome` | Greeting + role-self-assign select. |
+| `help` | Section list of FAQs + jump-to-topic select. |
+| `update` | Changelog-style sections with version header. |
+
+Each template accepts variables (e.g. `{{title}}`, `{{accent_color}}`)
+interpolated at send time via
+[`tools/components-v2/_lib/interpolate.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/interpolate.ts).
+
+`components_v2_send_from_template` accepts a template name + a vars object
+and emits the fully-resolved tree.
+
+## The `flags = 32768` contract
+
+<Aside type="caution">
+A V2 message **must** be sent with `flags = 32768` (`1 << 15`,
+`IS_COMPONENTS_V2`). Without that flag, Discord ignores the V2 payload and
+renders an empty message. discord-mcp sets the flag automatically in
+`components_v2_send` and `components_v2_send_from_template` — but if you're
+calling Discord through a different path and copying a V2 tree into the
+payload, set the flag yourself.
+</Aside>
+
+The flag is a one-way switch per message: V2 mode disables `content`,
+`embeds`, and `stickers` in the same message. A V2 send is therefore
+mutually exclusive with the legacy embed path.
+
+## Source map
+
+| Concern | File |
+| ------- | ---- |
+| Type definitions | [`_lib/schema.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/schema.ts) |
+| Validation | [`_lib/validator.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/validator.ts) |
+| Preview rendering | [`_lib/preview.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/preview.ts) |
+| Variable interpolation | [`_lib/interpolate.ts`](https://github.com/cappylab/discord-mcp/blob/main/packages/mcp-core/src/tools/components-v2/_lib/interpolate.ts) |
+| 8 tool definitions | [`tools/components-v2/`](https://github.com/cappylab/discord-mcp/tree/main/packages/mcp-core/src/tools/components-v2) |
+
+## Related
+
+- [`components-v2-announcement` recipe](/discord-mcp/recipes/components-v2-announcement/) — full end-to-end build + validate + send.
+- [Architecture → Pipeline](/discord-mcp/architecture/pipeline/) — atomically chain a V2 send with role grants and event creation.
+- [Architecture → Confirmation](/discord-mcp/architecture/confirmation/) — `components_v2_send` is destructive (writes to the channel) and requires `__confirm:true`.

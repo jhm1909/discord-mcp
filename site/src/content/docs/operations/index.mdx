@@ -1,0 +1,63 @@
+---
+title: Operations
+description: Production hardening reference for operators running discord-mcp at scale — observability, resilience, audit, and client capability matrix.
+sidebar:
+  order: 0
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+# Operations
+
+This section is the **production hardening reference** for operators running
+discord-mcp at scale. The other sections — [Tools](/discord-mcp/tools/),
+[Recipes](/discord-mcp/recipes/), and [Architecture](/discord-mcp/architecture/) —
+describe what the server can do and how it's built. This section is about how
+to **run it safely and observably** in front of a real Discord guild and a real
+agent.
+
+Every page here is rooted in the env-var contract: the server's runtime
+behavior is fully controlled by environment variables (no config files, no
+mutable runtime state). Below are the four operator concerns, each with its
+own page describing defaults, override knobs, and the observability surface.
+
+<CardGrid>
+  <LinkCard
+    title="Telemetry"
+    description="Enable OpenTelemetry traces and metrics. Honeycomb, local Jaeger, console exporter; six built-in metrics; trace context propagation into Discord REST."
+    href="/discord-mcp/operations/telemetry/"
+  />
+  <LinkCard
+    title="Resilience"
+    description="The composite policy chain — bulkhead, circuit breaker, retry, timeout. 11 environment variables; 429-aware backoff; pipeline interactions."
+    href="/discord-mcp/operations/resilience/"
+  />
+  <LinkCard
+    title="Audit logging"
+    description="Mutating-only audit trail. Four sinks (stderr, file, OTLP-stub, none); JSONL schema; PII redaction policy; SOC2/HIPAA considerations."
+    href="/discord-mcp/operations/audit/"
+  />
+  <LinkCard
+    title="Client capability matrix"
+    description="Which MCP clients support which capabilities (tools, resources, subscribe, sampling, elicitation). Setup links per client."
+    href="/discord-mcp/operations/clients/"
+  />
+</CardGrid>
+
+## Quick environment-variable orientation
+
+If you only read one section, read [Resilience](/discord-mcp/operations/resilience/) —
+it's the one set of knobs that affects every Discord call the server makes.
+Telemetry is opt-in (`OTEL_ENABLED=false` by default, zero overhead) and
+audit is on by default but can be tuned per-sink.
+
+For per-tool environment variables (token, scopes, allowed guilds, dry-run
+mode), see the [Reference → Environment variables](/discord-mcp/reference/)
+section once Phase E lands.
+
+## Looking for something else?
+
+- How to set up your client → [Get started → Client setup](/discord-mcp/start/client-setup/).
+- Single-tool reference → [Tools](/discord-mcp/tools/).
+- Multi-step workflows → [Recipes](/discord-mcp/recipes/).
+- How the server is built → [Architecture](/discord-mcp/architecture/).

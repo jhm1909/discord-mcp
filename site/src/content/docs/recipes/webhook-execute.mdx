@@ -1,0 +1,168 @@
+---
+title: Webhooks — bypass bot rate limits for high volume
+description: Provision a webhook once, then post messages without consuming the bot's rate-limit bucket.
+sidebar:
+  order: 5
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Webhooks: bypass bot rate limits for high volume
+
+A bot user has one global rate-limit bucket per route, shared across **every**
+guild it's installed in. For a high-volume publisher (CI alerts, cross-poster,
+metrics relay) this becomes the bottleneck long before Discord's per-channel
+limits do. The fix is webhooks — each webhook URL has its **own** bucket.
+
+## Use case
+
+Ops engineer says: **"Set up a webhook in #ci-alerts and use it for all
+GitHub Actions notifications. Don't burn our bot's rate limit on this."**
+
+Two tool calls split across time: provision the webhook once (capture the
+token), then call `webhooks_execute` from there on out.
+
+<Aside type="caution">
+The webhook **token** is a credential. Treat it like a database password —
+store it in a secrets manager, never log it, rotate it if it leaks. Anyone who
+holds the token can post anything to that channel **without** appearing as a
+bot. discord-mcp marks the token field `do not log` and will redact it from
+audit log output, but the agent must do the same on the client side.
+</Aside>
+
+## Tool flow
+
+<Steps>
+
+1. **Provision the webhook (one time).**
+
+   `webhooks_create` returns the full webhook record including the **token**.
+   Capture the `id` and `token` and store them outside the agent's working
+   memory — typically in a secrets manager or a sealed config file.
+
+   <Tabs>
+     <TabItem label="Input">
+       ```json
+       {
+         "name": "webhooks_create",
+         "arguments": {
+           "channel_id": "222233334444555566",
+           "name": "github-actions-notifier",
+           "audit_reason": "ops: bypass bot bucket for CI alerts"
+         }
+       }
+       ```
+     </TabItem>
+     <TabItem label="Output">
+       ```json
+       {
+         "id": "444455556666777788",
+         "type": 1,
+         "channel_id": "222233334444555566",
+         "application_id": null,
+         "name": "github-actions-notifier",
+         "avatar": null,
+         "token": "REDACTED-treat-as-credential",
+         "untrusted_name": "github-actions-notifier"
+       }
+       ```
+     </TabItem>
+   </Tabs>
+
+2. **Post via `webhooks_execute`.**
+
+   The token replaces bot authentication. **No `Authorization` header is sent**
+   on this call — the token in the request body is the credential. This is the
+   `auth: false` semantics in the tool's transport layer.
+
+   <Tabs>
+     <TabItem label="Plain text">
+       ```json
+       {
+         "name": "webhooks_execute",
+         "arguments": {
+           "webhook_id": "444455556666777788",
+           "token": "REDACTED-treat-as-credential",
+           "content": "Build #4127 failed on `main` — https://github.com/cappylab/discord-mcp/actions/runs/4127",
+           "username": "GitHub Actions",
+           "wait": true
+         }
+       }
+       ```
+     </TabItem>
+     <TabItem label="Components V2">
+       ```json
+       {
+         "name": "webhooks_execute",
+         "arguments": {
+           "webhook_id": "444455556666777788",
+           "token": "REDACTED-treat-as-credential",
+           "flags": 32768,
+           "with_components": true,
+           "components": [
+             {
+               "type": 17,
+               "accent_color": 16711680,
+               "components": [
+                 { "type": 10, "content": "## Build #4127 failed" },
+                 { "type": 10, "content": "Branch: `main` — Run: [4127](https://github.com/cappylab/discord-mcp/actions/runs/4127)" }
+               ]
+             }
+           ],
+           "wait": true
+         }
+       }
+       ```
+     </TabItem>
+     <TabItem label="Output (wait:true)">
+       ```json
+       {
+         "message_id": "888899990000111199",
+         "channel_id": "222233334444555566",
+         "webhook_id": "444455556666777788"
+       }
+       ```
+     </TabItem>
+   </Tabs>
+
+</Steps>
+
+## Why webhooks beat the bot for high volume
+
+| Concern | Bot user | Webhook |
+|---|---|---|
+| Rate-limit bucket | shared across all guilds | per webhook URL |
+| Auth | `Authorization: Bot <token>` header | token in URL/body, no header |
+| Display identity | bot's name + avatar | per-message `username` and `avatar_url` override |
+| Can react / reply / edit other messages | yes | no |
+| Cost to provision | one bot install per workspace | one `webhooks_create` per channel |
+
+When sending Components V2 through a webhook, you must set both:
+
+- `flags: 32768` — the `IS_COMPONENTS_V2` bit (`1 << 15`).
+- `with_components: true` — query parameter telling Discord to include the
+  component tree in the returned message (only matters when `wait: true`).
+
+## Caveats
+
+- **Webhooks can only post.** They can't react, reply with interactions, or
+  edit messages other than their own. For interactive flows, stick with the
+  bot.
+- **One channel per webhook.** A webhook is bound to its creation channel.
+  Cross-posting requires multiple webhooks.
+- **Token leakage = full impersonation.** Treat tokens like API keys. Anyone
+  with the token can post as the webhook with no further auth.
+
+## See also
+
+- [`webhooks_create`](/discord-mcp/tools/webhooks/create/) — schema for
+  provisioning, including the token field.
+- [`webhooks_execute`](/discord-mcp/tools/webhooks/execute/) — full execute
+  schema (content, embeds, components, threads).
+- [`webhooks_modify_with_token`](/discord-mcp/tools/webhooks/modify_with_token/),
+  [`webhooks_delete_with_token`](/discord-mcp/tools/webhooks/delete_with_token/)
+  — token-only mutations (no bot auth required).
+- [Recipe: Components V2 announcement](/discord-mcp/recipes/components-v2-announcement/)
+  — the rich-layout flow this recipe pairs with.
+- [Architecture: rate limits](/discord-mcp/architecture/rate-limits/) — how
+  Cockatiel buckets bot vs webhook traffic separately.

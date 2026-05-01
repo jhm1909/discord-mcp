@@ -1,0 +1,154 @@
+---
+title: Intelligence — summarize a busy channel
+description: Use MCP sampling to summarize a Discord channel without bringing your own LLM.
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Intelligence: summarize a busy channel
+
+The `intelligence_summarize_channel` tool turns "what did I miss in #support?"
+into a structured summary — **without the server holding any LLM API key**.
+It does this through **MCP sampling**: the tool calls back to the host client's
+LLM via the `requestSampling` capability, then parses the response.
+
+## Use case
+
+A support engineer says: **"TL;DR what happened in #support over the last 50
+messages, then post the summary to #ops."**
+
+Two tool calls. The first asks the host's own LLM (Claude, GPT, whatever) to do
+the heavy lifting; the second posts the result. discord-mcp ships zero API keys
+and never makes outbound LLM requests on your behalf.
+
+<Aside type="note">
+**Sampling capability is opt-in per client.** Claude Desktop, Cursor, ChatGPT,
+Cline, Continue, and Windsurf currently report "no sampling" during
+initialization. When the capability is missing the tool **falls back** to
+returning the raw messages plus a `_meta.fallback: 'host_llm_should_process'`
+hint, telling the host LLM to do the summarization itself in the next turn.
+Either path produces a usable summary; the difference is who runs the inference.
+</Aside>
+
+## Tool flow
+
+<Steps>
+
+1. **Read the channel (optional).**
+
+   `intelligence_summarize_channel` fetches messages internally, so this step
+   is only needed if you want to inspect the raw stream first or pass a custom
+   subset. For the standard flow, skip straight to step 2.
+
+   ```json
+   {
+     "name": "messages_read",
+     "arguments": {
+       "channel_id": "222233334444555566",
+       "limit": 50
+     }
+   }
+   ```
+
+2. **Summarize.**
+
+   The tool returns a structured object with `summary`, `key_topics`, and
+   `action_items`. The `style` parameter controls tone: `bullet` (default),
+   `paragraph`, or `executive`.
+
+   <Tabs>
+     <TabItem label="Input">
+       ```json
+       {
+         "name": "intelligence_summarize_channel",
+         "arguments": {
+           "channel_id": "222233334444555566",
+           "limit": 50,
+           "style": "bullet"
+         }
+       }
+       ```
+     </TabItem>
+     <TabItem label="Output (sampling supported)">
+       ```json
+       {
+         "summary": "- Three users hit the new SSO flow with expired refresh tokens.\n- @alice shipped a hotfix at 14:22 UTC; @bob verified.\n- Open: customer #88241 still cannot log in — escalated to on-call.",
+         "key_topics": ["sso", "refresh tokens", "hotfix deploy"],
+         "action_items": ["follow up with customer #88241"],
+         "message_count_used": 50,
+         "sampling_used": true
+       }
+       ```
+     </TabItem>
+     <TabItem label="Output (fallback)">
+       ```json
+       {
+         "summary": "[sampling unavailable — host LLM should summarize from raw_messages]",
+         "key_topics": [],
+         "action_items": [],
+         "message_count_used": 50,
+         "sampling_used": false,
+         "_meta": {
+           "fallback": "host_llm_should_process",
+           "intent": "summarize",
+           "raw_messages": [
+             { "id": "888899990000111101", "author": "alice", "content": "shipping the SSO hotfix now" },
+             { "id": "888899990000111102", "author": "bob", "content": "lgtm, will verify on staging" }
+           ]
+         }
+       }
+       ```
+     </TabItem>
+   </Tabs>
+
+3. **Post the summary.**
+
+   ```json
+   {
+     "name": "messages_send",
+     "arguments": {
+       "channel_id": "333344445555666677",
+       "content": "## Support recap\n\n- Three users hit the new SSO flow with expired refresh tokens.\n- @alice shipped a hotfix at 14:22 UTC; @bob verified.\n- Open: customer #88241 still cannot log in — escalated to on-call."
+     }
+   }
+   ```
+
+   When the tool returned the **fallback envelope**, the host LLM should
+   instead read `_meta.raw_messages`, generate the summary itself in the next
+   turn, then call `messages_send` with that content.
+
+</Steps>
+
+## Why this design
+
+- **Zero API keys to manage.** The server has no `OPENAI_API_KEY` field, no
+  budget telemetry, no key rotation playbook. The agent's existing model
+  subscription does the work.
+- **Privacy.** Channel content never leaves the path the user already trusts
+  (their MCP client → their LLM). discord-mcp doesn't proxy text to a
+  third-party inference provider.
+- **Graceful degradation.** Clients without sampling still get a usable result
+  via the fallback envelope — the agent just does the inference one turn later.
+
+## Style options
+
+| `style` | Output shape |
+|---------|---|
+| `bullet` (default) | Markdown bullet list, scannable |
+| `paragraph` | Two-to-three sentence paragraph |
+| `executive` | Single-sentence headline + 3-bullet body, written for skim-readers |
+
+## See also
+
+- [`intelligence_summarize_channel`](/discord-mcp/tools/intelligence/summarize_channel/)
+  — full schema and fallback envelope.
+- [`messages_read`](/discord-mcp/tools/messages/read/) — inspect raw messages
+  before summarizing.
+- [`messages_send`](/discord-mcp/tools/messages/send/) — post the summary back.
+- [`intelligence_classify_messages`](/discord-mcp/tools/intelligence/classify_messages/),
+  [`intelligence_moderate_content`](/discord-mcp/tools/intelligence/moderate_content/)
+  — sibling sampling-based intelligence tools.
+- [Architecture: MCP sampling](/discord-mcp/architecture/sampling/) — how the
+  fallback envelope is constructed.
