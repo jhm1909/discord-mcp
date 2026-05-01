@@ -7,7 +7,6 @@ import {
   decorrelatedJitterGenerator,
   ExponentialBackoff,
   fullJitterGenerator,
-  handleAll,
   handleType,
   type IPolicy,
   type IRetryBackoffContext,
@@ -130,11 +129,16 @@ export function buildPolicy(config: Config, logger?: Logger): IPolicy {
   });
 
   // --- Circuit breaker (Plan 8 D.1) ---
-  // Built only when MCP_CIRCUIT_ENABLED. The breaker handles
-  // DiscordRetryableError so 4xx (already-non-retryable) doesn't poison
-  // the failure counter.
+  // Built only when MCP_CIRCUIT_ENABLED. The breaker filter mirrors the
+  // retry filter — `handleType(DiscordRetryableError)` — so non-retryable
+  // 4xx bubbles through WITHOUT incrementing the consecutive-failure
+  // counter. This matches Plan 8 §13: "Non-retryable Discord errors (4xx)
+  // bubble through breaker WITHOUT incrementing failure count."
+  // (Spec called for `handleAll.orType(DiscordRetryableError)` but that
+  // would treat every error as a circuit failure — including validation
+  // 4xx — which is misleading.)
   const breaker = config.MCP_CIRCUIT_ENABLED
-    ? circuitBreaker(handleAll.orType(DiscordRetryableError), {
+    ? circuitBreaker(handleType(DiscordRetryableError), {
         halfOpenAfter: config.MCP_CIRCUIT_HALF_OPEN_AFTER_MS,
         breaker: new ConsecutiveBreaker(config.MCP_CIRCUIT_FAILURE_THRESHOLD),
       })
@@ -205,32 +209,46 @@ export function buildPolicy(config: Config, logger?: Logger): IPolicy {
 
   // Cast: cockatiel's `wrap` overloads cover up to 5 explicit args; we use
   // the variadic form which is typed as `IPolicy<C, A>` — fine for our use.
-  const final = (wrap as (...p: WrapInputs) => IPolicy)(...layers);
+  const inner = (wrap as (...p: WrapInputs) => IPolicy)(...layers);
 
   // --- Dead-letter telemetry (Plan 8 D.5) ---
-  // onFailure on the OUTERMOST policy fires only for terminal failures —
-  // i.e. after retries are exhausted (or there were no retries to start
-  // with).  Transient failures handled by the retry layer DO NOT fire this.
-  final.onFailure((evt) => {
-    try {
-      const err = 'error' in evt.reason ? evt.reason.error : undefined;
-      const errorType = err?.constructor.name ?? typeof (evt.reason as { value?: unknown }).value;
-      logger?.error(
-        {
-          event: 'dead_letter',
-          tag: 'dead-letter',
-          err: err?.message,
-          error_type: errorType,
-          handled: evt.handled,
-          duration_ms: evt.duration,
-        },
-        'request reached dead-letter (retries exhausted or unrecoverable)',
-      );
-      deadletterCount.add(1, { [ATTR_ERROR_TYPE]: errorType });
-    } catch {
-      // ignore — telemetry must never crash the policy.
-    }
-  });
+  // The composed `wrap()` policy's `onFailure` mirrors the OUTERMOST layer's
+  // event emitter (cockatiel implementation detail). Bulkhead never fires
+  // its executor's onFailure, so we cannot rely on `inner.onFailure` for
+  // dead-letter accounting. Instead we wrap `execute()` itself: any thrown
+  // error that escapes the entire policy chain IS a terminal failure by
+  // definition (retries exhausted, breaker opened, bulkhead rejected, etc.).
+  // Transient failures handled internally by retry never bubble out, so they
+  // do not fire this hook — matching Plan 8 §9 D.5 semantics.
+  const final: IPolicy = {
+    _altReturn: undefined as never,
+    onSuccess: inner.onSuccess,
+    onFailure: inner.onFailure,
+    async execute(fn, signal) {
+      try {
+        return await inner.execute(fn, signal);
+      } catch (err) {
+        try {
+          const errorType = err?.constructor.name ?? typeof err;
+          const errMessage = err instanceof Error ? err.message : String(err);
+          logger?.error(
+            {
+              event: 'dead_letter',
+              tag: 'dead-letter',
+              err: errMessage,
+              error_type: errorType,
+            },
+            'request reached dead-letter (retries exhausted or unrecoverable)',
+          );
+          deadletterCount.add(1, { [ATTR_ERROR_TYPE]: errorType });
+        } catch {
+          // Telemetry must never crash the policy.  Continue throwing the
+          // original error.
+        }
+        throw err;
+      }
+    },
+  };
 
   return final;
 }
