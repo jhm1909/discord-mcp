@@ -55,7 +55,11 @@ export async function loadAllTools(toolsDir: string = TOOLS_DIR): Promise<ToolMe
   for (const category of categories) {
     const categoryDir = join(toolsDir, category);
     const files = readdirSync(categoryDir).filter(
-      (f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && !f.startsWith('_'),
+      (f) =>
+        f.endsWith('.ts') &&
+        !f.endsWith('.test.ts') &&
+        !f.endsWith('.bench.ts') &&
+        !f.startsWith('_'),
     );
     for (const file of files) {
       const sourcePath = join(categoryDir, file);

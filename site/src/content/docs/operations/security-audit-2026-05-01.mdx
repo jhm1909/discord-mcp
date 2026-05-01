@@ -78,7 +78,7 @@ Three additional tools surfaced by the broader `grep` were inspected:
   `username` field is operator-controlled, not attacker-influenced. **Not
   in scope** for the untrusted-wrap requirement.
 - `members_search` — renders user-authored `username` into the `text`
-  field via a list (`- ${username} (\`user:${user_id}\`)`). The structured
+  field via a list (`- $\{username\} (\`user:$\{user_id\}\`)`). The structured
   payload is fine but the rendered Markdown is agent-visible. **P2**:
   consider wrapping the rendered list in Plan 13.
 - `stickers_list_guild` — `text` only contains a count and the guild ID;
@@ -162,7 +162,7 @@ comparison. String values longer than 200 chars are truncated to 100 +
 | Security misconfiguration | PASS | Defaults: `MCP_DRY_RUN=true`, `OTEL_ENABLED=false`. |
 | XSS | N/A | stdio transport renders no HTML. |
 | Deserialization | PASS | All inputs go through zod `safeParse` before handler runs. |
-| Vulnerable deps | P2 | `pnpm audit` reports 1 moderate: Astro <6.1.6 XSS in `define:vars`. Site-only, doesn't affect runtime mcp-core / mcp-server. Defer to Plan 13. |
+| Vulnerable deps | P2 | `pnpm audit` reports 1 moderate: Astro `<6.1.6` XSS in `define:vars`. Site-only, doesn't affect runtime mcp-core / mcp-server. Defer to Plan 13. |
 | Logging gaps | PASS | Every mutating call goes through `audit.ts` middleware (Plan 8 Phase E). |
 
 ## Action items
