@@ -39,4 +39,4 @@ export const ATTR_ERROR_TYPE = 'error.type';
 
 // --- Tracer / Meter identity (also used by middleware) ---
 export const TELEMETRY_INSTRUMENTATION_NAME = '@discord-mcp/core';
-export const TELEMETRY_INSTRUMENTATION_VERSION = '0.8.0';
+export const TELEMETRY_INSTRUMENTATION_VERSION = '0.9.0';
