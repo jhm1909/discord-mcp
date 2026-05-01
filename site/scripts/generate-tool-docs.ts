@@ -10,7 +10,7 @@
  * Run via `pnpm --filter site generate-tools`. Requires `tsx` to register
  * the TypeScript loader for dynamic .ts imports.
  */
-import { readdirSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
@@ -18,6 +18,7 @@ import { z } from 'zod';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '../..');
 const TOOLS_DIR = join(ROOT, 'packages/mcp-core/src/tools');
+const OUT_DIR = join(__dirname, '../src/content/docs/tools');
 
 export interface ToolMetadata {
   name: string;
@@ -220,16 +221,151 @@ ${outputTable}
 }
 
 // ---------------------------------------------------------------------------
-// Orchestration (category indexes + main land in subsequent commits)
+// Index renderers
 // ---------------------------------------------------------------------------
 
-async function main() {
-  const tools = await loadAllTools();
+function titleCaseCategory(category: string): string {
+  return category.charAt(0).toUpperCase() + category.slice(1).replace(/[_-]/g, ' ');
+}
+
+export function renderCategoryIndex(category: string, tools: ToolMetadata[]): string {
+  const title = titleCaseCategory(category);
+
+  const cards = tools
+    .map((t) => {
+      const slug = t.name.startsWith(`${category}_`) ? t.name.slice(category.length + 1) : t.name;
+      const cardDesc = parseDescription(t.description)
+        .purpose.replace(/\|/g, '\\|')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, ' ')
+        .slice(0, 100);
+      return `  <LinkCard title="${t.name}" href="/discord-mcp/tools/${category}/${slug}/" description="${cardDesc}" />`;
+    })
+    .join('\n');
+
+  return `---
+title: ${title}
+sidebar:
+  order: 1
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+# ${title}
+
+${tools.length} tool${tools.length === 1 ? '' : 's'} in this category.
+
+<CardGrid>
+${cards}
+</CardGrid>
+`;
+}
+
+export function renderToolsIndex(byCategory: Map<string, ToolMetadata[]>): string {
+  const total = Array.from(byCategory.values()).reduce((sum, arr) => sum + arr.length, 0);
+
+  const cards = Array.from(byCategory.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([cat, tools]) => {
+      const title = titleCaseCategory(cat);
+      return `  <LinkCard title="${title} (${tools.length})" href="/discord-mcp/tools/${cat}/" />`;
+    })
+    .join('\n');
+
+  return `---
+title: Tools
+sidebar:
+  order: 0
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+# ${total} Tools
+
+discord-mcp exposes ${total} tools across ${byCategory.size} categories. Every tool
+description follows the **Purpose / When to use / When NOT to use / Returns** structure
+for predictable agent reasoning.
+
+## Categories
+
+<CardGrid>
+${cards}
+</CardGrid>
+`;
+}
+
+// ---------------------------------------------------------------------------
+// Orchestration
+// ---------------------------------------------------------------------------
+
+export interface GenerateOptions {
+  toolsDir?: string;
+  outDir?: string;
+  /** Hard floor for sanity check; build fails if fewer tools load. */
+  minTools?: number;
+}
+
+export async function generate(opts: GenerateOptions = {}): Promise<{
+  tools: ToolMetadata[];
+  filesWritten: number;
+}> {
+  const toolsDir = opts.toolsDir ?? TOOLS_DIR;
+  const outDir = opts.outDir ?? OUT_DIR;
+  const minTools = opts.minTools ?? 190;
+
+  console.log('[generate-tool-docs] start');
+
+  rmSync(outDir, { recursive: true, force: true });
+  mkdirSync(outDir, { recursive: true });
+
+  const tools = await loadAllTools(toolsDir);
   console.log(`[generate-tool-docs] loaded ${tools.length} tools`);
-  if (tools.length < 190) {
-    console.error(`[generate-tool-docs] FATAL: expected >= 190 tools, got ${tools.length}`);
+
+  if (tools.length < minTools) {
+    console.error(`[generate-tool-docs] FATAL: expected >= ${minTools} tools, got ${tools.length}`);
     process.exit(1);
   }
+
+  // Group by category, sort tools alphabetically within each category
+  const byCategory = new Map<string, ToolMetadata[]>();
+  for (const t of tools) {
+    if (!byCategory.has(t.category)) byCategory.set(t.category, []);
+    byCategory.get(t.category)!.push(t);
+  }
+  for (const arr of byCategory.values()) {
+    arr.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  let written = 0;
+
+  for (const tool of tools) {
+    const dir = join(outDir, tool.category);
+    mkdirSync(dir, { recursive: true });
+    const slug = tool.name.startsWith(`${tool.category}_`)
+      ? tool.name.slice(tool.category.length + 1)
+      : tool.name;
+    writeFileSync(join(dir, `${slug}.mdx`), renderToolMdx(tool), 'utf8');
+    written++;
+  }
+  console.log(`[generate-tool-docs] wrote ${written} tool pages`);
+
+  for (const [category, list] of byCategory) {
+    writeFileSync(join(outDir, category, 'index.mdx'), renderCategoryIndex(category, list), 'utf8');
+    written++;
+  }
+  console.log(`[generate-tool-docs] wrote ${byCategory.size} category indexes`);
+
+  writeFileSync(join(outDir, 'index.mdx'), renderToolsIndex(byCategory), 'utf8');
+  written++;
+  console.log('[generate-tool-docs] wrote top-level index');
+
+  console.log(`[generate-tool-docs] done — ${written} files total`);
+
+  return { tools, filesWritten: written };
+}
+
+async function main() {
+  await generate();
 }
 
 const invokedAsMain = (() => {
