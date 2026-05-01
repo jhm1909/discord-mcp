@@ -7,9 +7,9 @@
  *   `discord-mcp` invocation still boots the stdio MCP server.
  * - `--gateway` lives on `serve`. Bare `discord-mcp --gateway` is
  *   forwarded to `serve` through commander's default-subcommand passthrough.
- * - `doctor`, `init`, `migrate` are placeholders that print
- *   "not yet implemented (Plan 9 Phase X)" and set process.exitCode = 2.
- *   They are wired now so the option shapes are stable for Phases B/C/D.
+ * - `doctor`, `init`, `migrate` are real sub-commands as of Plan 9
+ *   Phases B (doctor), D (init), and E (migrate). Each emits a
+ *   structured CommandResult via emitResult().
  * - Doctor / init / migrate handlers are lazy-imported (`await import(...)`)
  *   so cold-start for `serve` (the hot path) is unaffected by their deps.
  *
@@ -80,10 +80,13 @@ program
 
 program
   .command('migrate')
-  .description('Migrate older configs / mcp.json shapes to the current format')
-  .action(async () => {
+  .description('Migrate from another Discord setup (e.g. hubdustry-go-mcp)')
+  .option('--from <adapter>', 'Source adapter id (run without --from to list)')
+  .option('--source <path>', 'Path to source repo (default: current dir)')
+  .option('--json', 'Output as JSON instead of TTY-friendly text')
+  .action(async (options: { from?: string; source?: string; json?: boolean }) => {
     const { migrateAction } = await import('./commands/migrate.js');
-    await migrateAction();
+    await migrateAction(options);
   });
 
 // Run the parser only when invoked as the bin script (not when imported

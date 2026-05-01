@@ -232,4 +232,12 @@ describe('cli — migrate sub-command (Plan 9 Phase E)', () => {
     expect(out).toContain('--from');
     expect(out).toContain('hubdustry-go-mcp');
   });
+
+  it('migrate --help lists --from / --source / --json', async () => {
+    await runCli(['migrate', '--help']);
+    const out = stdoutOutput();
+    expect(out).toContain('--from');
+    expect(out).toContain('--source');
+    expect(out).toContain('--json');
+  });
 });
