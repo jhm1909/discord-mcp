@@ -81,10 +81,11 @@ program
 program
   .command('migrate')
   .description('Migrate from another Discord setup (e.g. hubdustry-go-mcp)')
-  .option('--from <adapter>', 'Source adapter id (run without --from to list)')
-  .option('--source <path>', 'Path to source repo (default: current dir)')
+  .option('--from <adapter>', 'Source adapter id (run --list to see available)')
+  .option('--source <path>', 'Path to source repo (default: cwd)')
+  .option('--list', 'List all available adapters')
   .option('--json', 'Output as JSON instead of TTY-friendly text')
-  .action(async (options: { from?: string; source?: string; json?: boolean }) => {
+  .action(async (options: { from?: string; source?: string; list?: boolean; json?: boolean }) => {
     const { migrateAction } = await import('./commands/migrate.js');
     await migrateAction(options);
   });
