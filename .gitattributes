@@ -1,0 +1,9 @@
+# Force LF line endings for all text files (silences Windows CRLF biome warnings)
+* text=auto eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.gif binary
