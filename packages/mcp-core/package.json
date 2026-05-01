@@ -45,6 +45,7 @@
     "discord.js": "^14.16.3"
   },
   "devDependencies": {
+    "@discord-mcp/server-mocks": "workspace:*",
     "@mswjs/interceptors": "^0.41.3",
     "@opentelemetry/context-async-hooks": "^2.0.0",
     "@types/node": "^22.0.0",

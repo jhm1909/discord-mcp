@@ -70,6 +70,9 @@ importers:
         specifier: ^14.16.3
         version: 14.26.3
     devDependencies:
+      '@discord-mcp/server-mocks':
+        specifier: workspace:*
+        version: link:../mcp-server-mocks
       '@mswjs/interceptors':
         specifier: ^0.41.3
         version: 0.41.6
@@ -134,6 +137,9 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
     devDependencies:
+      '@discord-mcp/server-mocks':
+        specifier: workspace:*
+        version: link:../mcp-server-mocks
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.17
@@ -146,6 +152,12 @@ importers:
       vitest:
         specifier: ^3.2.0
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.17)(jiti@2.6.1)(msw@2.13.6(@types/node@22.19.17)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/mcp-server-mocks:
+    dependencies:
+      msw:
+        specifier: ^2.7.0
+        version: 2.13.6(@types/node@24.12.2)(typescript@5.9.3)
 
   site:
     dependencies:
@@ -4367,7 +4379,6 @@ snapshots:
       '@inquirer/type': 4.0.5(@types/node@24.12.2)
     optionalDependencies:
       '@types/node': 24.12.2
-    optional: true
 
   '@inquirer/core@11.1.9(@types/node@22.19.17)':
     dependencies:
@@ -4392,7 +4403,6 @@ snapshots:
       signal-exit: 4.1.0
     optionalDependencies:
       '@types/node': 24.12.2
-    optional: true
 
   '@inquirer/figures@2.0.5': {}
 
@@ -4403,7 +4413,6 @@ snapshots:
   '@inquirer/type@4.0.5(@types/node@24.12.2)':
     optionalDependencies:
       '@types/node': 24.12.2
-    optional: true
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -6740,7 +6749,6 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/node'
-    optional: true
 
   mute-stream@3.0.0: {}
 
