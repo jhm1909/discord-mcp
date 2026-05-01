@@ -39,6 +39,20 @@ const ConfigSchema = z.object({
   OTEL_TRACES_SAMPLER_ARG: z.coerce.number().min(0).max(1).default(1),
   // Pipe spans to stdout (debug aid). Honours JSON-RPC by routing to stderr in caller.
   OTEL_CONSOLE_EXPORTER: boolish(false),
+
+  // --- Resilience (Plan 8 Phase C) ---
+  // Retry is ON by default. Boolean transform uses `!== 'false'` so anything
+  // other than the literal string 'false' (including unset → undefined) is true.
+  MCP_RETRY_ENABLED: z
+    .string()
+    .transform((v) => v !== 'false')
+    .default(true),
+  MCP_RETRY_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),
+  MCP_RETRY_BASE_DELAY_MS: z.coerce.number().int().min(50).max(5000).default(200),
+  MCP_RETRY_MAX_DELAY_MS: z.coerce.number().int().min(500).max(60000).default(10000),
+  MCP_RETRY_JITTER: z.enum(['none', 'full', 'decorrelated']).default('full'),
+  MCP_TIMEOUT_DEFAULT_MS: z.coerce.number().int().min(1000).max(120000).default(30000),
+  MCP_TIMEOUT_LONG_MS: z.coerce.number().int().min(1000).max(300000).default(60000),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

@@ -145,4 +145,155 @@ describe('loadConfig', () => {
       expect(on.OTEL_CONSOLE_EXPORTER).toBe(true);
     });
   });
+
+  describe('Resilience fields (Plan 8 Phase C)', () => {
+    it('MCP_RETRY_ENABLED defaults to true (default-on flag)', () => {
+      const c = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(c.MCP_RETRY_ENABLED).toBe(true);
+    });
+
+    it('MCP_RETRY_ENABLED only goes false on the literal string "false"', () => {
+      const off = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_RETRY_ENABLED: 'false',
+      } as NodeJS.ProcessEnv);
+      expect(off.MCP_RETRY_ENABLED).toBe(false);
+      // Anything else → true (default-on semantics).
+      for (const v of ['true', '1', 'yes', '0', 'no', '']) {
+        const on = loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_ENABLED: v,
+        } as NodeJS.ProcessEnv);
+        expect(on.MCP_RETRY_ENABLED).toBe(true);
+      }
+    });
+
+    it('MCP_RETRY_MAX_ATTEMPTS defaults to 3 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_RETRY_MAX_ATTEMPTS).toBe(3);
+      const five = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_RETRY_MAX_ATTEMPTS: '5',
+      } as NodeJS.ProcessEnv);
+      expect(five.MCP_RETRY_MAX_ATTEMPTS).toBe(5);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_MAX_ATTEMPTS: '0',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_MAX_ATTEMPTS: '11',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_RETRY_BASE_DELAY_MS defaults to 200 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_RETRY_BASE_DELAY_MS).toBe(200);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_RETRY_BASE_DELAY_MS: '1000',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_RETRY_BASE_DELAY_MS).toBe(1000);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_BASE_DELAY_MS: '49',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_BASE_DELAY_MS: '5001',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_RETRY_MAX_DELAY_MS defaults to 10000 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_RETRY_MAX_DELAY_MS).toBe(10000);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_RETRY_MAX_DELAY_MS: '30000',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_RETRY_MAX_DELAY_MS).toBe(30000);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_MAX_DELAY_MS: '499',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_MAX_DELAY_MS: '60001',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_RETRY_JITTER defaults to "full" and accepts the enum', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_RETRY_JITTER).toBe('full');
+      for (const v of ['none', 'full', 'decorrelated'] as const) {
+        const c = loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_JITTER: v,
+        } as NodeJS.ProcessEnv);
+        expect(c.MCP_RETRY_JITTER).toBe(v);
+      }
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_RETRY_JITTER: 'bogus',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_TIMEOUT_DEFAULT_MS defaults to 30000 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_TIMEOUT_DEFAULT_MS).toBe(30000);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_TIMEOUT_DEFAULT_MS: '15000',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_TIMEOUT_DEFAULT_MS).toBe(15000);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_TIMEOUT_DEFAULT_MS: '999',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_TIMEOUT_DEFAULT_MS: '120001',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+
+    it('MCP_TIMEOUT_LONG_MS defaults to 60000 and rejects out-of-range', () => {
+      const def = loadConfig({ DISCORD_TOKEN: VALID_TOKEN } as NodeJS.ProcessEnv);
+      expect(def.MCP_TIMEOUT_LONG_MS).toBe(60000);
+      const overridden = loadConfig({
+        DISCORD_TOKEN: VALID_TOKEN,
+        MCP_TIMEOUT_LONG_MS: '120000',
+      } as NodeJS.ProcessEnv);
+      expect(overridden.MCP_TIMEOUT_LONG_MS).toBe(120000);
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_TIMEOUT_LONG_MS: '999',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+      expect(() =>
+        loadConfig({
+          DISCORD_TOKEN: VALID_TOKEN,
+          MCP_TIMEOUT_LONG_MS: '300001',
+        } as NodeJS.ProcessEnv),
+      ).toThrow();
+    });
+  });
 });
