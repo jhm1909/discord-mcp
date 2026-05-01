@@ -21,8 +21,12 @@ coverage/
 .vscode/
 .idea/
 
-# Contens
-docs/
+# Contens — internal plans/research stay private (docs/superpowers/, etc.).
+# Operator docs (docs/operations/) ship to the public repo via the negation
+# below. NB: gitignore "cannot re-include a file if a parent directory is
+# excluded", so we ignore docs/* (files inside docs/, not docs/ itself).
+docs/*
+!docs/operations/
 
 # Agents
 .claude/

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DiscordServerErrorImpl, InternalError } from './server.js';
+import {
+  BulkheadFullError,
+  CircuitOpenError,
+  DiscordServerErrorImpl,
+  InternalError,
+} from './server.js';
 
 describe('DiscordServerErrorImpl', () => {
   it('captures HTTP status + route, retriable=true', () => {
@@ -20,5 +25,26 @@ describe('InternalError', () => {
     expect(e.category).toBe('server');
     expect(e.retriable).toBe(true);
     expect(e.recoveryHint).toMatch(/audit log/);
+  });
+});
+
+describe('CircuitOpenError (Plan 8 D.4)', () => {
+  it('carries retryAfterMs + retriable=true with wait-Nms hint', () => {
+    const e = new CircuitOpenError(45000);
+    expect(e.code).toBe('CIRCUIT_OPEN');
+    expect(e.category).toBe('server');
+    expect(e.retriable).toBe(true);
+    expect(e.retryAfterMs).toBe(45000);
+    expect(e.recoveryHint).toBe('wait 45000ms');
+  });
+});
+
+describe('BulkheadFullError (Plan 8 D.4)', () => {
+  it('is server-category, retriable, with concurrency hint', () => {
+    const e = new BulkheadFullError();
+    expect(e.code).toBe('BULKHEAD_FULL');
+    expect(e.category).toBe('server');
+    expect(e.retriable).toBe(true);
+    expect(e.recoveryHint).toMatch(/concurrency limit exceeded/);
   });
 });

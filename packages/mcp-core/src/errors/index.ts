@@ -12,4 +12,9 @@ export {
   ValidationError,
   type ValidationIssue,
 } from './client.js';
-export { DiscordServerErrorImpl, InternalError } from './server.js';
+export {
+  BulkheadFullError,
+  CircuitOpenError,
+  DiscordServerErrorImpl,
+  InternalError,
+} from './server.js';

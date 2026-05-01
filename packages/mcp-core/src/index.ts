@@ -1,5 +1,17 @@
 // AsyncLocalStorage
 export { getCtx, runWithCtx, type ToolRequestContext, tryGetCtx } from './als/context.js';
+// Audit (Plan 8 Phase E)
+export { redactArgs } from './audit/redact.js';
+export type { AuditEvent } from './audit/schema.js';
+export {
+  type AuditSink,
+  createAuditSink,
+  DEFAULT_AUDIT_FILE,
+  FileAuditSink,
+  NoopAuditSink,
+  OtlpAuditSink,
+  StderrAuditSink,
+} from './audit/sink.js';
 // Capabilities
 export { CapabilityRouter } from './capabilities/router.js';
 export type { CapabilityFlag, ClientCapabilitiesSnapshot } from './capabilities/types.js';
@@ -7,7 +19,9 @@ export { type Config, loadConfig } from './config.js';
 export { type FormatErrorContext, formatErrorForUser } from './errors/format.js';
 // Errors
 export {
+  BulkheadFullError,
   CancelledError,
+  CircuitOpenError,
   DiscordAuthError,
   DiscordClientError,
   DiscordCloudflareBlocked,
@@ -31,6 +45,7 @@ export {
 } from './gateway/client.js';
 export { SubscriptionRegistry } from './gateway/subscription_registry.js';
 export { createLogger } from './logger.js';
+export { auditMiddleware } from './middleware/audit.js';
 // Middleware
 export {
   type CallNext,
@@ -40,6 +55,7 @@ export {
   type ToolMiddleware,
 } from './middleware/compose.js';
 export { preconditionMiddleware } from './middleware/precondition.js';
+export { telemetryMiddleware } from './middleware/telemetry.js';
 export { validateMiddleware } from './middleware/validate.js';
 export { Precondition } from './pieces/Precondition.js';
 // Pieces
@@ -57,10 +73,18 @@ export { evalCondition, interpolate, resolvePath } from './pipeline/interpolate.
 // Preconditions
 export { CategoryEnabled } from './preconditions/CategoryEnabled.js';
 export { ConfirmRequired } from './preconditions/ConfirmRequired.js';
+// REST resilience (Plan 8 Phase C)
+export { classifyDiscordError, DiscordRetryableError } from './rest/errors.js';
+export { buildPolicy } from './rest/policy.js';
+export { type ClassifierFn, wrapRestWithResilience } from './rest/resilient.js';
 export { type BuildServerDeps, type BuildServerResult, buildServer } from './server.js';
 export { PreconditionStore } from './stores/PreconditionStore.js';
 // Stores
 export { ToolStore } from './stores/ToolStore.js';
+// Telemetry (Plan 8 Phase A)
+export * as TelemetryConventions from './telemetry/conventions.js';
+export { redactRoute } from './telemetry/redact.js';
+export { buildResource } from './telemetry/resource.js';
 // Tool helpers
 export { defineTool, type ToolDefinition } from './tools/_lib/defineTool.js';
 export { type CursorPayload, decodeCursor, encodeCursor } from './tools/_lib/pagination.js';

@@ -1,6 +1,6 @@
 {
   "name": "@discord-mcp/cli",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "type": "module",
   "mcpName": "io.github.jhm1909/discord-mcp",
@@ -44,6 +44,15 @@
     "@discord-mcp/core": "workspace:*",
     "@discordjs/rest": "^2.4.0",
     "@modelcontextprotocol/sdk": "^1.20.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.216.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.216.0",
+    "@opentelemetry/resources": "^2.0.0",
+    "@opentelemetry/sdk-metrics": "^2.0.0",
+    "@opentelemetry/instrumentation-pino": "^0.62.0",
+    "@opentelemetry/instrumentation-undici": "^0.26.0",
+    "@opentelemetry/sdk-node": "^0.216.0",
+    "@opentelemetry/sdk-trace-base": "^2.0.0",
     "commander": "^12.1.0"
   },
   "devDependencies": {

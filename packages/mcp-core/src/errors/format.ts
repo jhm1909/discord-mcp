@@ -1,6 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { BrokenCircuitError, BulkheadRejectedError } from 'cockatiel';
 import {
+  BulkheadFullError,
   CancelledError,
+  CircuitOpenError,
   DiscordAuthError,
   DiscordCloudflareBlocked,
   DiscordError,
@@ -47,6 +50,61 @@ function makeError(opts: MakeErrorOpts): CallToolResult {
 }
 
 export function formatErrorForUser(e: unknown, ctx: FormatErrorContext): CallToolResult {
+  // Plan 8 D.4: surface cockatiel resilience errors with structured retry hints.
+  // CircuitOpenError / BulkheadFullError are the user-facing wrappers raised by
+  // wrapRestWithResilience.  We also catch the raw cockatiel exceptions for
+  // any code path that might pass them in directly (defensive fallback).
+  if (e instanceof CircuitOpenError) {
+    return makeError({
+      code: e.code,
+      retriable: true,
+      category: 'server',
+      retry_after_ms: e.retryAfterMs,
+      text:
+        `**Upstream Circuit Open**\n\n` +
+        `discord-mcp opened the local circuit breaker because Discord REST has been failing repeatedly.\n\n` +
+        `**Recovery**: ${e.recoveryHint}`,
+      structured: { retry_after_ms: e.retryAfterMs },
+    });
+  }
+  if (e instanceof BulkheadFullError) {
+    return makeError({
+      code: e.code,
+      retriable: true,
+      category: 'server',
+      text:
+        `**Concurrency Limit Exceeded**\n\n` +
+        `Local bulkhead rejected the request — too many concurrent Discord REST calls in flight.\n\n` +
+        `**Recovery**: ${e.recoveryHint}`,
+      structured: {},
+    });
+  }
+  if (e instanceof BulkheadRejectedError) {
+    return makeError({
+      code: 'BULKHEAD_FULL',
+      retriable: true,
+      category: 'server',
+      text:
+        `**Concurrency Limit Exceeded**\n\n` +
+        `Local bulkhead rejected the request — too many concurrent Discord REST calls in flight.\n\n` +
+        `**Recovery**: concurrency limit exceeded; retry shortly`,
+      structured: {},
+    });
+  }
+  // BrokenCircuitError covers IsolatedCircuitError (subclass).
+  if (e instanceof BrokenCircuitError) {
+    return makeError({
+      code: 'CIRCUIT_OPEN',
+      retriable: true,
+      category: 'server',
+      text:
+        `**Upstream Circuit Open**\n\n` +
+        `discord-mcp opened the local circuit breaker because Discord REST has been failing repeatedly.\n\n` +
+        `**Recovery**: wait and retry`,
+      structured: {},
+    });
+  }
+
   if (e instanceof DiscordPermissionError) {
     const haveStr = e.have.length
       ? e.have.map((p) => `\`${p}\``).join(', ')
