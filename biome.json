@@ -29,5 +29,17 @@
       "style": { "noNonNullAssertion": "off" },
       "complexity": { "noUselessTypeConstraint": "error" }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["site/scripts/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "generate-tools": "tsx scripts/generate-tool-docs.ts"
   },
   "dependencies": {
     "astro": "^5.0.0",
@@ -14,6 +15,8 @@
     "sharp": "^0.33.0"
   },
   "devDependencies": {
-    "@discord-mcp/core": "workspace:*"
+    "@discord-mcp/core": "workspace:*",
+    "tsx": "^4.19.0",
+    "zod": "^4.0.0"
   }
 }
