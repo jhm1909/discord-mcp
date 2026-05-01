@@ -59,6 +59,19 @@ async function runCli(args: string[]): Promise<void> {
       stdoutWrites.push(str);
     },
   });
+  // Sub-commands keep their own exit/output config — propagate to all of
+  // them so `discord-mcp init --help` doesn't call process.exit() directly.
+  for (const sub of program.commands) {
+    sub.exitOverride();
+    sub.configureOutput({
+      writeOut: (str) => {
+        stdoutWrites.push(str);
+      },
+      writeErr: (str) => {
+        stdoutWrites.push(str);
+      },
+    });
+  }
   try {
     await program.parseAsync(['node', 'cli.js', ...args]);
   } catch (e) {
@@ -157,14 +170,61 @@ describe('cli — doctor sub-command (Plan 9 Phase B)', () => {
   });
 });
 
-describe('cli — placeholder sub-commands', () => {
-  it('init exits with code 2 and prints not-yet-implemented', async () => {
-    await runCli(['init']);
-    expect(process.exitCode).toBe(2);
-    expect(stdoutOutput()).toContain('not yet implemented');
-    expect(stdoutOutput()).toContain('init');
+describe('cli — init sub-command (Plan 9 Phase D)', () => {
+  // Force non-interactive so init takes the deterministic flag-only path.
+  const originalStdinTTY = process.stdin.isTTY;
+  const originalStdoutTTY = process.stdout.isTTY;
+  beforeEach(() => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: false,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: false,
+      configurable: true,
+      writable: true,
+    });
+  });
+  afterEach(() => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: originalStdinTTY,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalStdoutTTY,
+      configurable: true,
+      writable: true,
+    });
   });
 
+  it('init --help lists all the new flags', async () => {
+    await runCli(['init', '--help']);
+    const out = stdoutOutput();
+    expect(out).toContain('--client');
+    expect(out).toContain('--token');
+    expect(out).toContain('--gateway');
+    expect(out).toContain('--output');
+    expect(out).toContain('--force');
+    expect(out).toContain('--json');
+  });
+
+  it('init --json --client generic produces parseable JSON with exit code 0', async () => {
+    await runCli(['init', '--json', '--client', 'generic']);
+    expect(process.exitCode).toBe(0);
+    const parsed = JSON.parse(stdoutOutput()) as { ok: boolean; data?: { client?: string } };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.data?.client).toBe('generic');
+  });
+
+  it('init --client unknown-client exits with code 2', async () => {
+    await runCli(['init', '--json', '--client', 'unknown-client']);
+    expect(process.exitCode).toBe(2);
+  });
+});
+
+describe('cli — placeholder sub-commands', () => {
   it('migrate exits with code 2 and prints not-yet-implemented', async () => {
     await runCli(['migrate']);
     expect(process.exitCode).toBe(2);
