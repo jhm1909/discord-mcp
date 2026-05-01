@@ -1,6 +1,6 @@
 // FIXTURE: minimal Go for adapter testing — not real code
-// Three mcp.NewTool("server.files.{list,read,write}") calls so the
-// hubdustry-go-mcp adapter's regex picks up exactly three names.
+// Three NewTool calls (list/read/write) so the hubdustry-go-mcp
+// adapter's regex picks up exactly three names from this file.
 package tools
 
 import "example.com/hubdustry/mcp"
