@@ -15,9 +15,11 @@ import { container } from '@sapphire/pieces';
 import type { Logger } from 'pino';
 import { z } from 'zod';
 import { runWithCtx } from './als/context.js';
+import { type AuditSink, createAuditSink } from './audit/sink.js';
 import type { Config } from './config.js';
 import { formatErrorForUser } from './errors/format.js';
 import { SubscriptionRegistry } from './gateway/subscription_registry.js';
+import { auditMiddleware } from './middleware/audit.js';
 import { compose, type MiddlewareContext, type ToolMiddleware } from './middleware/compose.js';
 import { preconditionMiddleware } from './middleware/precondition.js';
 import { telemetryMiddleware } from './middleware/telemetry.js';
@@ -233,6 +235,11 @@ export interface BuildServerResult {
   registeredPreconditions: string[];
   notifyResource: (uri: string) => Promise<void>;
   subscriptions: SubscriptionRegistry;
+  /**
+   * Audit sink wired into the middleware chain (Plan 8 Phase E).
+   * Surfaced so transports can flush / close it on SIGTERM.
+   */
+  auditSink: AuditSink;
 }
 
 export async function buildServer(deps: BuildServerDeps): Promise<BuildServerResult> {
@@ -1010,13 +1017,25 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
   const registeredTools = [...toolStore.keys()];
   const registeredPreconditions = [...preconditionStore.keys()];
 
+  // --- Audit sink (Plan 8 Phase E) ---
+  // Constructed before middleware so it's the same instance both wired
+  // into auditMiddleware AND surfaced on BuildServerResult for graceful
+  // shutdown by the transport.
+  const auditSink = createAuditSink(deps.config);
+
   // --- Middleware chain (outer → inner) ---
-  // Order matters: telemetry must be outermost so spans cover the entire
-  // call (including validation/precondition errors and middleware overhead).
+  // Order matters:
+  //   - telemetry: OUTERMOST so spans cover the entire call (including
+  //     validation/precondition errors and middleware overhead).
+  //   - validate / precondition: argument and policy gates.
+  //   - audit: INNERMOST per plan §10 critical rule 2 — only fires for
+  //     actually-attempted operations. Blocked operations are visible
+  //     in telemetry already; audit shouldn't generate noise for them.
   const middlewares: ToolMiddleware[] = [
     telemetryMiddleware(),
     validateMiddleware(),
     preconditionMiddleware(preconditionStore),
+    auditMiddleware(auditSink),
   ];
 
   // --- MCP server ---
@@ -1181,5 +1200,12 @@ export async function buildServer(deps: BuildServerDeps): Promise<BuildServerRes
     }
   };
 
-  return { server, registeredTools, registeredPreconditions, notifyResource, subscriptions };
+  return {
+    server,
+    registeredTools,
+    registeredPreconditions,
+    notifyResource,
+    subscriptions,
+    auditSink,
+  };
 }

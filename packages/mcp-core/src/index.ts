@@ -1,5 +1,17 @@
 // AsyncLocalStorage
 export { getCtx, runWithCtx, type ToolRequestContext, tryGetCtx } from './als/context.js';
+// Audit (Plan 8 Phase E)
+export { redactArgs } from './audit/redact.js';
+export type { AuditEvent } from './audit/schema.js';
+export {
+  type AuditSink,
+  createAuditSink,
+  DEFAULT_AUDIT_FILE,
+  FileAuditSink,
+  NoopAuditSink,
+  OtlpAuditSink,
+  StderrAuditSink,
+} from './audit/sink.js';
 // Capabilities
 export { CapabilityRouter } from './capabilities/router.js';
 export type { CapabilityFlag, ClientCapabilitiesSnapshot } from './capabilities/types.js';
@@ -33,6 +45,7 @@ export {
 } from './gateway/client.js';
 export { SubscriptionRegistry } from './gateway/subscription_registry.js';
 export { createLogger } from './logger.js';
+export { auditMiddleware } from './middleware/audit.js';
 // Middleware
 export {
   type CallNext,

@@ -40,7 +40,7 @@ export async function startStdio(): Promise<void> {
     circuitHalfOpenAfterMs: config.MCP_CIRCUIT_HALF_OPEN_AFTER_MS,
   });
 
-  const { server, registeredTools, notifyResource, subscriptions } = await buildServer({
+  const { server, registeredTools, notifyResource, subscriptions, auditSink } = await buildServer({
     rest,
     logger,
     config,
@@ -86,6 +86,18 @@ export async function startStdio(): Promise<void> {
       }
     }
     await server.close();
+    // Flush audit sink before OTel — sinks may write JSON lines to
+    // disk that we want persisted even if OTel teardown stalls.
+    if (auditSink.shutdown !== undefined) {
+      try {
+        await auditSink.shutdown();
+      } catch (e) {
+        logger.warn(
+          { err: e instanceof Error ? e.message : String(e) },
+          'audit sink shutdown failed',
+        );
+      }
+    }
     if (otel !== null) {
       try {
         await otel.shutdown();
