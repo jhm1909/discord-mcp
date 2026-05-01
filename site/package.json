@@ -1,0 +1,19 @@
+{
+  "name": "site",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "@astrojs/starlight": "^0.37.0",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@discord-mcp/core": "workspace:*"
+  }
+}
