@@ -1,3 +1,4 @@
+import { BrokenCircuitError, BulkheadRejectedError, IsolatedCircuitError } from 'cockatiel';
 import { describe, expect, it } from 'vitest';
 import { formatErrorForUser } from './format.js';
 import {
@@ -12,7 +13,7 @@ import {
   ScopeRejectedError,
   ValidationError,
 } from './index.js';
-import { DiscordServerErrorImpl } from './server.js';
+import { BulkheadFullError, CircuitOpenError, DiscordServerErrorImpl } from './server.js';
 
 const stdio = { toolName: 'messages_send', transport: 'stdio' as const };
 
@@ -151,5 +152,62 @@ describe('formatErrorForUser', () => {
   it('includes sentry event id in trace_id when provided for unknown errors', () => {
     const r = formatErrorForUser(new Error('boom'), { ...stdio, sentryEventId: 'evt_999' });
     expect(r.structuredContent).toMatchObject({ trace_id: 'evt_999' });
+  });
+
+  describe('cockatiel resilience errors (Plan 8 D.4)', () => {
+    it('formats CircuitOpenError with retry_after_ms + retriable=true', () => {
+      const r = formatErrorForUser(new CircuitOpenError(60000), stdio);
+      expect(r.isError).toBe(true);
+      expect(r.structuredContent).toMatchObject({
+        code: 'CIRCUIT_OPEN',
+        retriable: true,
+        category: 'server',
+        retry_after_ms: 60000,
+      });
+      const text = (r.content as Array<{ text: string }>)[0]!.text;
+      expect(text).toMatch(/Circuit Open/);
+      expect(text).toMatch(/wait 60000ms/);
+    });
+
+    it('formats BulkheadFullError with retriable=true + concurrency hint', () => {
+      const r = formatErrorForUser(new BulkheadFullError(), stdio);
+      expect(r.structuredContent).toMatchObject({
+        code: 'BULKHEAD_FULL',
+        retriable: true,
+        category: 'server',
+      });
+      const text = (r.content as Array<{ text: string }>)[0]!.text;
+      expect(text).toMatch(/Concurrency Limit Exceeded/);
+      expect(text).toMatch(/concurrency limit exceeded; retry shortly/);
+    });
+
+    it('maps raw cockatiel BrokenCircuitError → CIRCUIT_OPEN structured shape', () => {
+      const r = formatErrorForUser(new BrokenCircuitError('open'), stdio);
+      expect(r.structuredContent).toMatchObject({
+        code: 'CIRCUIT_OPEN',
+        retriable: true,
+        category: 'server',
+      });
+    });
+
+    it('maps raw cockatiel IsolatedCircuitError → CIRCUIT_OPEN structured shape', () => {
+      // IsolatedCircuitError extends BrokenCircuitError so the same
+      // instanceof branch must match.
+      const r = formatErrorForUser(new IsolatedCircuitError(), stdio);
+      expect(r.structuredContent).toMatchObject({
+        code: 'CIRCUIT_OPEN',
+        retriable: true,
+        category: 'server',
+      });
+    });
+
+    it('maps raw cockatiel BulkheadRejectedError → BULKHEAD_FULL structured shape', () => {
+      const r = formatErrorForUser(new BulkheadRejectedError(0, 0), stdio);
+      expect(r.structuredContent).toMatchObject({
+        code: 'BULKHEAD_FULL',
+        retriable: true,
+        category: 'server',
+      });
+    });
   });
 });

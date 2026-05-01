@@ -1,9 +1,21 @@
 import type { REST } from '@discordjs/rest';
-import type { IPolicy } from 'cockatiel';
+import { BrokenCircuitError, BulkheadRejectedError, type IPolicy } from 'cockatiel';
+import { BulkheadFullError, CircuitOpenError } from '../errors/server.js';
 import { classifyDiscordError, DiscordRetryableError } from './errors.js';
 
 /** Function deciding whether a thrown error is retryable. */
 export type ClassifierFn = (err: unknown) => DiscordRetryableError | null;
+
+/** Options passed to {@link wrapRestWithResilience}. */
+export interface WrapResilienceOptions {
+  classifier?: ClassifierFn;
+  /**
+   * The configured `MCP_CIRCUIT_HALF_OPEN_AFTER_MS` so we can include a
+   * `wait Nms` `recoveryHint` on `CircuitOpenError`. Optional — defaults
+   * to 60_000 (the same default as the Config field) when omitted.
+   */
+  circuitHalfOpenAfterMs?: number;
+}
 
 /**
  * The five HTTP verbs `@discordjs/rest`'s REST class exposes for typical
@@ -32,8 +44,14 @@ type Verb = (typeof VERBS)[number];
 export function wrapRestWithResilience(
   rest: REST,
   policy: IPolicy,
-  classifier: ClassifierFn = classifyDiscordError,
+  classifierOrOpts: ClassifierFn | WrapResilienceOptions = classifyDiscordError,
 ): REST {
+  // Backwards-compatible: third arg can be a bare classifier function (the
+  // pre-Plan-8-D shape) or an options object.
+  const opts: WrapResilienceOptions =
+    typeof classifierOrOpts === 'function' ? { classifier: classifierOrOpts } : classifierOrOpts;
+  const classifier = opts.classifier ?? classifyDiscordError;
+  const halfOpenAfterMs = opts.circuitHalfOpenAfterMs ?? 60_000;
   type RestRecord = REST & Record<Verb, (...args: unknown[]) => Promise<unknown>>;
   const r = rest as RestRecord;
 
@@ -70,6 +88,15 @@ export function wrapRestWithResilience(
       try {
         return await wrapped(...args);
       } catch (err) {
+        // Plan 8 D.4: cockatiel circuit/bulkhead errors → user-facing
+        // CircuitOpenError / BulkheadFullError. Detect the breaker family
+        // FIRST since IsolatedCircuitError extends BrokenCircuitError.
+        if (err instanceof BrokenCircuitError) {
+          throw new CircuitOpenError(halfOpenAfterMs);
+        }
+        if (err instanceof BulkheadRejectedError) {
+          throw new BulkheadFullError();
+        }
         if (err instanceof DiscordRetryableError) {
           throw err.cause ?? err;
         }

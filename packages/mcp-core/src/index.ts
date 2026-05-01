@@ -7,7 +7,9 @@ export { type Config, loadConfig } from './config.js';
 export { type FormatErrorContext, formatErrorForUser } from './errors/format.js';
 // Errors
 export {
+  BulkheadFullError,
   CancelledError,
+  CircuitOpenError,
   DiscordAuthError,
   DiscordClientError,
   DiscordCloudflareBlocked,

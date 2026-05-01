@@ -34,7 +34,11 @@ export async function startStdio(): Promise<void> {
   // Wrap the rate-limit-queue-aware REST in cockatiel's resilience policy
   // (timeout + retry-on-DiscordRetryableError + circuit breaker + bulkhead).
   // Passing `logger` enables circuit/bulkhead/dead-letter hook logs.
-  const rest = wrapRestWithResilience(baseRest, buildPolicy(config, logger));
+  // `circuitHalfOpenAfterMs` is forwarded so CircuitOpenError carries the
+  // configured wait hint to the agent.
+  const rest = wrapRestWithResilience(baseRest, buildPolicy(config, logger), {
+    circuitHalfOpenAfterMs: config.MCP_CIRCUIT_HALF_OPEN_AFTER_MS,
+  });
 
   const { server, registeredTools, notifyResource, subscriptions } = await buildServer({
     rest,
