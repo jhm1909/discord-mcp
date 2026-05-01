@@ -61,7 +61,9 @@ describe('auditMiddleware — mutating tools', () => {
     expect(ev.idempotent).toBe(false);
     expect(ev.transport).toBe('stdio');
     expect(ev.request_id).toBe('req-test-1');
-    expect(ev.args_redacted).toEqual({ channel_id: '111', content: 'hi' });
+    // Phase F: messages_send.content is in SENSITIVE_KEYS_BY_TOOL → redacted
+    // with length-aware marker. channel_id passes through.
+    expect(ev.args_redacted).toEqual({ channel_id: '111', content: '[REDACTED:2ch]' });
     expect(ev.result_code).toBeUndefined();
     expect(typeof ev.duration_ms).toBe('number');
     // ISO-8601 timestamp shape (loose check).
@@ -101,7 +103,7 @@ describe('auditMiddleware — mutating tools', () => {
     expect(ev.result_code).toBe('TypeError');
   });
 
-  it('redacts sensitive top-level keys via redactArgs placeholder', async () => {
+  it('redacts globally sensitive top-level keys via redactArgs (length-aware marker)', async () => {
     const sink = new CapturingSink();
     const mw = auditMiddleware(sink);
     await runWithCtx(TEST_REQUEST_CTX, () =>
@@ -112,7 +114,7 @@ describe('auditMiddleware — mutating tools', () => {
     );
     expect(sink.events[0]?.args_redacted).toEqual({
       channel_id: '111',
-      token: '[REDACTED]',
+      token: '[REDACTED:16ch]',
     });
   });
 });

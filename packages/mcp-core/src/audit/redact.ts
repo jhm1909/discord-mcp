@@ -1,29 +1,61 @@
 /**
- * Argument redactor for audit logs (Plan 8 Phase E placeholder).
+ * Argument redactor for audit logs (Plan 8 Phase F).
  *
- * Phase E ships a global redactor that strips a small set of obviously
- * sensitive top-level keys (`token`, `bearer_token`, `auth`, `password`,
- * `secret`) and truncates over-long string values to keep the audit
- * record bounded. **Per-tool sensitive-key maps land in Phase F** (e.g.
- * `webhooks_create.url`, `oauth_*.code`); the function signature here
- * already accepts the tool name so the Phase F drop-in is non-breaking.
+ * Phase F upgrades the Phase E placeholder with:
  *
- * Redaction is shallow on purpose: nested objects pass through
- * untouched at this stage. The Phase F replacement walks recursively
- * with the per-tool key map merged in.
+ *   1. **Per-tool sensitive-key map** (`SENSITIVE_KEYS_BY_TOOL`) — explicit
+ *      allowlist keyed by tool name. Tools NOT in the map fall back to
+ *      the global rules only (length truncation + global key set). This
+ *      is intentionally allowlist-style: new tools added in future plans
+ *      MUST opt in to per-tool redaction. We prefer leaving an arg in
+ *      the audit record over silently dropping it for a tool nobody
+ *      knew to add to the map.
+ *   2. **Recursive walk** — nested objects and arrays are descended.
+ *      Per-tool keys match at any depth, global sensitive keys match at
+ *      any depth, and string truncation applies to every leaf string.
+ *   3. **Length-aware redaction marker** —
+ *      `[REDACTED:${len}ch]` for strings (preserves the size signal) and
+ *      `[REDACTED:value]` for non-string scalars / objects so the audit
+ *      record still hints at the original shape.
  *
- * Truncation policy: any string longer than `MAX_LEN` is shortened to
- * `TRUNCATE_TO` characters with the suffix `...[TRUNCATED]`. This caps
- * the size of message bodies, embed JSON, and long IDs so a single
- * audit record never blows up the log line.
+ * Truncation policy (preserved from Phase E): any leaf string longer
+ * than `MAX_LEN` is shortened to `TRUNCATE_TO` characters with the
+ * suffix `...[TRUNCATED]`. Caps message bodies, embed JSON, long IDs.
  */
 
-const SENSITIVE_KEYS = new Set(['token', 'bearer_token', 'auth', 'password', 'secret']);
+const SENSITIVE_KEYS_GLOBAL = new Set(['token', 'bearer_token', 'auth', 'password', 'secret']);
+
+/**
+ * Per-tool sensitive-key map (allowlist).
+ *
+ * Each entry lists arg-names whose values must be redacted for that
+ * specific tool. Tools NOT in this map only get global redaction +
+ * length truncation. New tools added in future plans must add their
+ * own entry to opt in to per-tool redaction.
+ */
+const SENSITIVE_KEYS_BY_TOOL: Record<string, ReadonlySet<string>> = {
+  messages_send: new Set(['content']),
+  messages_edit: new Set(['content']),
+  // length only, no IDs leaked — the redactor will replace the array
+  // with `[REDACTED:${arr.length}ch]`-style marker via the value path.
+  messages_bulk_delete: new Set(['message_ids']),
+  webhooks_execute: new Set(['content', 'embeds', 'components', 'attachments']),
+  webhooks_edit_message: new Set(['content', 'embeds', 'components']),
+  components_v2_send: new Set(['content', 'components']),
+  components_v2_edit: new Set(['components']),
+  components_v2_send_from_template: new Set(['variables']),
+  intelligence_summarize_channel: new Set(['messages', 'channel_messages']),
+  intelligence_classify_messages: new Set(['messages']),
+  intelligence_draft_response: new Set(['conversation', 'context']),
+  intelligence_moderate_content: new Set(['content', 'text']),
+  intelligence_extract_entities: new Set(['text', 'content']),
+  interactions_create_response: new Set(['data']),
+  interactions_edit_original_response: new Set(['content', 'embeds', 'components']),
+};
 
 const MAX_LEN = 200;
 const TRUNCATE_TO = 100;
 const TRUNCATE_SUFFIX = '...[TRUNCATED]';
-const REDACTED = '[REDACTED]';
 
 function truncateString(value: string): string {
   if (value.length <= MAX_LEN) return value;
@@ -31,29 +63,71 @@ function truncateString(value: string): string {
 }
 
 /**
- * @param args      Tool arguments as received by the middleware (already
- *                  validated). Always treated as a plain object — non-object
- *                  inputs return an empty record.
- * @param _toolName Reserved for the Phase F per-tool key map. Unused in
- *                  Phase E (placeholder global redactor only).
+ * Build the `[REDACTED:...]` marker for a redacted value, preserving a
+ * size hint:
+ *   - strings → `[REDACTED:${len}ch]` (length in characters)
+ *   - everything else → `[REDACTED:value]`
+ *
+ * The string-length encoding is what the integration tests assert
+ * against (e.g. `content: "secret data"` → `[REDACTED:11ch]`).
  */
-export function redactArgs(args: unknown, _toolName: string): Record<string, unknown> {
-  if (args === null || typeof args !== 'object' || Array.isArray(args)) {
-    return {};
+function redactionMarker(value: unknown): string {
+  if (typeof value === 'string') return `[REDACTED:${value.length}ch]`;
+  return '[REDACTED:value]';
+}
+
+/**
+ * Recursive walker. Descends into plain objects and arrays. For each
+ * key/value pair:
+ *   1. If the key matches the global sensitive set OR the per-tool set,
+ *      replace with `redactionMarker(value)`.
+ *   2. Otherwise, descend into the value (recurse on objects/arrays,
+ *      truncate strings, pass other scalars through).
+ *
+ * `null`, `undefined`, numbers, booleans, bigints pass through unchanged
+ * outside of the sensitive-key path.
+ */
+function walk(value: unknown, perToolKeys: ReadonlySet<string>): unknown {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return truncateString(value);
+  if (typeof value !== 'object') return value;
+
+  if (Array.isArray(value)) {
+    return value.map((item) => walk(item, perToolKeys));
   }
+
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(args as Record<string, unknown>)) {
-    if (SENSITIVE_KEYS.has(key.toLowerCase())) {
-      out[key] = REDACTED;
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    const lk = k.toLowerCase();
+    if (SENSITIVE_KEYS_GLOBAL.has(lk) || perToolKeys.has(lk) || perToolKeys.has(k)) {
+      out[k] = redactionMarker(v);
       continue;
     }
-    if (typeof value === 'string') {
-      out[key] = truncateString(value);
-      continue;
-    }
-    // Non-string scalars and nested objects pass through unchanged in
-    // Phase E. Phase F walks recursively.
-    out[key] = value;
+    out[k] = walk(v, perToolKeys);
   }
   return out;
 }
+
+/**
+ * Redact tool args for inclusion in audit records or span events.
+ *
+ * @param args     Tool arguments as received by the middleware (already
+ *                 validated). Non-object inputs return an empty record.
+ * @param toolName Tool name — used to look up `SENSITIVE_KEYS_BY_TOOL`.
+ *                 Tools missing from the map only get global redaction
+ *                 + length truncation (allowlist semantics).
+ */
+export function redactArgs(args: unknown, toolName: string): Record<string, unknown> {
+  if (args === null || typeof args !== 'object' || Array.isArray(args)) {
+    return {};
+  }
+  const perToolKeys = SENSITIVE_KEYS_BY_TOOL[toolName] ?? new Set<string>();
+  const walked = walk(args, perToolKeys) as Record<string, unknown>;
+  return walked;
+}
+
+/**
+ * Test-only export: lets the redact tests assert that every tool listed
+ * in the per-tool map is exercised. NOT part of the public API.
+ */
+export const __SENSITIVE_KEYS_BY_TOOL_FOR_TESTS = SENSITIVE_KEYS_BY_TOOL;
