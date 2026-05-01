@@ -134,20 +134,20 @@ describe('UndiciInstrumentation integration (Plan 8 B.5)', () => {
     dropping.disable();
   });
 
-  // SKIPPED: full end-to-end parent-child verification through
-  // buildServer + msw is currently infeasible. msw patches global
-  // fetch / ClientRequest while UndiciInstrumentation hooks dispatch
-  // at a lower layer. Either the mock fires (msw wins → no undici
-  // span) or the dispatch hook fires (msw bypassed → no mocked
-  // Discord response). In production the SDK sees real undici and
-  // both spans appear under the same trace_id.
+  // TODO (Plan 12 Phase C.5): full end-to-end parent-child verification
+  // through buildServer + msw is currently infeasible. msw patches global
+  // fetch / ClientRequest while UndiciInstrumentation hooks dispatch at a
+  // lower layer. Either the mock fires (msw wins → no undici span) or the
+  // dispatch hook fires (msw bypassed → no mocked Discord response). In
+  // production the SDK sees real undici and both spans appear under the
+  // same trace_id.
   //
-  // Re-enable once one of:
+  // Converted from `it.skip` to `it.todo` so it surfaces in vitest's todo
+  // list (intentional future work) instead of the skipped count
+  // (operational warning). Re-enable once one of:
   //  - msw exposes a dispatch-aware interceptor compatible with undici
-  //    instrumentation (tracked upstream).
-  //  - we add a stand-alone HTTP fixture (similar to the local server
-  //    in this file) under buildServer's REST instance instead of msw.
-  it.skip('emits parent SERVER + child CLIENT span under one trace via buildServer', () => {
-    // intentionally blank — see comment above.
-  });
+  //    instrumentation (tracked upstream — https://github.com/mswjs/msw).
+  //  - we add a stand-alone HTTP fixture (similar to the local server in
+  //    this file) under buildServer's REST instance instead of msw.
+  it.todo('emits parent SERVER + child CLIENT span under one trace via buildServer');
 });
